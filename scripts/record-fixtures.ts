@@ -1,4 +1,4 @@
-/** Records the live MTA subway feeds into test/fixtures/<feed>.pb. Re-run `npm run build:static` first if stops changed. */
+/** Records the live MTA subway feeds into test/fixtures/<feed>.pb. Re-run `pnpm build:static` first if stops changed. */
 import { writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { decodeFeed, FEEDS, feedUrl } from "../src/subway/feeds.js";

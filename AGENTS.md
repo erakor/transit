@@ -6,22 +6,22 @@ shapes and deployment steps; this file covers what you need to change the code s
 ## Commands
 
 ```sh
-npm test                                  # vitest, all tests (offline: uses test/fixtures)
-npx vitest run test/routes.test.ts        # one file
-npx vitest run -t "caps limit"            # tests whose name matches
-npm run typecheck                         # tsc --noEmit over api, src, scripts, test
-npm run build:static                      # regenerate src/data/subway.generated.ts from the MTA
-npm run build:static -- path/to/gtfs.zip  # same, from a local zip
-npm run record-fixtures                   # re-record test/fixtures/*.pb from the live feeds
-npm run smoke                             # live MTA feed checks (+ deployment checks if TRANSIT_BASE_URL is set)
+pnpm test                            # vitest, all tests (offline: uses test/fixtures)
+pnpm vitest run test/routes.test.ts  # one file
+pnpm vitest run -t "caps limit"      # tests whose name matches
+pnpm typecheck                       # tsc --noEmit over api, src, scripts, test
+pnpm build:static                    # regenerate src/data/subway.generated.ts from the MTA
+pnpm build:static path/to/gtfs.zip   # same, from a local zip
+pnpm record-fixtures                 # re-record test/fixtures/*.pb from the live feeds
+pnpm smoke                           # live MTA feed checks (+ deployment checks if TRANSIT_BASE_URL is set)
 ```
 
 There is no lint step and no build step: Vercel compiles `api/**/*.ts` itself. To check what
-Vercel will produce, `npx vercel build` works offline with a stub `.vercel/project.json`
+Vercel will produce, `pnpm dlx vercel build` works offline with a stub `.vercel/project.json`
 (`{"projectId":"x","orgId":"y","settings":{"framework":null}}`); `.vercel/` is gitignored.
 
 Node's built-in `fetch` ignores `HTTPS_PROXY`. Behind a proxy (such as a cloud sandbox), run the
-scripts that hit the network with `NODE_USE_ENV_PROXY=1` (Node 22.21 or later).
+scripts that hit the network with `NODE_USE_ENV_PROXY=1` (Node 22.21 or later, including Node 26).
 
 ## Architecture
 
@@ -76,7 +76,14 @@ Ids, which clients store as favorites, so keep them stable:
 - Times are epoch seconds; responses carry names and colors, not ids alone.
 - ESM with `NodeNext` resolution: relative imports end in `.js` even though the files are `.ts`.
 - TypeScript is pinned to 5.9: Vercel's build reported type errors with TypeScript 7.
-- After `npm run record-fixtures`, update `FIXTURE_NOW_MS` in `test/helpers.ts` to the newest feed
+- Toolchain: Node 26 (`engines` in `package.json`, `node-version` in the workflows) and pnpm, pinned
+  by `packageManager`. Vercel picks a pnpm version from the lockfile format rather than
+  `packageManager`, so `installCommand` in `vercel.json` pins the same version: bump both together.
+  Node 26 ships without Corepack; CI installs pnpm with `pnpm/action-setup`, which reads `packageManager`.
+- pnpm refuses to install when a dependency's build script hasn't been approved. Approvals live in
+  `allowBuilds` in `pnpm-workspace.yaml` (`pnpm approve-builds <pkg>` edits it).
+- On Node 26, `fetch` can use HTTP/2, where `statusText` is empty: check `res.status` only.
+- After `pnpm record-fixtures`, update `FIXTURE_NOW_MS` in `test/helpers.ts` to the newest feed
   header timestamp, or the fixture tests will see every train as already gone. If the static data
   changed, regenerate it before recording so stop ids match.
 - New providers (see the README roadmap) go under `api/<provider>/` with a handler in

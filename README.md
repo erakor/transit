@@ -129,12 +129,12 @@ tells whether the CDN served it (`HIT`, `STALE`) or not (`MISS`).
 ## Development
 
 ```sh
-npm install
-npm test               # unit tests (recorded feeds in test/fixtures)
-npm run typecheck
-npm run build:static   # regenerate src/data/subway.generated.ts from the MTA
-npm run record-fixtures  # re-record test/fixtures/*.pb from the live feeds
-npm run smoke          # check the live MTA feeds (see below)
+pnpm install
+pnpm test             # unit tests (recorded feeds in test/fixtures)
+pnpm typecheck
+pnpm build:static     # regenerate src/data/subway.generated.ts from the MTA
+pnpm record-fixtures  # re-record test/fixtures/*.pb from the live feeds
+pnpm smoke            # check the live MTA feeds (see below)
 ```
 
 Layout:
@@ -179,7 +179,7 @@ curl -i "$BASE/stops/search?q=bedford"                                  # 401
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/stops/search?q=bedford"     # 200
 ```
 
-Or run `TRANSIT_BASE_URL=$BASE TRANSIT_TOKEN=$TOKEN npm run smoke`, which does the same checks.
+Or run `TRANSIT_BASE_URL=$BASE TRANSIT_TOKEN=$TOKEN pnpm smoke`, which does the same checks.
 
 ## Testing
 

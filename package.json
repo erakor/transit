@@ -5,7 +5,7 @@
   "description": "Small NYC transit data service: normalized JSON over the MTA subway feeds.",
   "type": "module",
   "engines": {
-    "node": "22.x"
+    "node": "26.x"
   },
   "scripts": {
     "build:static": "tsx scripts/build-static.ts",
@@ -23,5 +23,6 @@
     "tsx": "^4.23.15",
     "typescript": "5.9",
     "vitest": "^5.1.0"
-  }
+  },
+  "packageManager": "pnpm@12.18.0"
 }

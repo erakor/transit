@@ -1,8 +1,8 @@
 /**
  * Smoke test against the live MTA feeds (and, optionally, a deployment).
  *
- *   npm run smoke
- *   TRANSIT_BASE_URL=https://<deployment> TRANSIT_TOKEN=... npm run smoke
+ *   pnpm smoke
+ *   TRANSIT_BASE_URL=https://<deployment> TRANSIT_TOKEN=... pnpm smoke
  *
  * Fails when an upstream change would break the service: a feed that no longer decodes, stale
  * data, routes the FEEDS table doesn't know, stop ids missing from the static data, or a big
