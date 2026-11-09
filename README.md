@@ -193,12 +193,23 @@ Or run `TRANSIT_BASE_URL=$BASE TRANSIT_TOKEN=$TOKEN npm run smoke`, which does t
   routes missing from `FEEDS`, many stop ids missing from the static data, or a big station with
   no arrivals.
 
-## Adding a provider later
+## Roadmap
 
-Same conventions: one function per route under `api/<provider>/`, a handler in `src/routes/`
-wrapped in `authenticated(...)`, `LIVE_CACHE` or `STATIC_CACHE` headers, names rather than bare
-ids, epoch seconds. Keys for upstreams that need one (MTA Bus Time) go in Vercel environment
-variables, never in the repo.
+Not built yet. Each new source follows the subway's conventions: token in a header,
+`Cache-Control: s-maxage` for the CDN, times as epoch seconds, names joined in,
+fixture-based parsing tests and a scheduled smoke test against the live feed.
+In code, that means one function per route under `api/<provider>/`, a handler in `src/routes/`
+wrapped in `authenticated(...)`, and the `LIVE_CACHE` or `STATIC_CACHE` headers from `src/http.ts`.
+
+- **PATH**: `GET /path/arrivals?station=<id>`, next trains per direction.
+  Source: the Port Authority's real-time feed (confirm the current official endpoint first).
+- **Citi Bike**: `GET /citibike/station?id=<id>` and `GET /citibike/nearby?lat=&lon=&n=`:
+  bikes, e-bikes and free docks. Source: the GBFS feeds (`station_information` +
+  `station_status`), plain JSON, no key.
+- **MTA bus**: next buses per stop. Source: MTA Bus Time, which needs a free API key
+  (stored as a Vercel environment variable, never committed).
+- **Stop search across systems**: extend `/stops/search` to PATH stations and
+  Citi Bike stations once those exist.
 
 ## Clients
 
