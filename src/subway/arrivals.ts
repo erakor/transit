@@ -48,13 +48,13 @@ const FALLBACK_ROUTE = (id: string): RouteInfo => ({
 
 /**
  * Next trains per route and direction at `stop`, from already decoded feeds.
- * Trains that left more than `graceSeconds` ago are dropped; each group keeps `limit` trains.
+ * Trains whose time has passed are dropped; each group keeps `limit` trains.
  */
 export function computeArrivals(
   stop: ResolvedStop,
   feeds: FeedMessage[],
   index: StationIndex,
-  { now, limit, graceSeconds = 0 }: { now: number; limit: number; graceSeconds?: number },
+  { now, limit }: { now: number; limit: number },
 ): ArrivalsResult {
   const data: SubwayData = index.data;
   const platforms = new Set(stop.platforms);
@@ -74,7 +74,7 @@ export function computeArrivals(
         if (!platforms.has(stopId)) continue;
         if (stu.scheduleRelationship === 1 /* SKIPPED */) continue;
         const time = num(stu.arrival?.time) ?? num(stu.departure?.time);
-        if (time === undefined || time < now - graceSeconds) continue;
+        if (time === undefined || time < now) continue;
         const direction = stopId.endsWith("N") ? "N" : "S";
         const dedupe = `${tripId}|${stopId}`;
         if (seen.has(dedupe)) continue;

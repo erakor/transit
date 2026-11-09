@@ -7,9 +7,6 @@ import { createHash, timingSafeEqual } from "node:crypto";
  * an Authorization header, so every call would reach the function and the MTA. Responses to
  * authenticated routes carry `Vary: X-Transit-Token`, so the token is part of the CDN cache key
  * and a request with a missing or wrong token can never be served a cached 200.
- *
- * `Authorization: Bearer <token>` is still accepted (for tools that only speak that), but those
- * responses are never CDN-cached.
  */
 export const TOKEN_HEADER = "x-transit-token";
 
@@ -28,10 +25,7 @@ export function configuredTokens(env: Record<string, string | undefined> = proce
 }
 
 export function presentedToken(headers: Headers): string | undefined {
-  const custom = headers.get(TOKEN_HEADER)?.trim();
-  if (custom) return custom;
-  const m = /^Bearer\s+(.+)$/i.exec(headers.get("authorization") ?? "");
-  return m?.[1]?.trim() || undefined;
+  return headers.get(TOKEN_HEADER)?.trim() || undefined;
 }
 
 export function checkToken(headers: Headers, env: Record<string, string | undefined> = process.env): AuthResult {
