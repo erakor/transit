@@ -1,0 +1,27 @@
+{
+  "name": "transit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Small NYC transit data service: normalized JSON over the MTA subway feeds.",
+  "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "build:static": "tsx scripts/build-static.ts",
+    "record-fixtures": "tsx scripts/record-fixtures.ts",
+    "smoke": "tsx scripts/smoke.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "gtfs-realtime-bindings": "^2.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "fflate": "^0.8.3",
+    "tsx": "^4.23.15",
+    "typescript": "5.9",
+    "vitest": "^5.1.0"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    { "source": "/health", "destination": "/api/health" },
+    { "source": "/subway/arrivals", "destination": "/api/subway/arrivals" },
+    { "source": "/stops/search", "destination": "/api/stops/search" }
+  ],
+  "functions": {
+    "api/**/*.ts": { "maxDuration": 15 }
+  }
+}
