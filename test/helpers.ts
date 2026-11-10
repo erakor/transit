@@ -26,3 +26,15 @@ export const FIXTURE_NOW_MS = 1794232814_000;
 export function get(path: string, headers: Record<string, string> = {}): Request {
   return new Request(`https://transit.test${path}`, { headers });
 }
+
+/** Serves test/fixtures/citibike-<feed>.json for Citi Bike GBFS URLs and records which feeds were requested. */
+export function citibikeFetcher(fail: string[] = []): Fetcher & { calls: string[]; fail: string[] } {
+  const calls: string[] = [];
+  const f = async (url: string) => {
+    const feed = url.split("/").pop()!.replace(/\.json$/, "");
+    calls.push(feed);
+    if (fail.includes(feed)) return new Response("upstream down", { status: 503 });
+    return new Response(fixture(`citibike-${feed}.json`), { headers: { "content-type": "application/json" } });
+  };
+  return Object.assign(f, { calls, fail });
+}

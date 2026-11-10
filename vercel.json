@@ -17,6 +17,14 @@
     {
       "source": "/preview/subway",
       "destination": "/api/preview/subway"
+    },
+    {
+      "source": "/citibike/station",
+      "destination": "/api/citibike/station"
+    },
+    {
+      "source": "/citibike/nearby",
+      "destination": "/api/citibike/nearby"
     }
   ],
   "functions": {

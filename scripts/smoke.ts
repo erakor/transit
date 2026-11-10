@@ -1,13 +1,16 @@
 /**
- * Smoke test against the live MTA feeds (and, optionally, a deployment).
+ * Smoke test against the live MTA and Citi Bike feeds (and, optionally, a deployment).
  *
  *   pnpm smoke
  *   TRANSIT_BASE_URL=https://<deployment> TRANSIT_TOKEN=... pnpm smoke
  *
  * Fails when an upstream change would break the service: a feed that no longer decodes, stale
  * data, routes the FEEDS table doesn't know, stop ids missing from the static data, or a big
- * station with no arrivals.
+ * station with no arrivals; for Citi Bike, a feed that changed shape, stale status, or no bikes
+ * station near Times Sq.
  */
+import { fetchGbfs } from "../src/citibike/feeds.js";
+import { joinStations, nearestStations } from "../src/citibike/stations.js";
 import { stationIndex } from "../src/stops/stations.js";
 import { computeArrivals } from "../src/subway/arrivals.js";
 import { fetchFeed, FEEDS, type FeedMessage } from "../src/subway/feeds.js";
@@ -61,6 +64,33 @@ for (const stopId of ["127", "631", "R20", "A41", "L08"]) {
   if (n === 0) fail(`${stop.name} (${stop.id}): no arrivals`);
 }
 
+try {
+  const [information, status] = await Promise.all([
+    fetchGbfs("station_information", { timeoutMs: 20_000 }),
+    fetchGbfs("station_status", { timeoutMs: 20_000 }),
+  ]);
+  const joined = joinStations(information, status);
+  const listed = information.data.stations.length;
+  const stations = [...joined.byId.values()];
+  const bikes = stations.reduce((a, s) => a + s.bikes, 0);
+  const ebikes = stations.reduce((a, s) => a + s.ebikes, 0);
+  const docks = stations.reduce((a, s) => a + s.docks, 0);
+  console.log(
+    `citibike: ${stations.length} of ${listed} stations installed, ${bikes} bikes, ${ebikes} e-bikes, ${docks} free docks, ` +
+      `age ${nowS - joined.updatedAt}s`,
+  );
+  if (Math.abs(nowS - joined.updatedAt) > 600) fail(`citibike: station_status is ${nowS - joined.updatedAt}s old`);
+  // Seasonal closures take some stations off the street; losing most of them means a broken join.
+  if (stations.length < 1000 || stations.length < listed * 0.8) fail(`citibike: only ${stations.length} of ${listed} stations joined`);
+  if (bikes + ebikes === 0 || docks === 0) fail("citibike: no bikes or no free docks anywhere");
+  if (!stations.some((s) => s.ebikes > 0)) fail("citibike: no e-bikes anywhere (num_ebikes_available gone?)");
+  const near = nearestStations(stations, 40.7559, -73.9871, 3);
+  console.log(`citibike near Times Sq: ${near.map((s) => `${s.name} (${s.distance} m)`).join(", ")}`);
+  if (!near[0] || near[0].distance > 500) fail("citibike: no station within 500 m of Times Sq");
+} catch (err) {
+  fail(`citibike: ${(err as Error).message}`);
+}
+
 const base = process.env.TRANSIT_BASE_URL?.replace(/\/$/, "");
 if (base) {
   const token = process.env.TRANSIT_TOKEN?.split(",")[0]?.trim() ?? "";
@@ -89,6 +119,16 @@ if (base) {
   const text = await line.text();
   console.log(`preview: ${text.trimEnd()}`);
   if (!/^Times Sq-42 St · .+\n$/.test(text)) fail(`preview: unexpected line ${JSON.stringify(text)}`);
+  const nearby = `/citibike/nearby?lat=40.7559&lon=-73.9871&n=3&smoke=${nowS}`;
+  expectStatus(await call(nearby, false), 401, "citibike nearby without token");
+  const near = await call(nearby, true);
+  expectStatus(near, 200, "citibike nearby with token");
+  const first = near.ok ? ((await near.json()) as { stations?: { id: string; name: string }[] }).stations?.[0] : undefined;
+  if (!first) fail("citibike nearby: no stations");
+  else {
+    console.log(`citibike nearby: ${first.name}`);
+    expectStatus(await call(`/citibike/station?id=${encodeURIComponent(first.id)}&smoke=${nowS}`, true), 200, "citibike station with token");
+  }
 }
 
 if (problems.length) {

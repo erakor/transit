@@ -4,8 +4,8 @@ A small NYC transit data service. It fetches the upstream feeds, normalizes them
 small, pre-joined JSON to apps and servers (the alfresco launcher and other personal projects),
 so clients never touch protobuf or GTFS.
 
-v1 covers the MTA subway. PATH, Citi Bike and MTA bus will be added later as their own route
-groups (`/path/...`, `/citibike/...`, `/bus/...`) with the same conventions.
+It covers the MTA subway and Citi Bike. PATH and MTA bus will be added later as their own route
+groups (`/path/...`, `/bus/...`) with the same conventions.
 
 Runs on Vercel, one serverless function per route, TypeScript.
 
@@ -88,6 +88,43 @@ Bedford Av · L ↑2 ↓4 min
 - `Cache-Control` adds `max-age` to the CDN's window, so the client knows how long its own copy
   stays good.
 
+### `GET /citibike/nearby?lat=<lat>&lon=<lon>&n=<n>`
+
+The Citi Bike stations closest to a point, nearest first. `n` defaults to 5, max 25.
+
+```json
+{
+  "lat": 40.7559, "lon": -73.9871,
+  "updatedAt": 1794322409,
+  "stations": [
+    {
+      "id": "f72a253f-3cef-4da8-9591-0cbd3a692162", "name": "W 40 St & 7 Ave",
+      "lat": 40.754818, "lon": -73.988154, "capacity": 45,
+      "bikes": 9, "ebikes": 28, "docks": 2,
+      "renting": true, "returning": true, "reportedAt": 1794322384,
+      "distance": 150
+    }
+  ]
+}
+```
+
+- `bikes` are classic bikes and `ebikes` are e-bikes, both ready to rent (so the total is their
+  sum); `docks` are free docks. `capacity` is every dock at the station, in any state.
+- `renting` and `returning` are false when the station is closed for rentals or returns: the
+  counts are still reported, but can't be used.
+- `distance` is meters from the requested point, as the crow flies.
+- `reportedAt` is when the station itself last reported (absent if it never did); `updatedAt`
+  is the status feed's timestamp.
+- Stations that are listed but not on the street (planned, or removed for the season) are left out.
+- Round `lat` and `lon` to about 4 decimals (11 m): every distinct URL is its own CDN cache entry.
+- Errors: 400 (missing or invalid `lat`, `lon`, `n`), 401 (token), 502 (Citi Bike down).
+
+### `GET /citibike/station?id=<id>`
+
+One station, by an `id` from `/citibike/nearby`, for favorites:
+`{ "updatedAt": 1794322409, "station": { ... } }`, the same station object without `distance`.
+An unknown id, or a station no longer on the street, is a 404.
+
 ### `GET /health`
 
 No token, never cached: `{ "ok": true, "staticFeedVersion": "...", "time": 1794232808 }`.
@@ -123,6 +160,7 @@ update clients, remove the old one. If it's unset, authenticated routes answer 5
 | `/subway/arrivals` | `public, s-maxage=20, stale-while-revalidate=40` |
 | `/subway/arrivals` with failed feeds | `public, s-maxage=5` |
 | `/preview/subway` | `public, max-age=20, s-maxage=20, stale-while-revalidate=40` (`public, max-age=5, s-maxage=5` with failed feeds) |
+| `/citibike/station`, `/citibike/nearby` | `public, s-maxage=20, stale-while-revalidate=40` |
 | `/stops/search` | `public, s-maxage=3600, stale-while-revalidate=86400` (static data only changes with a deploy, and Vercel purges the CDN cache on each production deploy) |
 | `/health`, errors | `no-store` |
 
@@ -136,6 +174,10 @@ tells whether the CDN served it (`HIT`, `STALE`) or not (`MISS`).
 - **Real time**: the MTA subway GTFS-realtime feeds (no API key), one per line group (see
   `FEEDS` in `src/subway/feeds.ts`), decoded with `gtfs-realtime-bindings`. A request fetches,
   in parallel, only the feeds carrying routes scheduled at the requested stop.
+- **Citi Bike**: the GBFS feeds `station_information` and `station_status` (plain JSON, no key,
+  see `src/citibike/feeds.ts`), joined per request. Each function instance keeps the status for
+  15 s and the station list for 10 minutes; if refreshing the station list fails, the previous
+  copy is used. There is no static Citi Bike data in the repo.
 - **Static**: the MTA static subway GTFS is preprocessed by `scripts/build-static.ts` into
   `src/data/subway.generated.ts` (routes with colors, parent stops with the routes serving them,
   and station complexes built from in-station transfers in `transfers.txt`). The file is
@@ -150,22 +192,23 @@ pnpm install
 pnpm test             # unit tests (recorded feeds in test/fixtures)
 pnpm typecheck
 pnpm build:static     # regenerate src/data/subway.generated.ts from the MTA
-pnpm record-fixtures  # re-record test/fixtures/*.pb from the live feeds
-pnpm smoke            # check the live MTA feeds (see below)
+pnpm record-fixtures  # re-record test/fixtures from the live feeds (or just `subway` / `citibike`)
+pnpm smoke            # check the live MTA and Citi Bike feeds (see below)
 ```
 
 Layout:
 
 ```
 api/                 one Vercel function per route (thin: they export GET from src/routes)
-src/routes/          handlers: arrivals, search, preview, health
+src/routes/          handlers: arrivals, search, preview, citibike, health
 src/subway/          feed list, fetching and decoding, arrivals computation, preview line
+src/citibike/        GBFS fetching, station join and nearest-station search
 src/stops/           station resolution and name search
 src/static/          static GTFS preprocessing (pure) and its types
 src/data/            generated static data
 scripts/             build-static, record-fixtures, smoke
 test/                vitest tests and fixture feeds
-vercel.json          rewrites /health, /subway/*, /stops/*, /preview/* to the functions
+vercel.json          rewrites /health, /subway/*, /stops/*, /preview/*, /citibike/* to the functions
 ```
 
 To run locally against Vercel's runtime, use `vercel dev` with `TRANSIT_TOKEN` in `.env.local`
@@ -195,6 +238,7 @@ curl -s -o /dev/null -D - -H "X-Transit-Token: $TOKEN" "$BASE/subway/arrivals?st
 curl -i "$BASE/stops/search?q=bedford"                                  # 401
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/stops/search?q=bedford"     # 200
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/preview/subway?q=bedford"   # 200, one line of text
+curl -i -H "X-Transit-Token: $TOKEN" "$BASE/citibike/nearby?lat=40.7559&lon=-73.9871"  # 200
 ```
 
 Or run `TRANSIT_BASE_URL=$BASE TRANSIT_TOKEN=$TOKEN pnpm smoke`, which does the same checks.
@@ -208,9 +252,11 @@ Or run `TRANSIT_BASE_URL=$BASE TRANSIT_TOKEN=$TOKEN pnpm smoke`, which does the 
 - `test/auth.test.ts`, `test/routes.test.ts`: the token check, status codes, `Cache-Control`
   and `Vary` headers, partial feed failures, search ranking, the preview route.
 - `test/preview.test.ts`: the preview line's format on hand-built arrivals.
+- `test/citibike.test.ts`: the station join and nearest-station search on hand-built feeds and
+  on recorded GBFS feeds (trimmed to the stations around Times Sq), and both routes.
 - `.github/workflows/smoke.yml`: twice a day against the live feeds. It fails on stale feeds,
-  routes missing from `FEEDS`, many stop ids missing from the static data, or a big station with
-  no arrivals.
+  routes missing from `FEEDS`, many stop ids missing from the static data, a big station with
+  no arrivals, or Citi Bike feeds that are stale or no longer join.
 
 ## Roadmap
 
@@ -222,13 +268,10 @@ wrapped in `authenticated(...)`, and the `LIVE_CACHE` or `STATIC_CACHE` headers 
 
 - **PATH**: `GET /path/arrivals?station=<id>`, next trains per direction.
   Source: the Port Authority's real-time feed (confirm the current official endpoint first).
-- **Citi Bike**: `GET /citibike/station?id=<id>` and `GET /citibike/nearby?lat=&lon=&n=`:
-  bikes, e-bikes and free docks. Source: the GBFS feeds (`station_information` +
-  `station_status`), plain JSON, no key.
 - **MTA bus**: next buses per stop. Source: MTA Bus Time, which needs a free API key
   (stored as a Vercel environment variable, never committed).
-- **Stop search across systems**: extend `/stops/search` to PATH stations and
-  Citi Bike stations once those exist.
+- **Stop search across systems**: extend `/stops/search` to Citi Bike stations, and to
+  PATH stations once those exist.
 
 ## Clients
 

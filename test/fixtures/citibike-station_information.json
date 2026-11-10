@@ -1,0 +1,527 @@
+{
+ "data": {
+  "stations": [
+   {
+    "station_id": "66dc292c-0aca-11e7-82f6-3863bb44ef7c",
+    "name": "Broadway & W 41 St",
+    "short_name": "6560.01",
+    "lon": -73.98658032,
+    "lat": 40.75513557,
+    "region_id": "71",
+    "capacity": 55,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "66dd9fa6-0aca-11e7-82f6-3863bb44ef7c",
+    "name": "E 48 St & 5 Ave",
+    "short_name": "6626.01",
+    "lon": -73.97805914282799,
+    "lat": 40.75724567911726,
+    "region_id": "71",
+    "capacity": 62,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "053312f2-e77e-4674-b28b-ad357fbcb4ee",
+    "name": "8 Ave & W 49 St",
+    "short_name": "6747.07",
+    "lon": -73.98655101656914,
+    "lat": 40.76171227910671,
+    "region_id": "71",
+    "capacity": 65,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "2227531312359792274",
+    "name": "W 44 St & 9 Ave",
+    "short_name": "6717.01",
+    "lon": -73.99155429633757,
+    "lat": 40.759632169100534,
+    "region_id": "71",
+    "capacity": 31,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "66dc686c-0aca-11e7-82f6-3863bb44ef7c",
+    "name": "8 Ave & W 33 St",
+    "short_name": "6450.12",
+    "lon": -73.99376901480953,
+    "lat": 40.75156757136795,
+    "region_id": "71",
+    "capacity": 96,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "64f0f28c-bedc-42d5-b107-ecdd48fc30cd",
+    "name": "Broadway & W 48 St",
+    "short_name": "6708.04",
+    "lon": -73.98486793041229,
+    "lat": 40.76017739537783,
+    "region_id": "71",
+    "capacity": 103,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "0fde06c2-632c-46a9-8866-f4e855604f74",
+    "name": "Broadway & W 38 St",
+    "short_name": "6560.15",
+    "lon": -73.98734897375107,
+    "lat": 40.7529728216068,
+    "region_id": "71",
+    "capacity": 68,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "96e72113-3681-4d19-88bb-032e76720093",
+    "name": "W 35 St & 8 Ave",
+    "short_name": "6526.01",
+    "lon": -73.99280458705107,
+    "lat": 40.752762088742045,
+    "region_id": "71",
+    "capacity": 45,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "2104286315955915532",
+    "name": "W 47 St & 6 Ave",
+    "short_name": "6667.12",
+    "lon": -73.981957,
+    "lat": 40.758154,
+    "region_id": "71",
+    "capacity": 68,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "66dc82ef-0aca-11e7-82f6-3863bb44ef7c",
+    "name": "W 43 St & 6 Ave",
+    "short_name": "6593.14",
+    "lon": -73.98316936,
+    "lat": 40.75527307,
+    "region_id": "71",
+    "capacity": 63,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "66dc48ef-0aca-11e7-82f6-3863bb44ef7c",
+    "name": "W 44 St & 5 Ave",
+    "short_name": "6551.02",
+    "lon": -73.98014437,
+    "lat": 40.75500254,
+    "region_id": "71",
+    "capacity": 68,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "66dc7de9-0aca-11e7-82f6-3863bb44ef7c",
+    "name": "W 43 St & 10 Ave",
+    "short_name": "6756.01",
+    "lon": -73.99461843,
+    "lat": 40.76009437,
+    "region_id": "71",
+    "capacity": 117,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "f72a253f-3cef-4da8-9591-0cbd3a692162",
+    "name": "W 40 St & 7 Ave",
+    "short_name": "6560.14",
+    "lon": -73.988154,
+    "lat": 40.754818,
+    "region_id": "71",
+    "capacity": 45,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "66dc3f08-0aca-11e7-82f6-3863bb44ef7c",
+    "name": "W 41 St & 8 Ave",
+    "short_name": "6602.03",
+    "lon": -73.9900262,
+    "lat": 40.75640548,
+    "region_id": "71",
+    "capacity": 105,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "66dc85bb-0aca-11e7-82f6-3863bb44ef7c",
+    "name": "W 42 St & 8 Ave",
+    "short_name": "6602.05",
+    "lon": -73.99098507,
+    "lat": 40.7575699,
+    "region_id": "71",
+    "capacity": 41,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "66dca682-0aca-11e7-82f6-3863bb44ef7c",
+    "name": "W 45 St & 8 Ave",
+    "short_name": "6676.02",
+    "lon": -73.98859651,
+    "lat": 40.75929124,
+    "region_id": "71",
+    "capacity": 65,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "66dc1e55-0aca-11e7-82f6-3863bb44ef7c",
+    "name": "W 49 St & 8 Ave",
+    "short_name": "6747.06",
+    "lon": -73.98788205,
+    "lat": 40.76227205,
+    "region_id": "71",
+    "capacity": 67,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "66dc4b4c-0aca-11e7-82f6-3863bb44ef7c",
+    "name": "W 37 St & 5 Ave",
+    "short_name": "6398.06",
+    "lon": -73.98338988,
+    "lat": 40.75038009,
+    "region_id": "71",
+    "capacity": 60,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "547cdccc-7864-4898-97c9-8798d924ef54",
+    "name": "6 Ave & W 34 St",
+    "short_name": "6364.10",
+    "lon": -73.98805,
+    "lat": 40.74964,
+    "region_id": "71",
+    "capacity": 67,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "66dda55f-0aca-11e7-82f6-3863bb44ef7c",
+    "name": "W 42 St & Dyer Ave",
+    "short_name": "6644.07",
+    "lon": -73.99379968643188,
+    "lat": 40.75898481399634,
+    "region_id": "71",
+    "capacity": 33,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "8d097a6d-f17c-4195-9dd4-42527b371c71",
+    "name": "8 Ave & W 38 St",
+    "short_name": "6526.05",
+    "lon": -73.99177,
+    "lat": 40.75461,
+    "region_id": "71",
+    "capacity": 65,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "341730d7-a61d-499d-8c07-fa015f644e54",
+    "name": "W 37 St & Broadway",
+    "short_name": "6441.06",
+    "lon": -73.98770570755005,
+    "lat": 40.75227093837409,
+    "region_id": "71",
+    "capacity": 84,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "833bc8bc-3c32-4481-9c14-9a88aa7accec",
+    "name": "W 36 St & 9 Ave",
+    "short_name": "6569.07",
+    "lon": -73.99516761302948,
+    "lat": 40.75462324029105,
+    "region_id": "71",
+    "capacity": 43,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "2176372377229409502",
+    "name": "Broadway & W 36 St",
+    "short_name": "6441.11",
+    "lon": -73.98772201748262,
+    "lat": 40.751226078125995,
+    "region_id": "71",
+    "capacity": 60,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "490ca6cc-c2a2-4838-acf0-4704ed60dc51",
+    "name": "W 47 St & 9 Ave",
+    "short_name": "6786.02",
+    "lon": -73.99007007479668,
+    "lat": 40.76153045158114,
+    "region_id": "71",
+    "capacity": 54,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "66dc78c4-0aca-11e7-82f6-3863bb44ef7c",
+    "name": "6 Ave & W 33 St",
+    "short_name": "6364.07",
+    "lon": -73.98848395,
+    "lat": 40.74901271,
+    "region_id": "71",
+    "capacity": 78,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "2af3ecc3-4f43-468a-a7cc-bb4804ee3e7a",
+    "name": "E 43 St & Madison Ave",
+    "short_name": "6551.11",
+    "lon": -73.97896572947502,
+    "lat": 40.75354681867074,
+    "region_id": "71",
+    "capacity": 56,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "66dc7b10-0aca-11e7-82f6-3863bb44ef7c",
+    "name": "W 51 St & 6 Ave",
+    "short_name": "6740.10",
+    "lon": -73.98042047,
+    "lat": 40.7606597,
+    "region_id": "71",
+    "capacity": 81,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "05c5e17c-7aa9-49b7-9da3-9db4858ec1fc",
+    "name": "W 35 St & 9 Ave",
+    "short_name": "6569.09",
+    "lon": -73.9960889518261,
+    "lat": 40.75414519263519,
+    "region_id": "71",
+    "capacity": 32,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "66db30e0-0aca-11e7-82f6-3863bb44ef7c",
+    "name": "E 40 St & 5 Ave",
+    "short_name": "6474.11",
+    "lon": -73.9816324043,
+    "lat": 40.752062307,
+    "region_id": "71",
+    "capacity": 93,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "904930bd-2671-4695-9c1a-8a894b041129",
+    "name": "6 Ave & W 45 St",
+    "short_name": "6593.15",
+    "lon": -73.982631,
+    "lat": 40.756951,
+    "region_id": "71",
+    "capacity": 67,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "2c366f4b-8319-41bf-ab8e-2fba3a952feb",
+    "name": "W 42 St & 6 Ave",
+    "short_name": "6517.08",
+    "lon": -73.98455,
+    "lat": 40.75492,
+    "region_id": "71",
+    "capacity": 54,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": true
+   },
+   {
+    "station_id": "66dc75ec-0aca-11e7-82f6-3863bb44ef7c",
+    "name": "Broadway & W 51 St",
+    "short_name": "6779.04",
+    "lon": -73.98336183,
+    "lat": 40.76228826,
+    "region_id": "71",
+    "capacity": 78,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "d29ea280-8b64-4a35-b12b-245525ae2a3a",
+    "name": "W 48 St & Rockefeller Plaza",
+    "short_name": "6626.11",
+    "lon": -73.97929430007935,
+    "lat": 40.75776935448309,
+    "region_id": "71",
+    "capacity": 57,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "d7c56fef-1bf9-4315-85af-8638c534b402",
+    "name": "W 36 St & 7 Ave",
+    "short_name": "6483.06",
+    "lon": -73.989539,
+    "lat": 40.752149,
+    "region_id": "71",
+    "capacity": 38,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "66dbcb2f-0aca-11e7-82f6-3863bb44ef7c",
+    "name": "Broadway & W 37 St",
+    "short_name": "6441.02",
+    "lon": -73.98753523,
+    "lat": 40.75172632,
+    "region_id": "71",
+    "capacity": 57,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   },
+   {
+    "station_id": "66dc4fb5-0aca-11e7-82f6-3863bb44ef7c",
+    "name": "W 39 St & 9 Ave",
+    "short_name": "6644.04",
+    "lon": -73.99372222,
+    "lat": 40.75645824,
+    "region_id": "71",
+    "capacity": 44,
+    "rental_uris": {
+     "android": "https://bkn.lft.to/lastmile_qr_scan",
+     "ios": "https://bkn.lft.to/lastmile_qr_scan"
+    },
+    "is_charging": false
+   }
+  ]
+ },
+ "last_updated": 1794322407,
+ "ttl": 60,
+ "version": "2.3"
+}
