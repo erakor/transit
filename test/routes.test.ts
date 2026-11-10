@@ -44,7 +44,6 @@ describe.each([
     expect(res.status).toBe(401);
     expect(res.headers.get("cache-control")).toBe("no-store");
     expect(res.headers.get("vary")).toBe("x-transit-token");
-    expect(res.headers.get("www-authenticate")).toMatch(/^Bearer/);
     expect(await res.json()).toEqual({ error: "missing token" });
   });
 
@@ -68,11 +67,6 @@ describe.each([
     expect(res.headers.get("cache-control")).toMatch(/^public, (max-age=\d+, )?s-maxage=\d+, stale-while-revalidate=\d+$/);
     expect(res.headers.get("vary")).toBe("x-transit-token");
     expect(res.headers.get("set-cookie")).toBeNull();
-  });
-
-  it("accepts Authorization: Bearer too", async () => {
-    const res = await handler()(get(path + query, { authorization: `Bearer ${TOKEN}` }));
-    expect(res.status).toBe(200);
   });
 });
 

@@ -110,8 +110,7 @@ carries `Vary: X-Transit-Token`, so the token is part of the CDN cache key: a re
 or wrong token never matches a cached 200 and always reaches the function (which returns an
 uncached 401). Since all clients share one token, this adds no cache fragmentation.
 
-`Authorization: Bearer <token>` is still accepted, for tools that only speak that, but those
-responses are never served from the CDN.
+The `Authorization` header is ignored: a token sent there is a 401.
 
 The server reads the token from the `TRANSIT_TOKEN` environment variable (set in Vercel only,
 never committed). It may hold several comma-separated tokens, for rotation: add the new one,
