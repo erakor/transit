@@ -1,5 +1,4 @@
-import { Memo } from "../memo.js";
-import type { Fetcher } from "../subway/feeds.js";
+import { memoized, type Fetcher } from "../gtfsrt.js";
 
 const BASE = "https://gbfs.lyft.com/gbfs/2.3/bkn/en/";
 
@@ -60,7 +59,6 @@ export function parseGbfs<T>(feed: string, body: unknown): GbfsFeed<T> {
   return b as GbfsFeed<T>;
 }
 
-const memo = new Memo<GbfsFeed<unknown>>();
 /** The last copy that loaded, per feed with `staleOnError`, and when it loaded. */
 const lastGood = new Map<GbfsFeedName, { at: number; feed: GbfsFeed<unknown> }>();
 /**
@@ -75,7 +73,7 @@ export async function fetchGbfs<K extends GbfsFeedName>(
   { fetcher = fetch, now = Date.now(), timeoutMs = 8_000 }: { fetcher?: Fetcher; now?: number; timeoutMs?: number } = {},
 ): Promise<GbfsStations[K]> {
   const { memoMs, staleOnError } = GBFS_FEEDS[feed];
-  const loaded = memo.get(feed, { ttlMs: memoMs, now }, async () => {
+  const loaded = memoized(`gbfs:${feed}`, now, async () => {
     try {
       const res = await fetcher(gbfsUrl(feed), { signal: AbortSignal.timeout(timeoutMs) });
       if (!res.ok) throw new Error(`feed ${feed}: HTTP ${res.status}`);
@@ -89,12 +87,11 @@ export async function fetchGbfs<K extends GbfsFeedName>(
       console.error(`feed ${feed} failed, using the copy from ${Math.round((now - last.at) / 60_000)} min ago:`, err);
       return last.feed;
     }
-  });
+  }, memoMs);
   return loaded as Promise<GbfsStations[K]>;
 }
 
-/** For tests. */
+/** For tests, with `clearFeedMemo`. */
 export function clearGbfsMemo(): void {
-  memo.clear();
   lastGood.clear();
 }

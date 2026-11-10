@@ -1,5 +1,5 @@
 import GtfsRealtimeBindings from "gtfs-realtime-bindings";
-import type { FeedMessage } from "../src/subway/feeds.js";
+import type { FeedMessage } from "../src/gtfsrt.js";
 
 const { transit_realtime } = GtfsRealtimeBindings;
 
@@ -10,12 +10,11 @@ export interface TripSpec {
   skipped?: string[];
 }
 
-/** Builds a small GTFS-realtime feed, round-tripped through protobuf encoding. */
+/** Builds a small feed of trip updates, round-tripped through protobuf encoding. */
 export function makeFeed(timestamp: number, trips: TripSpec[]): FeedMessage {
-  const msg = transit_realtime.FeedMessage.fromObject({
-    header: { gtfsRealtimeVersion: "1.0", timestamp },
-    entity: trips.map((t, i) => ({
-      id: String(i + 1),
+  return feedFrom(
+    timestamp,
+    trips.map((t) => ({
       tripUpdate: {
         trip: { tripId: t.id, routeId: t.route },
         stopTimeUpdate: t.stops.map(([stopId, time]) => ({
@@ -26,10 +25,18 @@ export function makeFeed(timestamp: number, trips: TripSpec[]): FeedMessage {
         })),
       },
     })),
-  });
-  return transit_realtime.FeedMessage.decode(transit_realtime.FeedMessage.encode(msg).finish());
+  );
 }
 
 export function encodeFeed(feed: FeedMessage): Uint8Array {
   return transit_realtime.FeedMessage.encode(feed).finish();
+}
+
+/** Any GTFS-realtime feed from a plain object (protobufjs `fromObject` shape), round-tripped through protobuf encoding. */
+export function feedFrom(timestamp: number, entity: Record<string, unknown>[]): FeedMessage {
+  const msg = transit_realtime.FeedMessage.fromObject({
+    header: { gtfsRealtimeVersion: "2.0", timestamp },
+    entity: entity.map((e, i) => ({ id: String(i + 1), ...e })),
+  });
+  return transit_realtime.FeedMessage.decode(encodeFeed(msg));
 }

@@ -1,19 +1,34 @@
 /**
- * Smoke test against the live MTA and Citi Bike feeds (and, optionally, a deployment).
+ * Smoke test against the live feeds (and, optionally, a deployment).
  *
  *   pnpm smoke
  *   TRANSIT_BASE_URL=https://<deployment> TRANSIT_TOKEN=... pnpm smoke
  *
  * Fails when an upstream change would break the service: a feed that no longer decodes, stale
  * data, routes the FEEDS table doesn't know, stop ids missing from the static data, or a big
- * station with no arrivals; for Citi Bike, a feed that changed shape, stale status, no bikes,
- * e-bikes or free docks anywhere, or no station within 500 m of Times Sq.
+ * station with no arrivals. For PATH: entries the parser can't read, stations or line colors it
+ * doesn't know, stale data, or Journal Square with no trains. For LIRR, Metro-North and NYC
+ * Ferry: stale or empty feeds, stop or route ids missing from the static data, ferry trips missing
+ * from the static schedule, a main stop with no departures, or no vehicle positions. For alerts:
+ * a feed that no longer decodes or has gone a day without an update. For Citi Bike: a feed that
+ * changed shape, stale status, no bikes, e-bikes or free docks anywhere, or no station within
+ * 500 m of Times Sq.
  */
+import { AGENCIES } from "../src/agency/agencies.js";
+import { computeAgencyArrivals } from "../src/agency/arrivals.js";
+import { computeAgencyVehicles } from "../src/agency/vehicles.js";
+import { computeAlerts } from "../src/alerts.js";
 import { fetchGbfs } from "../src/citibike/feeds.js";
 import { joinStations, nearestStations } from "../src/citibike/stations.js";
+import { fetchFeed, type FeedMessage } from "../src/gtfsrt.js";
+import { computePathArrivals } from "../src/path/arrivals.js";
+import { fetchPathFeed } from "../src/path/feed.js";
+import { PATH_STATIONS, pathStation, routeForColors } from "../src/path/stations.js";
+import { BUS_ALERTS_FEED } from "../src/routes/agency.js";
+import { SUBWAY_ALERTS_FEED } from "../src/routes/alerts.js";
 import { stationIndex } from "../src/stops/stations.js";
 import { computeArrivals } from "../src/subway/arrivals.js";
-import { fetchFeed, FEEDS, type FeedMessage } from "../src/subway/feeds.js";
+import { FEEDS } from "../src/subway/feeds.js";
 
 const problems: string[] = [];
 const fail = (msg: string) => {
@@ -24,47 +39,112 @@ const nowS = Math.floor(Date.now() / 1000);
 const index = stationIndex();
 const TIMES_SQ = { lat: 40.7559, lon: -73.9871 };
 
-const feeds: Record<string, FeedMessage> = {};
-for (const name of Object.keys(FEEDS)) {
-  try {
-    feeds[name] = await fetchFeed(name, { timeoutMs: 20_000 });
-  } catch (err) {
-    fail(`${name}: ${(err as Error).message}`);
-    continue;
-  }
-  const feed = feeds[name]!;
-  const ts = Number(feed.header.timestamp ?? 0);
-  const trips = feed.entity.filter((e) => e.tripUpdate);
-  const routes = new Set(trips.map((e) => e.tripUpdate!.trip?.routeId ?? ""));
-  const stopIds = trips.flatMap((e) => (e.tripUpdate!.stopTimeUpdate ?? []).map((s) => s.stopId ?? ""));
-  const unknownStops = stopIds.filter((s) => !index.stopName(s));
-  const unknownRoutes = [...routes].filter((r) => !FEEDS[name]!.includes(r));
-
-  console.log(
-    `${name}: ${trips.length} trips, routes ${[...routes].sort().join(",")}, age ${nowS - ts}s, ` +
-      `${unknownStops.length}/${stopIds.length} stop updates with unknown stop ids`,
-  );
-  if (Math.abs(nowS - ts) > 600) fail(`${name}: header timestamp ${ts} is ${nowS - ts}s old`);
-  if (trips.length === 0) fail(`${name}: no trip updates`);
-  if (unknownRoutes.length) fail(`${name}: routes missing from FEEDS: ${unknownRoutes.join(",")}`);
-  // A few yard/non-revenue ids are normal; many means the static data is out of date.
-  if (stopIds.length && unknownStops.length / stopIds.length > 0.1) {
-    fail(`${name}: ${unknownStops.length} of ${stopIds.length} stop ids unknown, e.g. ${[...new Set(unknownStops)].slice(0, 5).join(",")}`);
-  }
+/** Every feed is fetched up front, in parallel; a failure is reported where the feed is checked. */
+const live = (feed: string) => fetchFeed(feed, { timeoutMs: 20_000 }).catch((err: Error) => err);
+const agencies = Object.values(AGENCIES);
+const alertFeeds = [SUBWAY_ALERTS_FEED, BUS_ALERTS_FEED, ...agencies.map((a) => a.alertsFeed)];
+const fetched = new Map<string, FeedMessage | Error>();
+await Promise.all(
+  [...Object.keys(FEEDS), ...agencies.flatMap((a) => [a.tripsFeed, a.vehiclesFeed ?? a.tripsFeed]), ...alertFeeds].map(async (feed) => {
+    if (!fetched.has(feed)) fetched.set(feed, await live(feed));
+  }),
+);
+/** The fetched feed, or undefined after reporting why it is missing. */
+function feedOrFail(label: string, feed: string): FeedMessage | undefined {
+  const f = fetched.get(feed)!;
+  if (f instanceof Error) fail(`${label}: ${f.message}`);
+  return f instanceof Error ? undefined : f;
 }
 
+/** The checks every trip updates feed gets. Returns its trips. */
+function checkTripFeed(label: string, feed: FeedMessage, knownStop: (id: string) => boolean, extra = "") {
+  const ts = Number(feed.header.timestamp ?? 0);
+  const trips = feed.entity.flatMap((e) => (e.tripUpdate ? [e.tripUpdate] : []));
+  const stopIds = trips.flatMap((t) => (t.stopTimeUpdate ?? []).map((s) => s.stopId ?? ""));
+  const unknownStops = stopIds.filter((s) => !knownStop(s));
+  console.log(`${label}: ${trips.length} trips, age ${nowS - ts}s, ${unknownStops.length}/${stopIds.length} stop updates with unknown stop ids${extra}`);
+  if (Math.abs(nowS - ts) > 600) fail(`${label}: header timestamp ${ts} is ${nowS - ts}s old`);
+  if (trips.length === 0) fail(`${label}: no trip updates`);
+  // A few yard/non-revenue ids are normal; many means the static data is out of date.
+  if (stopIds.length && unknownStops.length / stopIds.length > 0.1) {
+    fail(`${label}: ${unknownStops.length} of ${stopIds.length} stop ids unknown, e.g. ${[...new Set(unknownStops)].slice(0, 5).join(",")}`);
+  }
+  return trips;
+}
+
+// Subway.
+const subway: FeedMessage[] = [];
+for (const name of Object.keys(FEEDS)) {
+  const feed = feedOrFail(name, name);
+  if (!feed) continue;
+  subway.push(feed);
+  const routes = new Set(feed.entity.flatMap((e) => (e.tripUpdate ? [e.tripUpdate.trip?.routeId ?? ""] : [])));
+  checkTripFeed(name, feed, (id) => !!index.stopName(id), `, routes ${[...routes].sort().join(",")}`);
+  const unknownRoutes = [...routes].filter((r) => !FEEDS[name]!.includes(r));
+  if (unknownRoutes.length) fail(`${name}: routes missing from FEEDS: ${unknownRoutes.join(",")}`);
+}
 for (const stopId of ["127", "631", "R20", "A41", "L08"]) {
   const stop = index.resolve(index.data.stops[stopId]?.station ?? stopId);
   if (!stop) {
     fail(`static data has no stop ${stopId}`);
     continue;
   }
-  const r = computeArrivals(stop, Object.values(feeds), index, { now: nowS, limit: 3 });
+  const r = computeArrivals(stop, subway, index, { now: nowS, limit: 3 });
   const n = r.groups.reduce((a, g) => a + g.arrivals.length, 0);
   console.log(`${stop.name}: ${r.groups.length} route/direction groups, ${n} arrivals`);
   if (n === 0) fail(`${stop.name} (${stop.id}): no arrivals`);
 }
 
+// PATH.
+try {
+  const path = await fetchPathFeed({ timeoutMs: 20_000 });
+  const trains = Object.values(path.stations).flat();
+  const newest = Math.max(0, ...trains.map((t) => t.updatedAt));
+  const unknownStations = Object.keys(path.stations).filter((id) => !pathStation(id));
+  const missingStations = PATH_STATIONS.filter((s) => !path.stations[s.id]).map((s) => s.id);
+  const unknownColors = [...new Set(trains.map((t) => t.colors))].filter((c) => !routeForColors(c));
+  console.log(`path: ${Object.keys(path.stations).length} stations, ${trains.length} trains, age ${nowS - newest}s, ${path.skipped} skipped entries`);
+  if (path.skipped) fail(`path: ${path.skipped} entries the parser could not read`);
+  if (Math.abs(nowS - newest) > 600) fail(`path: newest update ${newest} is ${nowS - newest}s old`);
+  if (unknownStations.length) fail(`path: stations missing from PATH_STATIONS: ${unknownStations.join(",")}`);
+  if (missingStations.length) fail(`path: stations missing from the feed: ${missingStations.join(",")}`);
+  if (unknownColors.length) fail(`path: line colors with no route: ${unknownColors.join(" ")}`);
+  const jsq = computePathArrivals(pathStation("JSQ")!, path, { now: nowS, limit: 3 });
+  const n = jsq.groups.reduce((a, g) => a + g.arrivals.length, 0);
+  console.log(`${jsq.station.name}: ${jsq.groups.length} route/direction groups, ${n} arrivals`);
+  if (n === 0) fail("Journal Square (JSQ): no arrivals");
+} catch (err) {
+  fail(`path: ${(err as Error).message}`);
+}
+
+// LIRR, Metro-North, NYC Ferry. Each with a stop that has service at the hours this runs:
+// Jamaica, Grand Central, Wall St/Pier 11.
+const MAIN_STOP: Record<string, string> = { lirr: "102", mnr: "1", ferry: "87" };
+for (const agency of agencies) {
+  const { data, id } = agency;
+  const feed = feedOrFail(id, agency.tripsFeed);
+  const positions = agency.vehiclesFeed ? feedOrFail(id, agency.vehiclesFeed) : feed;
+  if (!feed || !positions) continue;
+  const trips = checkTripFeed(id, feed, (s) => !!data.stops[s]);
+  const routeIds = new Set(trips.map((t) => t.trip?.routeId || data.trips?.[t.trip?.tripId ?? ""]?.route || ""));
+  const unknownRoutes = [...routeIds].filter((r) => r && !data.routes[r]);
+  if (unknownRoutes.length) fail(`${id}: routes missing from the static data: ${unknownRoutes.join(",")}`);
+  // The static schedule is a day behind at worst; many unknown trips means the refresh is failing.
+  const unscheduled = data.trips ? trips.filter((t) => !data.trips![t.trip?.tripId ?? ""]) : [];
+  if (trips.length && unscheduled.length / trips.length > 0.2) fail(`${id}: ${unscheduled.length} of ${trips.length} trips are not in the static schedule`);
+  const { vehicles } = computeAgencyVehicles(positions === feed ? [feed] : [positions, feed], data, { now: nowS });
+  if (vehicles.length === 0) fail(`${id}: no vehicle positions`);
+  const main = data.stops[MAIN_STOP[id] ?? ""];
+  if (!main) {
+    fail(`${id}: static data has no stop ${MAIN_STOP[id]}`);
+    continue;
+  }
+  const n = computeAgencyArrivals(main, feed, data, { now: nowS, limit: 30 }).arrivals.length;
+  console.log(`${id}: ${vehicles.length} vehicles, ${unscheduled.length} trips not in the static schedule; ${main.name}: ${n} departures`);
+  if (n === 0) fail(`${id}: no departures at ${main.name}`);
+}
+
+// Citi Bike.
 try {
   const [information, status] = await Promise.all([
     fetchGbfs("station_information", { timeoutMs: 20_000 }),
@@ -95,6 +175,17 @@ try {
   fail(`citibike: ${(err as Error).message}`);
 }
 
+// Alerts.
+for (const name of alertFeeds) {
+  const label = name.split("/").slice(-2).join("/");
+  const feed = feedOrFail(label, name);
+  if (!feed) continue;
+  const { alerts, updatedAt } = computeAlerts(feed, { now: nowS });
+  console.log(`${label}: ${feed.entity.length} alerts, ${alerts.length} in effect, age ${nowS - (updatedAt ?? 0)}s`);
+  if (Math.abs(nowS - (updatedAt ?? 0)) > 86_400) fail(`${label}: header timestamp ${updatedAt} is ${nowS - (updatedAt ?? 0)}s old`);
+  if (feed.entity.some((e) => !e.alert)) fail(`${label}: entities that are not alerts`);
+}
+
 const base = process.env.TRANSIT_BASE_URL?.replace(/\/$/, "");
 if (base) {
   const token = process.env.TRANSIT_TOKEN?.split(",")[0]?.trim() ?? "";
@@ -106,6 +197,15 @@ if (base) {
   const expectStatus = (res: Response, status: number, what: string) => {
     if (res.status !== status) fail(`${what}: expected ${status}, got ${res.status}`);
   };
+  /** A preview route answers one line starting with the stop's name. */
+  const expectPreview = async (path: string, stopName: string) => {
+    const res = await call(`${path}&smoke=${nowS}`, true);
+    expectStatus(res, 200, `${path} with token`);
+    const line = await res.text();
+    console.log(`preview: ${line.trimEnd()}`);
+    if (!line.startsWith(`${stopName} · `) || !line.endsWith("\n") || line.trimEnd().includes("\n")) fail(`${path}: unexpected line ${JSON.stringify(line)}`);
+  };
+
   expectStatus(await call("/health", false), 200, "/health");
   const arrivals = `/subway/arrivals?stop=${encodeURIComponent(index.data.stops["127"]!.station)}&smoke=${nowS}`;
   expectStatus(await call(arrivals, false), 401, "arrivals without token");
@@ -116,23 +216,37 @@ if (base) {
   expectStatus(await call(arrivals, false), 401, "arrivals without token after a cached hit");
   expectStatus(await call("/stops/search?q=times%20sq", false), 401, "search without token");
   expectStatus(await call("/stops/search?q=times%20sq", true), 200, "search with token");
-  const preview = `/preview/subway?q=times%20sq&smoke=${nowS}`;
-  expectStatus(await call(preview, false), 401, "preview without token");
-  const line = await call(preview, true);
-  expectStatus(line, 200, "preview with token");
-  const text = await line.text();
-  console.log(`preview: ${text.trimEnd()}`);
-  if (!/^Times Sq-42 St · .+\n$/.test(text)) fail(`preview: unexpected line ${JSON.stringify(text)}`);
+  expectStatus(await call(`/preview/subway?q=times%20sq&smoke=${nowS}`, false), 401, "preview without token");
+  await expectPreview("/preview/subway?q=times%20sq", "Times Sq-42 St");
+
+  const pathArrivals = `/path/arrivals?station=JSQ&smoke=${nowS}`;
+  expectStatus(await call(pathArrivals, false), 401, "PATH arrivals without token");
+  expectStatus(await call(pathArrivals, true), 200, "PATH arrivals with token");
+  expectStatus(await call("/path/stations", true), 200, "PATH stations with token");
+  await expectPreview("/preview/path?q=journal%20square", "Journal Square");
+
+  // These all go through one function behind a rewrite with a query string (see vercel.json).
+  const lirr = `/lirr/arrivals?station=${MAIN_STOP.lirr}&smoke=${nowS}`;
+  expectStatus(await call(lirr, false), 401, "LIRR arrivals without token");
+  const lirrRes = await call(lirr, true);
+  expectStatus(lirrRes, 200, "LIRR arrivals with token");
+  if (lirrRes.status === 200 && (await lirrRes.json()).station?.id !== MAIN_STOP.lirr) fail("LIRR arrivals: not the requested station's");
+  const others = ["/mnr/stations?q=grand%20central", "/ferry/stops", "/ferry/vehicles", "/mnr/alerts", "/bus/alerts", "/subway/alerts?route=A", "/subway/vehicles?route=L"];
+  for (const [i, res] of (await Promise.all(others.map((path) => call(path, true)))).entries()) expectStatus(res, 200, others[i]!);
+  expectStatus(await call("/lirr/nope", true), 404, "an unknown agency route");
+
   const nearby = `/citibike/nearby?lat=${TIMES_SQ.lat}&lon=${TIMES_SQ.lon}&n=3&smoke=${nowS}`;
-  expectStatus(await call(nearby, false), 401, "citibike nearby without token");
-  const near = await call(nearby, true);
-  expectStatus(near, 200, "citibike nearby with token");
-  const first = near.ok ? ((await near.json()) as { stations?: { id: string; name: string }[] }).stations?.[0] : undefined;
-  if (!first) fail("citibike nearby: no stations");
+  expectStatus(await call(nearby, false), 401, "Citi Bike nearby without token");
+  const nearRes = await call(nearby, true);
+  expectStatus(nearRes, 200, "Citi Bike nearby with token");
+  const first = nearRes.ok ? ((await nearRes.json()) as { stations?: { id: string; name: string }[] }).stations?.[0] : undefined;
+  if (!first) fail("Citi Bike nearby: no stations");
   else {
     console.log(`citibike nearby: ${first.name}`);
-    expectStatus(await call(`/citibike/station?id=${encodeURIComponent(first.id)}&smoke=${nowS}`, true), 200, "citibike station with token");
+    expectStatus(await call(`/citibike/station?id=${encodeURIComponent(first.id)}&smoke=${nowS}`, true), 200, "Citi Bike station with token");
   }
+
+  await expectPreview(`/preview/mnr?station=${MAIN_STOP.mnr}`, AGENCIES.mnr!.data.stops[MAIN_STOP.mnr!]!.name);
 }
 
 if (problems.length) {

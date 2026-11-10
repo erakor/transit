@@ -1,7 +1,7 @@
 import { fetchGbfs } from "../citibike/feeds.js";
 import { joinStations, nearestStations, type BikeStations } from "../citibike/stations.js";
 import { authenticated, errorResponse, intParam, json, LIVE_CACHE } from "../http.js";
-import type { Fetcher } from "../subway/feeds.js";
+import type { Fetcher } from "../gtfsrt.js";
 
 export interface CitibikeDeps {
   fetcher?: Fetcher;
