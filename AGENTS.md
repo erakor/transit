@@ -74,6 +74,11 @@ Ids, which clients store as favorites, so keep them stable:
 - Errors and `/health` are `no-store`. Success uses `LIVE_CACHE` (arrivals) or `STATIC_CACHE`
   (data that only changes with a deploy) from `src/http.ts`. Never set cookies on cached routes.
 - Times are epoch seconds; responses carry names and colors, not ids alone.
+- `/preview/...` routes answer one line of `text/plain` through `text()` in `src/http.ts` (never
+  empty, never starting with `<`, well under 1 KB: alfresco reads only the first 1 KB and drops
+  HTML), with `PREVIEW_CACHE`, whose `max-age` is how long the client keeps the line. Their
+  errors stay JSON and `no-store`. The line's format is built by a pure function with its own
+  tests (`src/subway/preview.ts`).
 - ESM with `NodeNext` resolution: relative imports end in `.js` even though the files are `.ts`.
 - TypeScript is pinned to 5.9: Vercel's build reported type errors with TypeScript 7.
 - Toolchain: Node 26 (`engines` in `package.json`, `node-version` in the workflows) and pnpm, pinned

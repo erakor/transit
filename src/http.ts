@@ -7,6 +7,11 @@ export const LIVE_CACHE = "public, s-maxage=20, stale-while-revalidate=40";
  */
 export const STATIC_CACHE = "public, s-maxage=3600, stale-while-revalidate=86400";
 export const NO_STORE = "no-store";
+/**
+ * Preview lines for clients that show one line of text (the alfresco launcher's hint). Like
+ * `LIVE_CACHE`, plus `max-age` so the client knows how long its own copy stays good.
+ */
+export const PREVIEW_CACHE = "public, max-age=20, s-maxage=20, stale-while-revalidate=40";
 
 export function json(body: unknown, { status = 200, cache = NO_STORE, vary }: { status?: number; cache?: string; vary?: string } = {}): Response {
   const headers = new Headers({
@@ -15,6 +20,19 @@ export function json(body: unknown, { status = 200, cache = NO_STORE, vary }: { 
   });
   if (vary) headers.set("vary", vary);
   return new Response(JSON.stringify(body), { status, headers });
+}
+
+/**
+ * One line of plain text, newline-terminated. Clients read the first non-empty line and ignore
+ * answers that start with `<` (HTML), so the line is trimmed and must not be empty.
+ */
+export function text(line: string, { status = 200, cache = NO_STORE }: { status?: number; cache?: string } = {}): Response {
+  const body = line.replace(/\s+/g, " ").trim();
+  if (!body || body.startsWith("<")) throw new Error("a preview line must be non-empty text");
+  return new Response(body + "\n", {
+    status,
+    headers: { "content-type": "text/plain; charset=utf-8", "cache-control": cache },
+  });
 }
 
 export function errorResponse(status: number, error: string, vary?: string): Response {
