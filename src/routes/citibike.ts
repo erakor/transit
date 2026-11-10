@@ -8,12 +8,18 @@ export interface CitibikeDeps {
   now?: () => number;
 }
 
+/** The last join, reused while both memoized feeds are the same objects. */
+let lastJoin: { information: object; status: object; stations: BikeStations } | undefined;
+
 /** Both GBFS feeds, joined. Undefined when either is unavailable: one without the other is no answer. */
 async function loadStations({ fetcher, now = () => Date.now() }: CitibikeDeps): Promise<BikeStations | undefined> {
   const opts = { fetcher, now: now() };
   try {
     const [information, status] = await Promise.all([fetchGbfs("station_information", opts), fetchGbfs("station_status", opts)]);
-    return joinStations(information, status);
+    if (lastJoin?.information !== information || lastJoin.status !== status) {
+      lastJoin = { information, status, stations: joinStations(information, status) };
+    }
+    return lastJoin.stations;
   } catch (err) {
     console.error("citibike feeds failed:", err);
     return undefined;
@@ -29,7 +35,7 @@ export function citibikeStationHandler(deps: CitibikeDeps = {}) {
     if (!id) return errorResponse(400, "id is required");
     const stations = await loadStations(deps);
     if (!stations) return errorResponse(502, UNAVAILABLE);
-    const station = stations.byId.get(id) ?? stations.byId.get(id.toLowerCase());
+    const station = stations.byId.get(id.toLowerCase());
     if (!station) return errorResponse(404, `unknown station ${id}`);
     return json({ updatedAt: stations.updatedAt, station }, { cache: LIVE_CACHE });
   });

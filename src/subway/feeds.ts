@@ -1,4 +1,5 @@
 import GtfsRealtimeBindings from "gtfs-realtime-bindings";
+import { Memo } from "../memo.js";
 
 const { transit_realtime } = GtfsRealtimeBindings;
 export type FeedMessage = GtfsRealtimeBindings.transit_realtime.FeedMessage;
@@ -38,13 +39,9 @@ export function decodeFeed(bytes: Uint8Array): FeedMessage {
   return transit_realtime.FeedMessage.decode(bytes);
 }
 
-/**
- * Fetched feeds kept in the function instance's memory for a few seconds. This sits behind
- * the CDN cache: it absorbs requests the CDN can't (cache misses for different stops in the
- * same window, concurrent misses) and coalesces concurrent fetches of the same feed.
- */
+/** Decoded feeds kept for a few seconds, so different stops on the same line share a fetch. */
 const MEMO_MS = 15_000;
-const memo = new Map<string, { at: number; feed: Promise<FeedMessage> }>();
+const memo = new Memo<FeedMessage>();
 
 export type Fetcher = (url: string, init: RequestInit) => Promise<Response>;
 
@@ -52,18 +49,11 @@ export async function fetchFeed(
   feed: string,
   { fetcher = fetch, now = Date.now(), timeoutMs = 8_000 }: { fetcher?: Fetcher; now?: number; timeoutMs?: number } = {},
 ): Promise<FeedMessage> {
-  const hit = memo.get(feed);
-  if (hit && now - hit.at < MEMO_MS) return hit.feed;
-  const promise = (async () => {
+  return memo.get(feed, { ttlMs: MEMO_MS, now }, async () => {
     const res = await fetcher(feedUrl(feed), { signal: AbortSignal.timeout(timeoutMs) });
     if (!res.ok) throw new Error(`feed ${feed}: HTTP ${res.status}`);
     return decodeFeed(new Uint8Array(await res.arrayBuffer()));
-  })();
-  memo.set(feed, { at: now, feed: promise });
-  promise.catch(() => {
-    if (memo.get(feed)?.feed === promise) memo.delete(feed);
   });
-  return promise;
 }
 
 /** For tests. */

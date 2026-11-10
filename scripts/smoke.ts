@@ -22,6 +22,7 @@ const fail = (msg: string) => {
 };
 const nowS = Math.floor(Date.now() / 1000);
 const index = stationIndex();
+const TIMES_SQ = { lat: 40.7559, lon: -73.9871 };
 
 const feeds: Record<string, FeedMessage> = {};
 for (const name of Object.keys(FEEDS)) {
@@ -72,9 +73,12 @@ try {
   const joined = joinStations(information, status);
   const listed = information.data.stations.length;
   const stations = [...joined.byId.values()];
-  const bikes = stations.reduce((a, s) => a + s.bikes, 0);
-  const ebikes = stations.reduce((a, s) => a + s.ebikes, 0);
-  const docks = stations.reduce((a, s) => a + s.docks, 0);
+  let bikes = 0, ebikes = 0, docks = 0;
+  for (const s of stations) {
+    bikes += s.bikes;
+    ebikes += s.ebikes;
+    docks += s.docks;
+  }
   console.log(
     `citibike: ${stations.length} of ${listed} stations installed, ${bikes} bikes, ${ebikes} e-bikes, ${docks} free docks, ` +
       `age ${nowS - joined.updatedAt}s`,
@@ -84,7 +88,7 @@ try {
   if (stations.length < 1000 || stations.length < listed * 0.8) fail(`citibike: only ${stations.length} of ${listed} stations joined`);
   if (bikes + ebikes === 0 || docks === 0) fail("citibike: no bikes or no free docks anywhere");
   if (!stations.some((s) => s.ebikes > 0)) fail("citibike: no e-bikes anywhere (num_ebikes_available gone?)");
-  const near = nearestStations(stations, 40.7559, -73.9871, 3);
+  const near = nearestStations(stations, TIMES_SQ.lat, TIMES_SQ.lon, 3);
   console.log(`citibike near Times Sq: ${near.map((s) => `${s.name} (${s.distance} m)`).join(", ")}`);
   if (!near[0] || near[0].distance > 500) fail("citibike: no station within 500 m of Times Sq");
 } catch (err) {
@@ -119,7 +123,7 @@ if (base) {
   const text = await line.text();
   console.log(`preview: ${text.trimEnd()}`);
   if (!/^Times Sq-42 St · .+\n$/.test(text)) fail(`preview: unexpected line ${JSON.stringify(text)}`);
-  const nearby = `/citibike/nearby?lat=40.7559&lon=-73.9871&n=3&smoke=${nowS}`;
+  const nearby = `/citibike/nearby?lat=${TIMES_SQ.lat}&lon=${TIMES_SQ.lon}&n=3&smoke=${nowS}`;
   expectStatus(await call(nearby, false), 401, "citibike nearby without token");
   const near = await call(nearby, true);
   expectStatus(near, 200, "citibike nearby with token");
