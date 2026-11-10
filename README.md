@@ -175,9 +175,10 @@ tells whether the CDN served it (`HIT`, `STALE`) or not (`MISS`).
   `FEEDS` in `src/subway/feeds.ts`), decoded with `gtfs-realtime-bindings`. A request fetches,
   in parallel, only the feeds carrying routes scheduled at the requested stop.
 - **Citi Bike**: the GBFS feeds `station_information` and `station_status` (plain JSON, no key,
-  see `src/citibike/feeds.ts`), joined per request. Each function instance keeps the status for
-  15 s and the station list for 10 minutes; if refreshing the station list fails, the previous
-  copy is used. There is no static Citi Bike data in the repo.
+  see `src/citibike/feeds.ts`), joined when either changes. Each function instance keeps the
+  status for 15 s and the station list for 10 minutes; if refreshing the station list fails, the
+  previous copy is used for up to 6 hours (retried every 10 minutes), then requests are 502s.
+  There is no static Citi Bike data in the repo.
 - **Static**: the MTA static subway GTFS is preprocessed by `scripts/build-static.ts` into
   `src/data/subway.generated.ts` (routes with colors, parent stops with the routes serving them,
   and station complexes built from in-station transfers in `transfers.txt`). The file is

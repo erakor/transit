@@ -33,10 +33,9 @@ async function recordCitibike(): Promise<void> {
   const TIMES_SQ = { lat: 40.7559, lon: -73.9871 };
   const RADIUS_M = 800;
   const opts = { timeoutMs: 15_000 };
-  const feeds = {
-    station_information: await fetchGbfs("station_information", opts),
-    station_status: await fetchGbfs("station_status", opts),
-  };
+  // Fetched together so the two snapshots are as close in time as possible.
+  const [information, status] = await Promise.all([fetchGbfs("station_information", opts), fetchGbfs("station_status", opts)]);
+  const feeds = { station_information: information, station_status: status };
   const keep = new Set(
     feeds.station_information.data.stations
       .filter((s) => distanceMeters(TIMES_SQ.lat, TIMES_SQ.lon, s.lat, s.lon) <= RADIUS_M)

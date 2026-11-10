@@ -24,7 +24,7 @@ export interface BikeStation {
 export interface BikeStations {
   /** `station_status`'s timestamp, epoch seconds. */
   updatedAt: number;
-  /** Stations on the street, by lowercased id. */
+  /** Stations on the street, by id (exact: ids are opaque). */
   byId: Map<string, BikeStation>;
 }
 
@@ -61,7 +61,7 @@ export function joinStations(information: GbfsFeed<GbfsStationInformation>, stat
     };
     // Stations that never reported carry a placeholder near zero.
     if (count(st.last_reported) > 1_000_000_000) station.reportedAt = count(st.last_reported);
-    byId.set(station.id.toLowerCase(), station);
+    byId.set(station.id, station);
   }
   return { updatedAt: status.last_updated, byId };
 }
@@ -80,8 +80,17 @@ export type NearbyStation = BikeStation & { /** Meters from the requested point,
 
 /** The `n` stations closest to a point, nearest first (ties by id, so the order is stable). */
 export function nearestStations(stations: Iterable<BikeStation>, lat: number, lon: number, n: number): NearbyStation[] {
-  const all: [number, BikeStation][] = [];
-  for (const s of stations) all.push([Math.round(distanceMeters(lat, lon, s.lat, s.lon)), s]);
-  all.sort(([da, a], [db, b]) => da - db || (a.id < b.id ? -1 : 1));
-  return all.slice(0, n).map(([distance, s]) => ({ ...s, distance }));
+  if (n < 1) return [];
+  // Keeps the best n seen so far, sorted, instead of sorting every station.
+  const best: [number, BikeStation][] = [];
+  const before = (d: number, s: BikeStation, [bd, b]: [number, BikeStation]) => d < bd || (d === bd && s.id < b.id);
+  for (const s of stations) {
+    const d = Math.round(distanceMeters(lat, lon, s.lat, s.lon));
+    if (best.length === n && !before(d, s, best[n - 1]!)) continue;
+    let i = best.length;
+    while (i > 0 && before(d, s, best[i - 1]!)) i--;
+    best.splice(i, 0, [d, s]);
+    if (best.length > n) best.pop();
+  }
+  return best.map(([distance, s]) => ({ ...s, distance }));
 }

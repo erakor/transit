@@ -45,7 +45,9 @@ fixture fetcher and a fixed clock (`test/helpers.ts`) instead of mocking modules
 Citi Bike (`/citibike/station`, `/citibike/nearby`, both in `src/routes/citibike.ts`) has no
 static data: `fetchGbfs()` (`src/citibike/feeds.ts`) fetches the GBFS `station_information` and
 `station_status` JSON through a per-feed memo (10 min and 15 s; `Memo` in `src/memo.ts`, which
-`fetchFeed()` uses too), and `joinStations()` (`src/citibike/stations.ts`, pure) joins them. Both feeds are required: either one failing is a 502.
+`fetchFeed()` uses too), and `joinStations()` (`src/citibike/stations.ts`, pure) joins them. Both
+feeds are required: a failing `station_status` is a 502. A failing `station_information` falls
+back to the last copy that loaded (`staleOnError`), for up to `STALE_MAX_MS`, then is a 502 too.
 
 ### Static data
 

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { clearGbfsMemo, fetchGbfs, parseGbfs, type GbfsFeed, type GbfsStationInformation, type GbfsStationStatus } from "../src/citibike/feeds.js";
+import { clearGbfsMemo, fetchGbfs, GBFS_FEEDS, parseGbfs, STALE_MAX_MS, type GbfsFeed, type GbfsStationInformation, type GbfsStationStatus } from "../src/citibike/feeds.js";
 import { distanceMeters, joinStations, nearestStations } from "../src/citibike/stations.js";
 import { citibikeNearbyHandler, citibikeStationHandler } from "../src/routes/citibike.js";
 import { LIVE_CACHE } from "../src/http.js";
@@ -88,6 +88,17 @@ describe("nearestStations", () => {
     const near = nearestStations(byId.values(), 40.7, -74, 3);
     expect(near.map((s) => s.id)).toEqual(["1", "3", "2"]);
     expect(near[0]!.distance).toBe(111);
+    expect(nearestStations(byId.values(), 40.7, -74, 10).map((s) => s.id)).toEqual(["1", "3", "2", "0"]);
+    expect(nearestStations(byId.values(), 40.7, -74, 1).map((s) => s.id)).toEqual(["1"]);
+  });
+
+  it("matches a full sort on the recorded stations", () => {
+    const feed = <T>(name: string) => parseGbfs<T>(name, JSON.parse(new TextDecoder().decode(fixture(`citibike-${name}.json`))));
+    const all = [...joinStations(feed("station_information"), feed("station_status")).byId.values()];
+    const sorted = all
+      .map((s) => ({ ...s, distance: Math.round(distanceMeters(40.75, -73.99, s.lat, s.lon)) }))
+      .sort((a, b) => a.distance - b.distance || (a.id < b.id ? -1 : 1));
+    for (const n of [1, 5, 25, 100]) expect(nearestStations(all, 40.75, -73.99, n)).toEqual(sorted.slice(0, n));
   });
 });
 
@@ -155,7 +166,7 @@ describe("/citibike/station", () => {
   const handler = (fetcher = citibikeFetcher()) => citibikeStationHandler({ fetcher, now: () => NOW_MS });
 
   it("returns one station with its name and counts", async () => {
-    const res = await handler()(get(`/citibike/station?id=${W40_7AV.toUpperCase()}`, auth));
+    const res = await handler()(get(`/citibike/station?id=${W40_7AV}`, auth));
     expect(await res.json()).toEqual({
       updatedAt: 1794322409,
       station: {
@@ -168,7 +179,7 @@ describe("/citibike/station", () => {
   it("is 400 without an id and 404 for an unknown or uninstalled station", async () => {
     const GET = handler();
     expect((await GET(get("/citibike/station", auth))).status).toBe(400);
-    for (const id of ["nope", NOT_INSTALLED]) {
+    for (const id of ["nope", NOT_INSTALLED, W40_7AV.toUpperCase()]) {
       const res = await GET(get(`/citibike/station?id=${id}`, auth));
       expect(res.status).toBe(404);
       expect(res.headers.get("cache-control")).toBe("no-store");
@@ -178,6 +189,17 @@ describe("/citibike/station", () => {
 });
 
 describe("/citibike/nearby", () => {
+  it.each([
+    ["+40.7559", "-73.9871"],
+    [".5", "-73.9871"],
+    ["40.", "-73.9871"],
+    ["4.07559e1", "-7.39871E1"],
+  ])("accepts lat=%s lon=%s", async (lat, lon) => {
+    const GET = citibikeNearbyHandler({ fetcher: citibikeFetcher(), now: () => NOW_MS });
+    const res = await GET(get(`/citibike/nearby?lat=${encodeURIComponent(lat)}&lon=${lon}`, auth));
+    expect(res.status).toBe(200);
+  });
+
   const handler = (fetcher = citibikeFetcher()) => citibikeNearbyHandler({ fetcher, now: () => NOW_MS });
 
   it("returns the closest installed stations, nearest first, 5 by default", async () => {
@@ -204,10 +226,24 @@ describe("/citibike/nearby", () => {
     ["?lat=91&lon=-74", "lat must be a number between -90 and 90"],
     ["?lat=40.7&lon=-181", "lon must be a number between -180 and 180"],
     ["?lat=40.7&lon=-74&n=0", "n must be a positive integer"],
+    ["?lat=0x1A&lon=-74", "lat must be a number between -90 and 90"],
+    ["?lat=40.7&lon=-74e", "lon must be a number between -180 and 180"],
   ])("is 400 for %s", async (query, error) => {
     const res = await handler()(get(`/citibike/nearby${query}`, auth));
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error });
+  });
+});
+
+describe("loading stations", () => {
+  it("reports a failing join as a 500, not as unavailable feeds", async () => {
+    const fixtures = citibikeFetcher();
+    const fetcher = async (url: string, init: RequestInit) => {
+      if (!url.endsWith("station_status.json")) return fixtures(url, init);
+      return new Response(JSON.stringify({ last_updated: 1, data: { stations: [null] } }));
+    };
+    const res = await citibikeStationHandler({ fetcher, now: () => NOW_MS })(get(`/citibike/station?id=${W40_7AV}`, auth));
+    expect(res.status).toBe(500);
   });
 });
 
@@ -222,14 +258,18 @@ describe("fetchGbfs", () => {
     expect(fetcher.calls.sort()).toEqual(["station_information", "station_status", "station_status"]);
   });
 
-  it("falls back to the previous station list when its refresh fails, and retries next time", async () => {
+  it("falls back to the previous station list when its refresh fails, retrying once per memo window", async () => {
     const fetcher = citibikeFetcher();
     const first = await fetchGbfs("station_information", { fetcher, now: NOW_MS });
     fetcher.fail.push("station_information");
     const later = NOW_MS + 3_600_000;
     expect(await fetchGbfs("station_information", { fetcher, now: later })).toBe(first);
-    await fetchGbfs("station_information", { fetcher, now: later + 1 });
+    expect(await fetchGbfs("station_information", { fetcher, now: later + 1 })).toBe(first);
+    expect(fetcher.calls).toHaveLength(2);
+    await fetchGbfs("station_information", { fetcher, now: later + GBFS_FEEDS.station_information.memoMs });
     expect(fetcher.calls).toHaveLength(3);
+    // Too old to stand in: the feed fails like any other.
+    await expect(fetchGbfs("station_information", { fetcher, now: NOW_MS + STALE_MAX_MS + 1 })).rejects.toThrow(/HTTP 503/);
     await expect(fetchGbfs("station_status", { fetcher: citibikeFetcher(["station_status"]), now: later })).rejects.toThrow(/HTTP 503/);
   });
 });

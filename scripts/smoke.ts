@@ -6,8 +6,8 @@
  *
  * Fails when an upstream change would break the service: a feed that no longer decodes, stale
  * data, routes the FEEDS table doesn't know, stop ids missing from the static data, or a big
- * station with no arrivals; for Citi Bike, a feed that changed shape, stale status, or no bikes
- * station near Times Sq.
+ * station with no arrivals; for Citi Bike, a feed that changed shape, stale status, no bikes,
+ * e-bikes or free docks anywhere, or no station within 500 m of Times Sq.
  */
 import { fetchGbfs } from "../src/citibike/feeds.js";
 import { joinStations, nearestStations } from "../src/citibike/stations.js";
