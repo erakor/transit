@@ -11,12 +11,48 @@
       "destination": "/api/subway/arrivals"
     },
     {
+      "source": "/subway/alerts",
+      "destination": "/api/subway/alerts"
+    },
+    {
+      "source": "/subway/vehicles",
+      "destination": "/api/subway/vehicles"
+    },
+    {
       "source": "/stops/search",
       "destination": "/api/stops/search"
     },
     {
+      "source": "/path/arrivals",
+      "destination": "/api/path/arrivals"
+    },
+    {
+      "source": "/path/stations",
+      "destination": "/api/path/stations"
+    },
+    {
       "source": "/preview/subway",
       "destination": "/api/preview/subway"
+    },
+    {
+      "source": "/preview/path",
+      "destination": "/api/preview/path"
+    },
+    {
+      "source": "/:agency(lirr|mnr)/:op(arrivals|stations|alerts|vehicles)",
+      "destination": "/api/agency?agency=:agency&op=:op"
+    },
+    {
+      "source": "/ferry/:op(arrivals|stops|alerts|vehicles)",
+      "destination": "/api/agency?agency=ferry&op=:op"
+    },
+    {
+      "source": "/preview/:agency(lirr|mnr|ferry)",
+      "destination": "/api/agency?agency=:agency&op=preview"
+    },
+    {
+      "source": "/bus/alerts",
+      "destination": "/api/agency?agency=bus&op=alerts"
     }
   ],
   "functions": {

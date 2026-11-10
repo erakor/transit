@@ -1,7 +1,8 @@
 import { authenticated, errorResponse, intParam, json, LIVE_CACHE } from "../http.js";
 import { stationIndex, type ResolvedStop, type StationIndex } from "../stops/stations.js";
 import { computeArrivals, type ArrivalsResult } from "../subway/arrivals.js";
-import { feedsForRoutes, fetchFeed, type Fetcher } from "../subway/feeds.js";
+import { fetchFeed, type Fetcher } from "../gtfsrt.js";
+import { feedsForRoutes } from "../subway/feeds.js";
 
 /** Shorter CDN window when some feeds failed, so a full answer comes back soon. */
 const PARTIAL_CACHE = "public, s-maxage=5";
