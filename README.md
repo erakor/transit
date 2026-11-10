@@ -71,6 +71,23 @@ match). `limit` defaults to 10, max 25.
 
 `id` goes straight into `/subway/arrivals?stop=`.
 
+### `GET /preview/subway?q=<station name>` or `?stop=<id>`
+
+One line of plain text (`text/plain`, newline-terminated) for clients that show a single line,
+such as the alfresco launcher's hint: the station, then each route's next train per direction in
+whole minutes (rounded down), `↑` for the northbound platform and `↓` for the southbound one.
+
+```
+Bedford Av · L ↑2 ↓4 min
+```
+
+- `q` takes the top `/stops/search` result; `stop` takes the same ids as `/subway/arrivals`.
+- At most 6 routes, then `· …`. No train coming reads `<station> · no trains soon`.
+- Errors are JSON like every other route (400 without `q` or `stop`, 404 for no match, 502 when
+  every feed failed), so a client that wants a line of text simply ignores them.
+- `Cache-Control` adds `max-age` to the CDN's window, so the client knows how long its own copy
+  stays good.
+
 ### `GET /health`
 
 No token, never cached: `{ "ok": true, "staticFeedVersion": "...", "time": 1794232808 }`.
@@ -106,6 +123,7 @@ update clients, remove the old one. If it's unset, authenticated routes answer 5
 | --- | --- |
 | `/subway/arrivals` | `public, s-maxage=20, stale-while-revalidate=40` |
 | `/subway/arrivals` with failed feeds | `public, s-maxage=5` |
+| `/preview/subway` | `public, max-age=20, s-maxage=20, stale-while-revalidate=40` (`public, max-age=5, s-maxage=5` with failed feeds) |
 | `/stops/search` | `public, s-maxage=3600, stale-while-revalidate=86400` (static data only changes with a deploy, and Vercel purges the CDN cache on each production deploy) |
 | `/health`, errors | `no-store` |
 
@@ -141,14 +159,14 @@ Layout:
 
 ```
 api/                 one Vercel function per route (thin: they export GET from src/routes)
-src/routes/          handlers: arrivals, search, health
-src/subway/          feed list, fetching and decoding, arrivals computation
+src/routes/          handlers: arrivals, search, preview, health
+src/subway/          feed list, fetching and decoding, arrivals computation, preview line
 src/stops/           station resolution and name search
 src/static/          static GTFS preprocessing (pure) and its types
 src/data/            generated static data
 scripts/             build-static, record-fixtures, smoke
 test/                vitest tests and fixture feeds
-vercel.json          rewrites /health, /subway/*, /stops/* to the functions
+vercel.json          rewrites /health, /subway/*, /stops/*, /preview/* to the functions
 ```
 
 To run locally against Vercel's runtime, use `vercel dev` with `TRANSIT_TOKEN` in `.env.local`
@@ -177,6 +195,7 @@ curl -i -H "X-Transit-Token: $TOKEN" "$BASE/subway/arrivals?stop=$STOP" # 200
 curl -s -o /dev/null -D - -H "X-Transit-Token: $TOKEN" "$BASE/subway/arrivals?stop=$STOP" | grep -i x-vercel-cache  # HIT
 curl -i "$BASE/stops/search?q=bedford"                                  # 401
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/stops/search?q=bedford"     # 200
+curl -i -H "X-Transit-Token: $TOKEN" "$BASE/preview/subway?q=bedford"   # 200, one line of text
 ```
 
 Or run `TRANSIT_BASE_URL=$BASE TRANSIT_TOKEN=$TOKEN pnpm smoke`, which does the same checks.
@@ -188,7 +207,8 @@ Or run `TRANSIT_BASE_URL=$BASE TRANSIT_TOKEN=$TOKEN pnpm smoke`, which does the 
 - `test/arrivals.test.ts`: arrivals on a hand-built protobuf feed (grouping, ordering, past and
   skipped stops, complexes, platforms) and on recorded feeds for all eight MTA feeds.
 - `test/auth.test.ts`, `test/routes.test.ts`: the token check, status codes, `Cache-Control`
-  and `Vary` headers, partial feed failures, search ranking.
+  and `Vary` headers, partial feed failures, search ranking, the preview route.
+- `test/preview.test.ts`: the preview line's format on hand-built arrivals.
 - `.github/workflows/smoke.yml`: twice a day against the live feeds. It fails on stale feeds,
   routes missing from `FEEDS`, many stop ids missing from the static data, or a big station with
   no arrivals.
@@ -215,4 +235,6 @@ wrapped in `authenticated(...)`, and the `LIVE_CACHE` or `STATIC_CACHE` headers 
 
 Clients send `X-Transit-Token` (not `Authorization`) so their calls are CDN-cacheable. Favorite
 stops live in each client; the service is stateless. For alfresco (Swift), the base URL and token
-are read like `Config.weatherAPIKey()`, and a nil token turns the feature off.
+are read like `Config.weatherAPIKey()`, and a nil token turns the feature off. alfresco also sends
+the token with a workflow's `preview` request when the preview URL is on this service's host
+(`/preview/...`), and keeps the line for the response's `max-age`.

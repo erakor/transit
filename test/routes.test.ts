@@ -2,8 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { GET as healthGET } from "../api/health.js";
 import { arrivalsHandler } from "../src/routes/arrivals.js";
 import { searchHandler } from "../src/routes/search.js";
+import { subwayPreviewHandler } from "../src/routes/preview.js";
 import { clearFeedMemo } from "../src/subway/feeds.js";
-import { LIVE_CACHE, STATIC_CACHE } from "../src/http.js";
+import { LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from "../src/http.js";
 import { SUBWAY_DATA } from "../src/data/subway.generated.js";
 import { fixtureFetcher, FIXTURE_NOW_MS, get, TOKEN } from "./helpers.js";
 
@@ -36,6 +37,7 @@ describe("/health", () => {
 describe.each([
   ["/subway/arrivals", `?stop=${encodeURIComponent(TIMES_SQ)}`, () => arrivals().GET],
   ["/stops/search", "?q=times", () => searchHandler()],
+  ["/preview/subway", "?q=bedford", () => subwayPreviewHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
 ])("%s auth and caching", (path, query, handler) => {
   it("is 401 without a token, uncached and varying on the token header", async () => {
     const res = await handler()(get(path + query));
@@ -59,11 +61,11 @@ describe.each([
     expect(res.headers.get("cache-control")).toBe("no-store");
   });
 
-  it("returns CDN-cacheable JSON keyed by the token header", async () => {
+  it("returns a CDN-cacheable answer keyed by the token header", async () => {
     const res = await handler()(get(path + query, auth));
     expect(res.status).toBe(200);
-    expect(res.headers.get("content-type")).toMatch(/^application\/json/);
-    expect(res.headers.get("cache-control")).toMatch(/^public, s-maxage=\d+, stale-while-revalidate=\d+$/);
+    expect(res.headers.get("content-type")).toMatch(path.startsWith("/preview/") ? /^text\/plain/ : /^application\/json/);
+    expect(res.headers.get("cache-control")).toMatch(/^public, (max-age=\d+, )?s-maxage=\d+, stale-while-revalidate=\d+$/);
     expect(res.headers.get("vary")).toBe("x-transit-token");
     expect(res.headers.get("set-cookie")).toBeNull();
   });
@@ -187,5 +189,55 @@ describe("/stops/search", () => {
   it("requires q", async () => {
     const res = await searchHandler()(get("/stops/search?q=%20", auth));
     expect(res.status).toBe(400);
+  });
+});
+
+describe("/preview/subway", () => {
+  function preview(fetcher = fixtureFetcher()) {
+    return { fetcher, GET: subwayPreviewHandler({ fetcher, now: () => FIXTURE_NOW_MS }) };
+  }
+
+  it("answers one line of text for a station name, cached for the client too", async () => {
+    const { GET, fetcher } = preview();
+    const res = await GET(get("/preview/subway?q=bedford%20av", auth));
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toBe("text/plain; charset=utf-8");
+    expect(res.headers.get("cache-control")).toBe(PREVIEW_CACHE);
+    expect(res.headers.get("cache-control")).toMatch(/max-age=20/);
+    expect(fetcher.calls).toEqual(["gtfs-l"]);
+    const body = await res.text();
+    expect(body.endsWith("\n")).toBe(true);
+    expect(body.trimEnd()).not.toContain("\n");
+    expect(body).toMatch(/^Bedford Av · L (↑\d+ ↓\d+|↑\d+|↓\d+) min\n$/);
+  });
+
+  it("takes a station id like /subway/arrivals", async () => {
+    const res = await preview().GET(get(`/preview/subway?stop=${encodeURIComponent(TIMES_SQ)}`, auth));
+    expect(res.status).toBe(200);
+    const body = await res.text();
+    expect(body).toMatch(/^Times Sq-42 St · /);
+    expect(Buffer.byteLength(body)).toBeLessThan(1024);
+  });
+
+  it("uses a short cache when some feeds failed", async () => {
+    const res = await preview(fixtureFetcher(["gtfs-ace"])).GET(get(`/preview/subway?stop=${encodeURIComponent(TIMES_SQ)}`, auth));
+    expect(res.status).toBe(200);
+    expect(res.headers.get("cache-control")).toBe("public, max-age=5, s-maxage=5");
+  });
+
+  it.each([
+    ["", 400, "q or stop is required"],
+    ["?q=zzzz", 404, "no matching station"],
+    ["?stop=ZZZ", 404, "unknown stop ZZZ"],
+  ])("rejects %s with %i as uncached JSON", async (query, status, error) => {
+    const res = await preview().GET(get(`/preview/subway${query}`, auth));
+    expect(res.status).toBe(status);
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    expect(await res.json()).toEqual({ error });
+  });
+
+  it("is 502 when every feed fails", async () => {
+    const res = await preview(fixtureFetcher(["gtfs-l"])).GET(get("/preview/subway?q=bedford%20av", auth));
+    expect(res.status).toBe(502);
   });
 });

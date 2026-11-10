@@ -82,6 +82,13 @@ if (base) {
   expectStatus(await call(arrivals, false), 401, "arrivals without token after a cached hit");
   expectStatus(await call("/stops/search?q=times%20sq", false), 401, "search without token");
   expectStatus(await call("/stops/search?q=times%20sq", true), 200, "search with token");
+  const preview = `/preview/subway?q=times%20sq&smoke=${nowS}`;
+  expectStatus(await call(preview, false), 401, "preview without token");
+  const line = await call(preview, true);
+  expectStatus(line, 200, "preview with token");
+  const text = await line.text();
+  console.log(`preview: ${text.trimEnd()}`);
+  if (!/^Times Sq-42 St · .+\n$/.test(text)) fail(`preview: unexpected line ${JSON.stringify(text)}`);
 }
 
 if (problems.length) {

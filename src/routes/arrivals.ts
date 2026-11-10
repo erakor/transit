@@ -1,6 +1,6 @@
 import { authenticated, errorResponse, intParam, json, LIVE_CACHE } from "../http.js";
-import { stationIndex, type StationIndex } from "../stops/stations.js";
-import { computeArrivals } from "../subway/arrivals.js";
+import { stationIndex, type ResolvedStop, type StationIndex } from "../stops/stations.js";
+import { computeArrivals, type ArrivalsResult } from "../subway/arrivals.js";
 import { feedsForRoutes, fetchFeed, type Fetcher } from "../subway/feeds.js";
 
 /** Shorter CDN window when some feeds failed, so a full answer comes back soon. */
@@ -25,19 +25,32 @@ export function arrivalsHandler({ fetcher, now = () => Date.now(), index = stati
     if (!stop) return errorResponse(404, `unknown stop ${stopParam}`);
 
     const nowMs = now();
-    const names = feedsForRoutes(stop.routes);
-    const settled = await Promise.allSettled(names.map((f) => fetchFeed(f, { fetcher, now: nowMs })));
-    const feeds = settled.flatMap((s) => (s.status === "fulfilled" ? [s.value] : []));
-    const failed = names.filter((_, i) => settled[i]!.status === "rejected");
-    for (const [i, s] of settled.entries()) {
-      if (s.status === "rejected") console.error(`feed ${names[i]} failed:`, s.reason);
-    }
-    if (names.length > 0 && feeds.length === 0) return errorResponse(502, "MTA feeds unavailable");
-
-    const result = computeArrivals(stop, feeds, idx, { now: Math.floor(nowMs / 1000), limit });
+    const loaded = await loadArrivals(stop, idx, { fetcher, nowMs, limit });
+    if (!loaded) return errorResponse(502, "MTA feeds unavailable");
+    const { result, failed } = loaded;
     return json(
       failed.length ? { ...result, unavailableFeeds: failed } : result,
       { cache: failed.length ? PARTIAL_CACHE : LIVE_CACHE },
     );
   });
+}
+
+/**
+ * Fetches the feeds serving `stop` and computes its arrivals. Shared with the preview routes.
+ * `failed` names the feeds that didn't answer; undefined when every feed failed.
+ */
+export async function loadArrivals(
+  stop: ResolvedStop,
+  idx: StationIndex,
+  { fetcher, nowMs, limit }: { fetcher?: Fetcher; nowMs: number; limit: number },
+): Promise<{ result: ArrivalsResult; failed: string[] } | undefined> {
+  const names = feedsForRoutes(stop.routes);
+  const settled = await Promise.allSettled(names.map((f) => fetchFeed(f, { fetcher, now: nowMs })));
+  const feeds = settled.flatMap((s) => (s.status === "fulfilled" ? [s.value] : []));
+  const failed = names.filter((_, i) => settled[i]!.status === "rejected");
+  for (const [i, s] of settled.entries()) {
+    if (s.status === "rejected") console.error(`feed ${names[i]} failed:`, s.reason);
+  }
+  if (names.length > 0 && feeds.length === 0) return undefined;
+  return { result: computeArrivals(stop, feeds, idx, { now: Math.floor(nowMs / 1000), limit }), failed };
 }
