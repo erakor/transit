@@ -4,8 +4,8 @@ A small NYC transit data service. It fetches the upstream feeds, normalizes them
 small, pre-joined JSON to apps and servers (the alfresco launcher and other personal projects),
 so clients never touch protobuf or GTFS.
 
-v1 covers the MTA subway. PATH, Citi Bike and MTA bus will be added later as their own route
-groups (`/path/...`, `/citibike/...`, `/bus/...`) with the same conventions.
+It covers the MTA subway and PATH. Citi Bike and MTA bus will be added later as their own route
+groups (`/citibike/...`, `/bus/...`) with the same conventions.
 
 Runs on Vercel, one serverless function per route, TypeScript.
 
@@ -88,6 +88,71 @@ Bedford Av · L ↑2 ↓4 min
 - `Cache-Control` adds `max-age` to the CDN's window, so the client knows how long its own copy
   stays good.
 
+### `GET /path/arrivals?station=<id>&limit=<n>`
+
+Next PATH trains per route and direction.
+
+- `station`: a station id from `/path/stations`, case insensitive: `NWK`, `HAR`, `JSQ`, `GRV`,
+  `EXP`, `WTC`, `NEW` (Newport), `HOB`, `CHR`, `09S`, `14S`, `23S`, `33S`.
+- `limit`: trains per route and direction, default 3, max 10. The Port Authority lists only the
+  next few trains per station, so a group often holds one or two.
+
+```json
+{
+  "station": { "id": "GRV", "name": "Grove Street" },
+  "updatedAt": 1794320232,
+  "groups": [
+    {
+      "route": "NWK-WTC", "name": "Newark - World Trade Center", "color": "#D93A30", "textColor": "#FFFFFF",
+      "direction": "NJ", "headsign": "Newark",
+      "arrivals": [{ "time": 1794320471, "headsign": "Newark" }]
+    },
+    {
+      "route": "JSQ-33", "name": "Journal Square - 33rd Street", "color": "#FF9900", "textColor": "#FFFFFF",
+      "direction": "NY", "headsign": "33rd Street",
+      "arrivals": [{ "time": 1794320385, "headsign": "33rd Street" }]
+    }
+  ]
+}
+```
+
+- `direction` is the feed's own label at that station: `NY` (toward Manhattan) or `NJ`.
+  `headsign` is where the train ends, so it's the best label.
+- Routes: `NWK-WTC`, `HOB-WTC`, `JSQ-33`, `HOB-33`, and `JSQ-33-HOB` (Journal Square to 33rd
+  Street via Hoboken, nights and weekends). Groups are in that order, then `NY` before `NJ`.
+- The feed refreshes about once a minute and shows a train standing at the platform as 0 seconds
+  away, so `time` can be up to 2 minutes in the past: read that as "boarding". There is no trip id.
+- `updatedAt` is the oldest update time among the station's trains, `null` when the feed lists none.
+- Errors: 400 (missing `station`, bad `limit`), 404 (unknown station), 401 (token), 502 (the
+  Port Authority feed is down).
+
+### `GET /path/stations`
+
+The 13 PATH stations, in line order, with the routes serving each:
+
+```json
+{
+  "stations": [
+    {
+      "id": "NWK", "name": "Newark",
+      "routes": [{ "id": "NWK-WTC", "name": "Newark - World Trade Center", "color": "#D93A30", "textColor": "#FFFFFF" }]
+    }
+  ]
+}
+```
+
+### `GET /preview/path?q=<station name>` or `?station=<id>`
+
+Like `/preview/subway`, for PATH: the station, then the next train to each destination in whole
+minutes (rounded down), soonest first.
+
+```
+Grove Street · Journal Square 0 · 33rd Street 1 · Newark 3 min
+```
+
+`q` matches like `/stops/search` does ("wtc", "9th st", "journal sq", "grove"). Same errors,
+caching and `no trains soon` line as `/preview/subway`.
+
 ### `GET /health`
 
 No token, never cached: `{ "ok": true, "staticFeedVersion": "...", "time": 1794232808 }`.
@@ -123,7 +188,9 @@ update clients, remove the old one. If it's unset, authenticated routes answer 5
 | `/subway/arrivals` | `public, s-maxage=20, stale-while-revalidate=40` |
 | `/subway/arrivals` with failed feeds | `public, s-maxage=5` |
 | `/preview/subway` | `public, max-age=20, s-maxage=20, stale-while-revalidate=40` (`public, max-age=5, s-maxage=5` with failed feeds) |
-| `/stops/search` | `public, s-maxage=3600, stale-while-revalidate=86400` (static data only changes with a deploy, and Vercel purges the CDN cache on each production deploy) |
+| `/path/arrivals` | `public, s-maxage=20, stale-while-revalidate=40` |
+| `/preview/path` | `public, max-age=20, s-maxage=20, stale-while-revalidate=40` |
+| `/stops/search`, `/path/stations` | `public, s-maxage=3600, stale-while-revalidate=86400` (static data only changes with a deploy, and Vercel purges the CDN cache on each production deploy) |
 | `/health`, errors | `no-store` |
 
 So the CDN calls the function about once per 20 s per distinct URL. Behind it, each function
@@ -143,6 +210,13 @@ tells whether the CDN served it (`HIT`, `STALE`) or not (`MISS`).
   regenerates it daily and commits it when it changed, which triggers a Vercel deploy. (A Vercel
   Cron job can't do this: it runs a function, and a function can't change the deployed bundle.)
 
+- **PATH**: the Port Authority's real-time JSON feed, the one behind the arrival boards on
+  panynj.gov (`https://www.panynj.gov/bin/portauthority/ridepath.json`, no API key): one document
+  with every station's next trains, refreshed about once a minute, so one upstream request
+  (kept 15 s per function instance) answers every station. It carries no route ids, only line
+  colors, which `src/path/stations.ts` maps to routes; the station list lives there too, since
+  PATH has 13 stations and they don't change.
+
 ## Development
 
 ```sh
@@ -158,14 +232,15 @@ Layout:
 
 ```
 api/                 one Vercel function per route (thin: they export GET from src/routes)
-src/routes/          handlers: arrivals, search, preview, health
+src/routes/          handlers: arrivals, search, preview, path, health
 src/subway/          feed list, fetching and decoding, arrivals computation, preview line
+src/path/            PATH stations and routes, feed fetching and parsing, arrivals, preview line
 src/stops/           station resolution and name search
 src/static/          static GTFS preprocessing (pure) and its types
 src/data/            generated static data
 scripts/             build-static, record-fixtures, smoke
 test/                vitest tests and fixture feeds
-vercel.json          rewrites /health, /subway/*, /stops/*, /preview/* to the functions
+vercel.json          rewrites /health, /subway/*, /path/*, /stops/*, /preview/* to the functions
 ```
 
 To run locally against Vercel's runtime, use `vercel dev` with `TRANSIT_TOKEN` in `.env.local`
@@ -195,6 +270,9 @@ curl -s -o /dev/null -D - -H "X-Transit-Token: $TOKEN" "$BASE/subway/arrivals?st
 curl -i "$BASE/stops/search?q=bedford"                                  # 401
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/stops/search?q=bedford"     # 200
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/preview/subway?q=bedford"   # 200, one line of text
+curl -i -H "X-Transit-Token: $TOKEN" "$BASE/path/arrivals?station=JSQ"  # 200
+curl -i -H "X-Transit-Token: $TOKEN" "$BASE/path/stations"              # 200
+curl -i -H "X-Transit-Token: $TOKEN" "$BASE/preview/path?q=grove"       # 200, one line of text
 ```
 
 Or run `TRANSIT_BASE_URL=$BASE TRANSIT_TOKEN=$TOKEN pnpm smoke`, which does the same checks.
@@ -208,9 +286,12 @@ Or run `TRANSIT_BASE_URL=$BASE TRANSIT_TOKEN=$TOKEN pnpm smoke`, which does the 
 - `test/auth.test.ts`, `test/routes.test.ts`: the token check, status codes, `Cache-Control`
   and `Vary` headers, partial feed failures, search ranking, the preview route.
 - `test/preview.test.ts`: the preview line's format on hand-built arrivals.
+- `test/path.test.ts`: PATH station lookup, feed parsing (hand-built documents and a recorded
+  feed), arrivals, the preview line and the three PATH routes.
 - `.github/workflows/smoke.yml`: twice a day against the live feeds. It fails on stale feeds,
   routes missing from `FEEDS`, many stop ids missing from the static data, or a big station with
-  no arrivals.
+  no arrivals; for PATH, on entries the parser can't read, unknown stations or line colors,
+  stale data, or Journal Square with no trains.
 
 ## Roadmap
 
@@ -220,15 +301,13 @@ fixture-based parsing tests and a scheduled smoke test against the live feed.
 In code, that means one function per route under `api/<provider>/`, a handler in `src/routes/`
 wrapped in `authenticated(...)`, and the `LIVE_CACHE` or `STATIC_CACHE` headers from `src/http.ts`.
 
-- **PATH**: `GET /path/arrivals?station=<id>`, next trains per direction.
-  Source: the Port Authority's real-time feed (confirm the current official endpoint first).
 - **Citi Bike**: `GET /citibike/station?id=<id>` and `GET /citibike/nearby?lat=&lon=&n=`:
   bikes, e-bikes and free docks. Source: the GBFS feeds (`station_information` +
   `station_status`), plain JSON, no key.
 - **MTA bus**: next buses per stop. Source: MTA Bus Time, which needs a free API key
   (stored as a Vercel environment variable, never committed).
-- **Stop search across systems**: extend `/stops/search` to PATH stations and
-  Citi Bike stations once those exist.
+- **Stop search across systems**: extend `/stops/search` to PATH stations (today listed by
+  `/path/stations`) and Citi Bike stations once those exist.
 
 ## Clients
 

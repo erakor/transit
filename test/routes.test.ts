@@ -3,10 +3,12 @@ import { GET as healthGET } from "../api/health.js";
 import { arrivalsHandler } from "../src/routes/arrivals.js";
 import { searchHandler } from "../src/routes/search.js";
 import { subwayPreviewHandler } from "../src/routes/preview.js";
+import { pathArrivalsHandler, pathPreviewHandler, pathStationsHandler } from "../src/routes/path.js";
+import { clearPathFeedMemo } from "../src/path/feed.js";
 import { clearFeedMemo } from "../src/subway/feeds.js";
 import { LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from "../src/http.js";
 import { SUBWAY_DATA } from "../src/data/subway.generated.js";
-import { fixtureFetcher, FIXTURE_NOW_MS, get, TOKEN } from "./helpers.js";
+import { fixtureFetcher, FIXTURE_NOW_MS, get, PATH_FIXTURE_NOW_MS, TOKEN } from "./helpers.js";
 
 const auth = { "x-transit-token": TOKEN };
 const TIMES_SQ = SUBWAY_DATA.stops["127"]!.station;
@@ -15,6 +17,7 @@ beforeEach(() => {
   vi.stubEnv("TRANSIT_TOKEN", TOKEN);
   vi.spyOn(console, "error").mockImplementation(() => {});
   clearFeedMemo();
+  clearPathFeedMemo();
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -38,6 +41,9 @@ describe.each([
   ["/subway/arrivals", `?stop=${encodeURIComponent(TIMES_SQ)}`, () => arrivals().GET],
   ["/stops/search", "?q=times", () => searchHandler()],
   ["/preview/subway", "?q=bedford", () => subwayPreviewHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
+  ["/path/arrivals", "?station=WTC", () => pathArrivalsHandler({ fetcher: fixtureFetcher(), now: () => PATH_FIXTURE_NOW_MS })],
+  ["/path/stations", "", () => pathStationsHandler()],
+  ["/preview/path", "?q=hoboken", () => pathPreviewHandler({ fetcher: fixtureFetcher(), now: () => PATH_FIXTURE_NOW_MS })],
 ])("%s auth and caching", (path, query, handler) => {
   it("is 401 without a token, uncached and varying on the token header", async () => {
     const res = await handler()(get(path + query));

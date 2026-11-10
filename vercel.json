@@ -15,8 +15,20 @@
       "destination": "/api/stops/search"
     },
     {
+      "source": "/path/arrivals",
+      "destination": "/api/path/arrivals"
+    },
+    {
+      "source": "/path/stations",
+      "destination": "/api/path/stations"
+    },
+    {
       "source": "/preview/subway",
       "destination": "/api/preview/subway"
+    },
+    {
+      "source": "/preview/path",
+      "destination": "/api/preview/path"
     }
   ],
   "functions": {
