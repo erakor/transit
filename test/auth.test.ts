@@ -10,13 +10,9 @@ describe("token check", () => {
     expect(checkToken(h({ "X-Transit-Token": " beta " }), env)).toEqual({ ok: true });
   });
 
-  it("accepts Authorization: Bearer as a fallback", () => {
-    expect(checkToken(h({ authorization: "Bearer alpha" }), env)).toEqual({ ok: true });
-    expect(checkToken(h({ authorization: "bearer beta" }), env)).toEqual({ ok: true });
-  });
-
-  it("prefers X-Transit-Token over Authorization", () => {
-    expect(presentedToken(h({ "x-transit-token": "a", authorization: "Bearer b" }))).toBe("a");
+  it("ignores the Authorization header", () => {
+    expect(presentedToken(h({ authorization: "Bearer alpha" }))).toBeUndefined();
+    expect(checkToken(h({ authorization: "Bearer alpha" }), env)).toMatchObject({ ok: false, status: 401, error: "missing token" });
   });
 
   it("rejects missing and wrong tokens with 401", () => {

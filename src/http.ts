@@ -30,9 +30,7 @@ export function authenticated(handler: (request: Request, url: URL) => Promise<R
     const auth = checkToken(request.headers);
     if (!auth.ok) {
       if (auth.status === 500) console.error("TRANSIT_TOKEN is not set");
-      const res = errorResponse(auth.status, auth.error, TOKEN_HEADER);
-      if (auth.status === 401) res.headers.set("www-authenticate", `Bearer realm="transit"`);
-      return res;
+      return errorResponse(auth.status, auth.error, TOKEN_HEADER);
     }
     let res: Response;
     try {
