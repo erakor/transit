@@ -2,7 +2,7 @@
   "name": "transit",
   "version": "0.1.0",
   "private": true,
-  "description": "Small NYC transit data service: normalized JSON over the MTA subway and PATH feeds.",
+  "description": "Small NYC transit data service: normalized JSON over the MTA, PATH and NYC Ferry feeds.",
   "type": "module",
   "engines": {
     "node": "26.x"

@@ -4,8 +4,9 @@ A small NYC transit data service. It fetches the upstream feeds, normalizes them
 small, pre-joined JSON to apps and servers (the alfresco launcher and other personal projects),
 so clients never touch protobuf or GTFS.
 
-It covers the MTA subway and PATH. Citi Bike and MTA bus will be added later as their own route
-groups (`/citibike/...`, `/bus/...`) with the same conventions.
+It covers the MTA subway (arrivals, alerts, train positions), PATH, the LIRR, Metro-North and
+NYC Ferry, plus MTA bus alerts. Bus arrivals, NJ Transit and Citi Bike will be added later as
+their own route groups with the same conventions.
 
 Runs on Vercel, one serverless function per route, TypeScript.
 
@@ -153,6 +154,142 @@ Grove Street · Journal Square 0 · 33rd Street 1 · Newark 3 min
 `q` matches like `/stops/search` does ("wtc", "9th st", "journal sq", "grove"). Same errors,
 caching and `no trains soon` line as `/preview/subway`.
 
+### `GET /subway/alerts`, optionally `?route=<id>` or `?stop=<id>`
+
+The service alerts in effect right now: incidents first, then planned work, newest first.
+
+- `route`: a subway route id (`A`, `6X`, `GS`). `stop`: the same ids as `/subway/arrivals`; it
+  keeps alerts that name one of the station's stops, and route-wide alerts for routes that stop
+  there. Both can be combined. With neither, every subway alert in effect.
+
+```json
+{
+  "updatedAt": 1794322719,
+  "alerts": [
+    {
+      "id": "lmm:alert:275694:26", "planned": false,
+      "header": "Downtown [A][B][C][D] trains are running with delays while we address a signal malfunction near 135 St.",
+      "description": "For skipped stops, take an uptown [B][C] train.",
+      "routes": [{ "id": "A", "name": "A", "color": "#0062CF", "textColor": "#FFFFFF" }],
+      "stops": [],
+      "start": 1794320575, "end": null
+    }
+  ]
+}
+```
+
+- `header` and `description` are plain text (the MTA writes routes in brackets); `description`
+  is `""` when there is none. `planned` is true for scheduled work.
+- `start` and `end` are the period in effect now; planned work lists one period per affected
+  night, and only alerts with a period covering the present are returned.
+- With `stop`, the response also carries the resolved `stop`, as in `/subway/arrivals`.
+- The feeds don't give a category ("Delays", "Planned - Stops Skipped") in a form this service
+  decodes, so there is none.
+- Errors: 404 (unknown route or stop), 401, 502.
+
+`/lirr/alerts`, `/mnr/alerts` and `/ferry/alerts` answer the same shape, filtered with `route`
+and `station` (`stop` for the ferry). `/bus/alerts?route=<id>` (`Q29`, `S79+`, `SIM10`) does too,
+but there is no static bus data yet: routes carry their id as `name` and a gray color, and no
+stops are named.
+
+### `GET /subway/vehicles?route=<id>`
+
+Where a route's trains are. The subway feeds carry no coordinates, so each train has the stop it
+is at or heading to.
+
+```json
+{
+  "route": { "id": "L", "name": "L", "color": "#7C858C", "textColor": "#FFFFFF" },
+  "updatedAt": 1794322787,
+  "vehicles": [
+    { "tripId": "056350_L..N", "direction": "N", "headsign": "8 Av", "status": "STOPPED_AT",
+      "stop": { "id": "L02N", "name": "6 Av" }, "time": 1794322775 }
+  ]
+}
+```
+
+`status` is `STOPPED_AT`, `INCOMING_AT` or `IN_TRANSIT_TO`, relative to `stop`. Northbound trains
+first, each direction in stop id order. Trains that last reported over 15 minutes ago are left
+out. Errors: 400 (missing `route`), 404 (unknown route), 401, 502.
+
+### LIRR, Metro-North and NYC Ferry
+
+Three agencies with the same routes: `/lirr/...`, `/mnr/...` and `/ferry/...`. The railroads call
+a stop a `station`, the ferry a `stop`, in paths, parameters and response keys alike.
+
+#### `GET /lirr/stations`, `/mnr/stations`, `/ferry/stops`, optionally `?q=<name>&limit=<n>`
+
+Every station by name, or with `q` the ones matching it, best first, like `/stops/search`
+(`limit` defaults to 10, max 25).
+
+```json
+{
+  "query": "white plains",
+  "stations": [
+    { "id": "74", "name": "White Plains", "lat": 41.032589, "lon": -73.775208,
+      "routes": [{ "id": "2", "name": "Harlem", "color": "#0039A6", "textColor": "#FFFFFF" }] }
+  ]
+}
+```
+
+`id` is the agency's GTFS `stop_id` and goes into the routes below.
+
+#### `GET /lirr/arrivals?station=<id>&limit=<n>` (`/mnr/arrivals`, `/ferry/arrivals?stop=<id>`)
+
+The next departures, soonest first, in one list for all routes and directions, like a station's
+departure board. `limit` defaults to 10, max 30.
+
+```json
+{
+  "station": { "id": "102", "name": "Jamaica" },
+  "updatedAt": 1794322787,
+  "arrivals": [
+    { "time": 1794323029, "delay": 109, "route": "10", "name": "Port Jefferson Branch",
+      "color": "#006EC7", "textColor": "#FFFFFF", "headsign": "Huntington", "tripId": "GO203_26_1518_1" }
+  ]
+}
+```
+
+- `time` is when the train leaves the station (when it arrives, where its trip ends there).
+- `delay` is seconds behind schedule, present when the feed gives it (the railroads do, the
+  ferry doesn't).
+- `headsign` is the trip's last stop. A trip that ends at the requested station is listed too,
+  with the station's own name as `headsign`.
+- Track numbers are not included: the railroads publish them in a feed extension this service
+  doesn't decode.
+- **Ferry times past the next stop are estimates.** NYC Ferry's feed predicts only each boat's
+  next stop. Later stops are that prediction plus the scheduled running time from there, so the
+  boat's current delay carries down the line. Boats not yet assigned to a trip don't appear.
+- Errors: 400 (missing `station`, bad `limit`), 404 (unknown station), 401, 502.
+
+#### `GET /lirr/vehicles`, `/mnr/vehicles`, `/ferry/vehicles`, optionally `?route=<id>`
+
+Where the trains or boats are, with coordinates.
+
+```json
+{
+  "updatedAt": 1794322789,
+  "vehicles": [
+    { "id": "41", "label": "H111", "tripId": "1013",
+      "route": { "id": "AS", "name": "Astoria", "color": "#FF6B00", "textColor": "#FFFFFF" },
+      "headsign": "Wall St/Pier 11", "lat": 40.70783, "lon": -73.97942,
+      "status": "IN_TRANSIT_TO", "stop": null, "time": 1794322788 }
+  ]
+}
+```
+
+`route`, `stop`, `status` and `time` are `null` when the feed doesn't say (the ferry names no
+stop). Positions older than 15 minutes are left out. Sorted by route name.
+
+#### `GET /preview/lirr`, `/preview/mnr`, `/preview/ferry`: `?q=<name>` or `?station=<id>` (`?stop=<id>`)
+
+One line like `/preview/path`: the next departure to each destination, at most 6, soonest first.
+Trips ending at the station are left out.
+
+```
+Penn Station · Ronkonkoma 1 · Huntington 9 · Port Washington 16 · Babylon 32 · Long Beach 42 min
+```
+
 ### `GET /health`
 
 No token, never cached: `{ "ok": true, "staticFeedVersion": "...", "time": 1794232808 }`.
@@ -190,7 +327,10 @@ update clients, remove the old one. If it's unset, authenticated routes answer 5
 | `/preview/subway` | `public, max-age=20, s-maxage=20, stale-while-revalidate=40` (`public, max-age=5, s-maxage=5` with failed feeds) |
 | `/path/arrivals` | `public, s-maxage=20, stale-while-revalidate=40` |
 | `/preview/path` | `public, max-age=20, s-maxage=20, stale-while-revalidate=40` |
-| `/stops/search`, `/path/stations` | `public, s-maxage=3600, stale-while-revalidate=86400` (static data only changes with a deploy, and Vercel purges the CDN cache on each production deploy) |
+| `/subway/vehicles`, `/<agency>/arrivals`, `/<agency>/vehicles` | `public, s-maxage=20, stale-while-revalidate=40` |
+| `/preview/lirr`, `/preview/mnr`, `/preview/ferry` | `public, max-age=20, s-maxage=20, stale-while-revalidate=40` |
+| `/subway/alerts`, `/<agency>/alerts`, `/bus/alerts` | `public, s-maxage=60, stale-while-revalidate=120` |
+| `/stops/search`, `/path/stations`, `/<agency>/stations` | `public, s-maxage=3600, stale-while-revalidate=86400` (static data only changes with a deploy, and Vercel purges the CDN cache on each production deploy) |
 | `/health`, errors | `no-store` |
 
 So the CDN calls the function about once per 20 s per distinct URL. Behind it, each function
@@ -217,30 +357,44 @@ tells whether the CDN served it (`HIT`, `STALE`) or not (`MISS`).
   colors, which `src/path/stations.ts` maps to routes; the station list lives there too, since
   PATH has 13 stations and they don't change.
 
+- **Alerts**: the MTA's GTFS-realtime alert feeds (`camsys/subway-alerts`, `bus-alerts`,
+  `lirr-alerts`, `mnr-alerts`, no key) on the same host as the subway feeds.
+- **LIRR and Metro-North**: the MTA's GTFS-realtime feeds (`lirr/gtfs-lirr`, `mnr/gtfs-mnr`, no
+  key), with stations and branches from each railroad's static GTFS.
+- **NYC Ferry**: the GTFS-realtime feeds and static GTFS at `nycferry.connexionz.net` (no key).
+  Its static data keeps every scheduled trip, because the realtime feed names only a trip id and
+  its next stop.
+- The LIRR, Metro-North and ferry data files (`src/data/<agency>.generated.ts`) are built and
+  refreshed like the subway's, by the same script and workflow.
+
 ## Development
 
 ```sh
 pnpm install
 pnpm test             # unit tests (recorded feeds in test/fixtures)
 pnpm typecheck
-pnpm build:static     # regenerate src/data/subway.generated.ts from the MTA
+pnpm build:static     # regenerate src/data/*.generated.ts (subway, lirr, mnr, ferry)
 pnpm record-fixtures  # re-record test/fixtures/*.pb from the live feeds
-pnpm smoke            # check the live MTA feeds (see below)
+pnpm smoke            # check the live feeds (see below)
 ```
 
 Layout:
 
 ```
-api/                 one Vercel function per route (thin: they export GET from src/routes)
-src/routes/          handlers: arrivals, search, preview, path, health
+api/                 Vercel functions (thin: they export GET from src/routes); api/agency.ts
+                     serves every LIRR, Metro-North, ferry and bus route
+src/routes/          handlers: arrivals, search, preview, alerts, vehicles, path, agency, health
 src/subway/          feed list, fetching and decoding, arrivals computation, preview line
 src/path/            PATH stations and routes, feed fetching and parsing, arrivals, preview line
+src/agency/          LIRR, Metro-North and NYC Ferry: registry, departures, vehicle positions
+src/alerts.ts        alerts in effect, from any GTFS-realtime alerts feed
+src/preview.ts       the "next departure per destination" line shared by PATH and the agencies
 src/stops/           station resolution and name search
 src/static/          static GTFS preprocessing (pure) and its types
 src/data/            generated static data
 scripts/             build-static, record-fixtures, smoke
 test/                vitest tests and fixture feeds
-vercel.json          rewrites /health, /subway/*, /path/*, /stops/*, /preview/* to the functions
+vercel.json          rewrites the public paths to the functions
 ```
 
 To run locally against Vercel's runtime, use `vercel dev` with `TRANSIT_TOKEN` in `.env.local`
@@ -273,6 +427,12 @@ curl -i -H "X-Transit-Token: $TOKEN" "$BASE/preview/subway?q=bedford"   # 200, o
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/path/arrivals?station=JSQ"  # 200
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/path/stations"              # 200
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/preview/path?q=grove"       # 200, one line of text
+curl -i -H "X-Transit-Token: $TOKEN" "$BASE/subway/alerts?route=A"      # 200
+curl -i -H "X-Transit-Token: $TOKEN" "$BASE/subway/vehicles?route=L"    # 200
+curl -i -H "X-Transit-Token: $TOKEN" "$BASE/lirr/arrivals?station=102"  # 200, Jamaica
+curl -i -H "X-Transit-Token: $TOKEN" "$BASE/mnr/stations?q=rye"         # 200
+curl -i -H "X-Transit-Token: $TOKEN" "$BASE/preview/ferry?q=wall"       # 200, one line of text
+curl -i -H "X-Transit-Token: $TOKEN" "$BASE/bus/alerts?route=Q29"       # 200
 ```
 
 Or run `TRANSIT_BASE_URL=$BASE TRANSIT_TOKEN=$TOKEN pnpm smoke`, which does the same checks.
@@ -288,10 +448,17 @@ Or run `TRANSIT_BASE_URL=$BASE TRANSIT_TOKEN=$TOKEN pnpm smoke`, which does the 
 - `test/preview.test.ts`: the preview line's format on hand-built arrivals.
 - `test/path.test.ts`: PATH station lookup, feed parsing (hand-built documents and a recorded
   feed), arrivals, the preview line and the three PATH routes.
+- `test/agency.test.ts`: the generic static build, departures (including the ferry's schedule
+  extension), vehicle positions, and every `/lirr`, `/mnr`, `/ferry` and `/bus` route on
+  recorded feeds.
+- `test/alerts.test.ts`: alerts in effect on hand-built and recorded feeds, `/subway/alerts`
+  and `/subway/vehicles`.
 - `.github/workflows/smoke.yml`: twice a day against the live feeds. It fails on stale feeds,
   routes missing from `FEEDS`, many stop ids missing from the static data, or a big station with
   no arrivals; for PATH, on entries the parser can't read, unknown stations or line colors,
-  stale data, or Journal Square with no trains.
+  stale data, or Journal Square with no trains; for the LIRR, Metro-North and the ferry, on
+  stale feeds, ids missing from the static data, a main stop with no departures or no vehicle
+  positions; and on alert feeds that stop decoding.
 
 ## Roadmap
 
@@ -304,10 +471,15 @@ wrapped in `authenticated(...)`, and the `LIVE_CACHE` or `STATIC_CACHE` headers 
 - **Citi Bike**: `GET /citibike/station?id=<id>` and `GET /citibike/nearby?lat=&lon=&n=`:
   bikes, e-bikes and free docks. Source: the GBFS feeds (`station_information` +
   `station_status`), plain JSON, no key.
-- **MTA bus**: next buses per stop. Source: MTA Bus Time, which needs a free API key
-  (stored as a Vercel environment variable, never committed).
-- **Stop search across systems**: extend `/stops/search` to PATH stations (today listed by
-  `/path/stations`) and Citi Bike stations once those exist.
+- **MTA bus**: next buses per stop (alerts are already served). Source: MTA Bus Time's
+  GTFS-realtime feeds, which need a free API key (stored as a Vercel environment variable, never
+  committed), plus the static bus GTFS for stop and route names.
+- **NJ Transit**: rail and bus arrivals. Source: NJ Transit's GTFS-realtime feeds, which need a
+  developer account.
+- **Alert categories and track numbers**: both sit in MTA extensions to GTFS-realtime that
+  `gtfs-realtime-bindings` drops; decoding them needs the MTA's `.proto` files.
+- **Stop search across systems**: extend `/stops/search` to PATH, LIRR, Metro-North and ferry
+  stations (today each has its own list) and Citi Bike stations once those exist.
 
 ## Clients
 

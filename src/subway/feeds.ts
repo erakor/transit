@@ -3,7 +3,7 @@ import GtfsRealtimeBindings from "gtfs-realtime-bindings";
 const { transit_realtime } = GtfsRealtimeBindings;
 export type FeedMessage = GtfsRealtimeBindings.transit_realtime.FeedMessage;
 
-const BASE = "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2F";
+const BASE = "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/";
 
 /** MTA subway GTFS-realtime feeds (no API key needed) and the routes each one carries. */
 export const FEEDS: Record<string, readonly string[]> = {
@@ -17,8 +17,13 @@ export const FEEDS: Record<string, readonly string[]> = {
   "gtfs-si": ["SI"],
 };
 
+/**
+ * URL of a GTFS-realtime feed: a subway feed name from `FEEDS` ("gtfs-ace"), another MTA feed
+ * with its group ("lirr/gtfs-lirr", "camsys/subway-alerts"), or a full URL for other agencies.
+ */
 export function feedUrl(feed: string): string {
-  return BASE + feed;
+  if (feed.startsWith("https://")) return feed;
+  return BASE + encodeURIComponent(feed.includes("/") ? feed : `nyct/${feed}`);
 }
 
 const FEED_OF_ROUTE = new Map<string, string>();

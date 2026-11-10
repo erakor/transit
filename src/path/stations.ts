@@ -1,4 +1,4 @@
-import { tokenize } from "../stops/search.js";
+import { rankByName, tokenize } from "../stops/search.js";
 
 export interface PathRoute {
   id: string;
@@ -98,28 +98,14 @@ export function routesOf(station: PathStation): PathRoute[] {
 }
 
 const SEARCH = PATH_STATIONS.map((station) => ({
-  station,
+  item: station,
   names: [station.name, station.id, ...(ALIASES[station.id] ?? [])].map(tokenize),
 }));
 
 /**
- * Stations matching a name, best first, with the subway search's rules: every query token must
- * prefix a token of one of the station's names ("wtc", "9th st", "journal sq", "grove").
+ * Stations matching a name, best first, with the subway search's rules ("wtc", "9th st",
+ * "journal sq", "grove"). Ties keep the station list's order.
  */
 export function searchPathStations(query: string): PathStation[] {
-  const q = tokenize(query);
-  if (q.length === 0) return [];
-  const joined = q.join(" ");
-  const hits: { station: PathStation; score: number }[] = [];
-  for (const e of SEARCH) {
-    let best = 0;
-    for (const name of e.names) {
-      if (!q.every((t) => name.some((n) => n.startsWith(t)))) continue;
-      const full = name.join(" ");
-      best = Math.max(best, full === joined ? 3 : full.startsWith(joined) ? 2 : 1);
-    }
-    if (best > 0) hits.push({ station: e.station, score: best });
-  }
-  // Stable sort: ties keep the station list's order.
-  return hits.sort((a, b) => b.score - a.score).map((h) => h.station);
+  return rankByName(SEARCH, query);
 }

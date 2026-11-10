@@ -31,7 +31,7 @@ export interface ArrivalsResult {
 }
 
 type Long = { toNumber(): number };
-function num(v: number | Long | null | undefined): number | undefined {
+export function num(v: number | Long | null | undefined): number | undefined {
   if (v === null || v === undefined) return undefined;
   const n = typeof v === "number" ? v : v.toNumber();
   return n > 0 ? n : undefined;
@@ -111,7 +111,7 @@ export function computeArrivals(
  * The trip's last stop with a known name. Feeds sometimes end a trip at a yard or
  * non-revenue track id that isn't in the static stops, so walk back to the last real one.
  */
-function terminalName(updates: { stopId?: string | null }[], index: StationIndex): string {
+export function terminalName(updates: { stopId?: string | null }[], index: { stopName(id: string): string | undefined }): string {
   for (let i = updates.length - 1; i >= 0; i--) {
     const name = index.stopName(updates[i]!.stopId ?? "");
     if (name) return name;

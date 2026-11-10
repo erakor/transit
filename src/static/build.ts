@@ -7,12 +7,12 @@ export type GtfsFiles = Record<string, string>;
 const REQUIRED = ["routes.txt", "stops.txt", "trips.txt", "stop_times.txt"];
 const DEFAULT_COLOR = "808183";
 
-function hex(c: string | undefined, fallback: string): string {
+export function hex(c: string | undefined, fallback: string): string {
   const v = (c ?? "").replace(/^#/, "").toUpperCase();
   return "#" + (/^[0-9A-F]{6}$/.test(v) ? v : fallback);
 }
 
-function round(n: number, digits = 6): number {
+export function round(n: number, digits = 6): number {
   const f = 10 ** digits;
   return Math.round(n * f) / f;
 }

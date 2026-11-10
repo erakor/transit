@@ -3,6 +3,9 @@ import { GET as healthGET } from "../api/health.js";
 import { arrivalsHandler } from "../src/routes/arrivals.js";
 import { searchHandler } from "../src/routes/search.js";
 import { subwayPreviewHandler } from "../src/routes/preview.js";
+import { agencyHandler } from "../src/routes/agency.js";
+import { subwayAlertsHandler } from "../src/routes/alerts.js";
+import { subwayVehiclesHandler } from "../src/routes/vehicles.js";
 import { pathArrivalsHandler, pathPreviewHandler, pathStationsHandler } from "../src/routes/path.js";
 import { clearPathFeedMemo } from "../src/path/feed.js";
 import { clearFeedMemo } from "../src/subway/feeds.js";
@@ -44,6 +47,13 @@ describe.each([
   ["/path/arrivals", "?station=WTC", () => pathArrivalsHandler({ fetcher: fixtureFetcher(), now: () => PATH_FIXTURE_NOW_MS })],
   ["/path/stations", "", () => pathStationsHandler()],
   ["/preview/path", "?q=hoboken", () => pathPreviewHandler({ fetcher: fixtureFetcher(), now: () => PATH_FIXTURE_NOW_MS })],
+  ["/subway/alerts", "?route=A", () => subwayAlertsHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
+  ["/subway/vehicles", "?route=L", () => subwayVehiclesHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
+  ["/lirr/arrivals", "?station=102", () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
+  ["/mnr/stations", "?q=rye", () => agencyHandler()],
+  ["/ferry/vehicles", "", () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
+  ["/bus/alerts", "", () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
+  ["/preview/mnr", "?station=1", () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
 ])("%s auth and caching", (path, query, handler) => {
   it("is 401 without a token, uncached and varying on the token header", async () => {
     const res = await handler()(get(path + query));

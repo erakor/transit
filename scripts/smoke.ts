@@ -1,5 +1,5 @@
 /**
- * Smoke test against the live MTA and PATH feeds (and, optionally, a deployment).
+ * Smoke test against the live feeds (and, optionally, a deployment).
  *
  *   pnpm smoke
  *   TRANSIT_BASE_URL=https://<deployment> TRANSIT_TOKEN=... pnpm smoke
@@ -7,8 +7,16 @@
  * Fails when an upstream change would break the service: a feed that no longer decodes, stale
  * data, routes the FEEDS table doesn't know, stop ids missing from the static data, or a big
  * station with no arrivals. For PATH: entries the parser can't read, stations or line colors it
- * doesn't know, stale data, or Journal Square with no trains.
+ * doesn't know, stale data, or Journal Square with no trains. For LIRR, Metro-North and NYC
+ * Ferry: stale or empty feeds, stop or route ids missing from the static data, ferry trips missing
+ * from the static schedule, a main stop with no departures, or no vehicle positions. For alerts:
+ * a feed that no longer decodes or has gone a day without an update.
  */
+import { AGENCIES } from "../src/agency/agencies.js";
+import { computeAgencyArrivals } from "../src/agency/arrivals.js";
+import { computeAgencyVehicles } from "../src/agency/vehicles.js";
+import { computeAlerts } from "../src/alerts.js";
+import { BUS_ALERTS_FEED, FALLBACK_ROUTE, SUBWAY_ALERTS_FEED } from "../src/routes/alerts.js";
 import { computePathArrivals } from "../src/path/arrivals.js";
 import { fetchPathFeed } from "../src/path/feed.js";
 import { PATH_STATIONS, pathStation, routeForColors } from "../src/path/stations.js";
@@ -86,6 +94,55 @@ try {
   fail(`path: ${(err as Error).message}`);
 }
 
+/** A stop that always has service at the hours the smoke test runs. */
+const MAIN_STOP: Record<string, string> = { lirr: "Jamaica", mnr: "Grand Central", ferry: "Wall St/Pier 11" };
+for (const agency of Object.values(AGENCIES)) {
+  try {
+    const feed = await fetchFeed(agency.tripsFeed, { timeoutMs: 20_000 });
+    const positions = agency.vehiclesFeed ? await fetchFeed(agency.vehiclesFeed, { timeoutMs: 20_000 }) : feed;
+    const ts = Number(feed.header.timestamp ?? 0);
+    const trips = feed.entity.flatMap((e) => (e.tripUpdate ? [e.tripUpdate] : []));
+    const stopIds = trips.flatMap((t) => (t.stopTimeUpdate ?? []).map((s) => s.stopId ?? ""));
+    const unknownStops = stopIds.filter((s) => !agency.data.stops[s]);
+    const routeIds = new Set(trips.map((t) => t.trip?.routeId || agency.data.trips?.[t.trip?.tripId ?? ""]?.route || ""));
+    const unknownRoutes = [...routeIds].filter((r) => r && !agency.data.routes[r]);
+    const unscheduled = agency.data.trips ? trips.filter((t) => !agency.data.trips![t.trip?.tripId ?? ""]) : [];
+    const { vehicles } = computeAgencyVehicles(positions === feed ? [feed] : [positions, feed], agency.data, { now: nowS });
+    console.log(
+      `${agency.id}: ${trips.length} trips, age ${nowS - ts}s, ${unknownStops.length}/${stopIds.length} stop updates with unknown stop ids, ` +
+        `${unscheduled.length} trips not in the static schedule, ${vehicles.length} vehicles`,
+    );
+    if (Math.abs(nowS - ts) > 600) fail(`${agency.id}: header timestamp ${ts} is ${nowS - ts}s old`);
+    if (trips.length === 0) fail(`${agency.id}: no trip updates`);
+    if (unknownRoutes.length) fail(`${agency.id}: routes missing from the static data: ${unknownRoutes.join(",")}`);
+    if (stopIds.length && unknownStops.length / stopIds.length > 0.1) {
+      fail(`${agency.id}: ${unknownStops.length} of ${stopIds.length} stop ids unknown, e.g. ${[...new Set(unknownStops)].slice(0, 5).join(",")}`);
+    }
+    // The static schedule is a day behind at worst; many unknown trips means the refresh is failing.
+    if (trips.length && unscheduled.length / trips.length > 0.2) fail(`${agency.id}: ${unscheduled.length} of ${trips.length} trips are not in the static schedule`);
+    if (vehicles.length === 0) fail(`${agency.id}: no vehicle positions`);
+    const main = Object.values(agency.data.stops).find((s) => s.name === MAIN_STOP[agency.id]);
+    const n = main ? computeAgencyArrivals(main, feed, agency.data, { now: nowS, limit: 30 }).arrivals.length : 0;
+    console.log(`${MAIN_STOP[agency.id]}: ${n} departures`);
+    if (n === 0) fail(`${agency.id}: no departures at ${MAIN_STOP[agency.id]}`);
+  } catch (err) {
+    fail(`${agency.id}: ${(err as Error).message}`);
+  }
+}
+
+for (const name of [SUBWAY_ALERTS_FEED, BUS_ALERTS_FEED, ...Object.values(AGENCIES).map((a) => a.alertsFeed)]) {
+  const label = name.split("/").slice(-2).join("/");
+  try {
+    const feed = await fetchFeed(name, { timeoutMs: 20_000 });
+    const { alerts, updatedAt } = computeAlerts(feed, { now: nowS, route: FALLBACK_ROUTE, stopName: () => undefined });
+    console.log(`${label}: ${feed.entity.length} alerts, ${alerts.length} in effect, age ${nowS - (updatedAt ?? 0)}s`);
+    if (Math.abs(nowS - (updatedAt ?? 0)) > 86_400) fail(`${label}: header timestamp ${updatedAt} is ${nowS - (updatedAt ?? 0)}s old`);
+    if (feed.entity.some((e) => !e.alert)) fail(`${label}: entities that are not alerts`);
+  } catch (err) {
+    fail(`${label}: ${(err as Error).message}`);
+  }
+}
+
 const base = process.env.TRANSIT_BASE_URL?.replace(/\/$/, "");
 if (base) {
   const token = process.env.TRANSIT_TOKEN?.split(",")[0]?.trim() ?? "";
@@ -124,6 +181,23 @@ if (base) {
   const pathText = await pathLine.text();
   console.log(`preview: ${pathText.trimEnd()}`);
   if (!/^Journal Square · .+\n$/.test(pathText)) fail(`PATH preview: unexpected line ${JSON.stringify(pathText)}`);
+
+  // These all go through one function behind a rewrite with a query string (see vercel.json).
+  const jamaica = Object.values(AGENCIES.lirr!.data.stops).find((s) => s.name === "Jamaica")!;
+  const lirr = `/lirr/arrivals?station=${jamaica.id}&smoke=${nowS}`;
+  expectStatus(await call(lirr, false), 401, "LIRR arrivals without token");
+  const lirrRes = await call(lirr, true);
+  expectStatus(lirrRes, 200, "LIRR arrivals with token");
+  if (lirrRes.status === 200 && (await lirrRes.json()).station?.name !== "Jamaica") fail("LIRR arrivals: not Jamaica's");
+  for (const path of ["/mnr/stations?q=grand%20central", "/ferry/stops", "/ferry/vehicles", "/mnr/alerts", "/bus/alerts", "/subway/alerts?route=A", "/subway/vehicles?route=L"]) {
+    expectStatus(await call(path, true), 200, path);
+  }
+  expectStatus(await call("/lirr/nope", true), 404, "an unknown agency route");
+  const mnrLine = await call(`/preview/mnr?q=grand%20central&smoke=${nowS}`, true);
+  expectStatus(mnrLine, 200, "Metro-North preview with token");
+  const mnrText = await mnrLine.text();
+  console.log(`preview: ${mnrText.trimEnd()}`);
+  if (!/^Grand Central · .+\n$/.test(mnrText)) fail(`Metro-North preview: unexpected line ${JSON.stringify(mnrText)}`);
 }
 
 if (problems.length) {

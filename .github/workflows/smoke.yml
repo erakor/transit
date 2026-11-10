@@ -1,7 +1,7 @@
 name: Live smoke test
 
-# Checks the live MTA feeds still decode and match the static data, so upstream format
-# changes show up. If the TRANSIT_BASE_URL and TRANSIT_TOKEN repository secrets are set,
+# Checks the live feeds (MTA subway, LIRR, Metro-North, alerts, PATH, NYC Ferry) still decode and
+# match the static data, so upstream format changes show up. If the TRANSIT_BASE_URL and TRANSIT_TOKEN repository secrets are set,
 # it also calls the deployment: 401 without the token, 200 with it, CDN hit on a repeat.
 on:
   schedule:

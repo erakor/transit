@@ -33,3 +33,12 @@ export function makeFeed(timestamp: number, trips: TripSpec[]): FeedMessage {
 export function encodeFeed(feed: FeedMessage): Uint8Array {
   return transit_realtime.FeedMessage.encode(feed).finish();
 }
+
+/** Any GTFS-realtime feed from a plain object (protobufjs `fromObject` shape), round-tripped like `makeFeed`. */
+export function feedFrom(timestamp: number, entity: Record<string, unknown>[]): FeedMessage {
+  const msg = transit_realtime.FeedMessage.fromObject({
+    header: { gtfsRealtimeVersion: "2.0", timestamp },
+    entity: entity.map((e, i) => ({ id: String(i + 1), ...e })),
+  });
+  return transit_realtime.FeedMessage.decode(transit_realtime.FeedMessage.encode(msg).finish());
+}
