@@ -1,12 +1,7 @@
+import type { RouteDisplay } from "../gtfsrt.js";
 import { rankByName, tokenize } from "../stops/search.js";
 
-export interface PathRoute {
-  id: string;
-  name: string;
-  /** Hex color with leading "#". */
-  color: string;
-  textColor: string;
-}
+export type PathRoute = RouteDisplay;
 
 /**
  * PATH lines in the order PATH lists them. The realtime feed has no route id, only a line color
@@ -21,11 +16,9 @@ const ROUTES: (PathRoute & { feedColors: string })[] = [
   { id: "JSQ-33-HOB", name: "Journal Square - 33rd Street (via Hoboken)", color: "#FF9900", textColor: "#FFFFFF", feedColors: "4D92FB,FF9900" },
 ];
 
-export const PATH_ROUTES: readonly PathRoute[] = ROUTES.map(({ feedColors: _, ...route }) => route);
-
+const ROUTE_BY_COLORS = new Map(ROUTES.map(({ feedColors, ...route }): [string, PathRoute] => [feedColors, route]));
+export const PATH_ROUTES: readonly PathRoute[] = [...ROUTE_BY_COLORS.values()];
 const ROUTE_BY_ID = new Map(PATH_ROUTES.map((r) => [r.id, r]));
-const ROUTE_BY_COLORS = new Map(ROUTES.map((r) => [r.feedColors, ROUTE_BY_ID.get(r.id)!]));
-const ROUTE_ORDER = new Map(PATH_ROUTES.map((r, i) => [r.id, i]));
 
 /** The feed's `lineColor` ("4d92fb,ff9900") as a lookup key ("4D92FB,FF9900"). */
 export function colorsKey(lineColor: string): string {
@@ -45,7 +38,8 @@ export function routeForColors(key: string): PathRoute | undefined {
 
 /** Position of a route id in PATH's order; unknown routes go last. */
 export function routeOrder(id: string): number {
-  return ROUTE_ORDER.get(id) ?? ROUTES.length;
+  const i = PATH_ROUTES.findIndex((r) => r.id === id);
+  return i === -1 ? PATH_ROUTES.length : i;
 }
 
 export interface PathStation {

@@ -1,8 +1,6 @@
 import type { AgencyData, AgencyRoute, AgencyStop, AgencyTrip } from "../agency/types.js";
-import { hex, round, type GtfsFiles } from "./build.js";
+import { DEFAULT_COLOR, hex, requireFiles, round, type GtfsFiles } from "./build.js";
 import { forEachCsvRow, parseCsvObjects } from "./csv.js";
-
-const REQUIRED = ["routes.txt", "stops.txt", "trips.txt", "stop_times.txt"];
 
 /** "25:10:30" (GTFS times run past midnight) as seconds. */
 function seconds(time: string): number {
@@ -16,9 +14,7 @@ function seconds(time: string): number {
  * sorted, so the same GTFS gives a byte-identical file.
  */
 export function buildAgencyData(files: GtfsFiles, { trips: withTrips = false }: { trips?: boolean } = {}): AgencyData {
-  for (const f of REQUIRED) {
-    if (files[f] === undefined) throw new Error(`GTFS is missing ${f}`);
-  }
+  requireFiles(files);
 
   const routes: Record<string, AgencyRoute> = {};
   for (const r of parseCsvObjects(files["routes.txt"]!)) {
@@ -26,7 +22,7 @@ export function buildAgencyData(files: GtfsFiles, { trips: withTrips = false }: 
     routes[r.route_id] = {
       id: r.route_id,
       name: r.route_long_name || r.route_short_name || r.route_id,
-      color: hex(r.route_color, "808183"),
+      color: hex(r.route_color, DEFAULT_COLOR),
       textColor: hex(r.route_text_color, "FFFFFF"),
     };
   }

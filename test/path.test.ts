@@ -1,13 +1,12 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from "../src/http.js";
 import { BOARDING_GRACE_S, computePathArrivals, type PathArrivalsResult } from "../src/path/arrivals.js";
-import { clearPathFeedMemo, parsePathFeed, PATH_FEED_URL } from "../src/path/feed.js";
+import { parsePathFeed, PATH_FEED_URL } from "../src/path/feed.js";
 import { pathPreviewLine } from "../src/path/preview.js";
 import { PATH_ROUTES, PATH_STATIONS, pathStation, routeForColors, searchPathStations } from "../src/path/stations.js";
 import { pathArrivalsHandler, pathPreviewHandler, pathStationsHandler } from "../src/routes/path.js";
-import { fixture, fixtureFetcher, get, PATH_FIXTURE_NOW_MS, TOKEN } from "./helpers.js";
+import { auth, fixture, fixtureFetcher, get, PATH_FIXTURE_NOW_MS, useRouteTestSetup } from "./helpers.js";
 
-const auth = { "x-transit-token": TOKEN };
 const NOW = 1_000_000;
 const UPDATED = "1970-01-12T13:46:40Z"; // NOW
 
@@ -189,15 +188,7 @@ describe("pathPreviewLine", () => {
 });
 
 describe("PATH routes", () => {
-  beforeEach(() => {
-    vi.stubEnv("TRANSIT_TOKEN", TOKEN);
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    clearPathFeedMemo();
-  });
-  afterEach(() => {
-    vi.unstubAllEnvs();
-    vi.restoreAllMocks();
-  });
+  useRouteTestSetup();
 
   const deps = (fetcher = fixtureFetcher()) => ({ fetcher, now: () => PATH_FIXTURE_NOW_MS });
 

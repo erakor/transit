@@ -1,8 +1,6 @@
 import type { RouteInfo } from "../static/types.js";
 import type { StationIndex } from "../stops/stations.js";
-import { VEHICLE_STATUS } from "../agency/vehicles.js";
-import { num, terminalName } from "./arrivals.js";
-import type { FeedMessage } from "./feeds.js";
+import { num, terminalName, VEHICLE_MAX_AGE_S, VEHICLE_STATUS, type FeedMessage } from "../gtfsrt.js";
 
 export interface SubwayTrain {
   tripId: string;
@@ -24,26 +22,24 @@ export interface SubwayTrainsResult {
   vehicles: SubwayTrain[];
 }
 
-/** Trains that last reported longer ago than this are left out. */
-export const TRAIN_MAX_AGE_S = 900;
-
 /**
  * Where a route's trains are: the stop each one is at or heading to. The subway feeds carry no
  * coordinates, only stops. Pure: takes the decoded feed for the route and `now` (epoch seconds).
+ * Trains that last reported over `VEHICLE_MAX_AGE_S` ago are left out.
  * Trains go northbound first, each direction in stop id order, which follows the line.
  */
 export function computeSubwayTrains(route: RouteInfo, feed: FeedMessage, index: StationIndex, { now }: { now: number }): SubwayTrainsResult {
   const headsigns = new Map<string, string>();
   for (const entity of feed.entity) {
     const tu = entity.tripUpdate;
-    if (tu?.trip?.tripId) headsigns.set(tu.trip.tripId, terminalName(tu.stopTimeUpdate ?? [], index));
+    if (tu?.trip?.tripId) headsigns.set(tu.trip.tripId, terminalName(tu.stopTimeUpdate ?? [], (id) => index.stopName(id)));
   }
   const trains: SubwayTrain[] = [];
   for (const entity of feed.entity) {
     const v = entity.vehicle;
     if (!v || entity.isDeleted || v.trip?.routeId !== route.id) continue;
     const time = num(v.timestamp) ?? null;
-    if (time !== null && time < now - TRAIN_MAX_AGE_S) continue;
+    if (time !== null && time < now - VEHICLE_MAX_AGE_S) continue;
     const stopId = v.stopId ?? "";
     const name = index.stopName(stopId);
     const tripId = v.trip.tripId ?? entity.id;

@@ -3,7 +3,7 @@ import { computePathArrivals } from "../path/arrivals.js";
 import { fetchPathFeed, type PathFeed } from "../path/feed.js";
 import { pathPreviewLine } from "../path/preview.js";
 import { PATH_STATIONS, pathStation, routesOf, searchPathStations } from "../path/stations.js";
-import type { Fetcher } from "../subway/feeds.js";
+import type { Fetcher } from "../gtfsrt.js";
 
 export interface PathDeps {
   fetcher?: Fetcher;

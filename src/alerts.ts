@@ -1,12 +1,4 @@
-import { num } from "./subway/arrivals.js";
-import type { FeedMessage } from "./subway/feeds.js";
-
-export interface AlertRoute {
-  id: string;
-  name: string;
-  color: string;
-  textColor: string;
-}
+import { fallbackRoute, num, type FeedMessage, type RouteDisplay } from "./gtfsrt.js";
 
 export interface Alert {
   id: string;
@@ -16,7 +8,7 @@ export interface Alert {
   header: string;
   /** Longer plain text, "" when there is none. */
   description: string;
-  routes: AlertRoute[];
+  routes: RouteDisplay[];
   stops: { id: string; name: string }[];
   /** Start of the period in effect now (epoch seconds), null when open. */
   start: number | null;
@@ -35,8 +27,16 @@ export interface AlertsOptions {
   now: number;
   /** Keeps an alert when any of its informed entities passes; all alerts without it. */
   match?: (routeId: string, stopId: string) => boolean;
-  route: (id: string) => AlertRoute;
-  stopName: (id: string) => string | undefined;
+  /** Display data for a route id; without it, or for unknown ids, `fallbackRoute`. */
+  route?: (id: string) => RouteDisplay | undefined;
+  stopName?: (id: string) => string | undefined;
+}
+
+type Period = { start?: Parameters<typeof num>[0]; end?: Parameters<typeof num>[0] };
+
+/** Whether an alert's active period covers `now` (epoch seconds). A missing bound is open. */
+export function inEffect(period: Period, now: number): boolean {
+  return (num(period.start) ?? 0) <= now && (num(period.end) ?? Infinity) >= now;
 }
 
 function plain(text: { translation?: { text?: string | null; language?: string | null }[] | null } | null | undefined): string {
@@ -52,23 +52,23 @@ function plain(text: { translation?: { text?: string | null; language?: string |
  */
 export function computeAlerts(feed: FeedMessage, { now, match, route, stopName }: AlertsOptions): AlertsResult {
   const alerts: Alert[] = [];
+  const routeOf = (e: Entity) => e.routeId || e.trip?.routeId || "";
   for (const entity of feed.entity) {
     const a = entity.alert;
     if (!a || entity.isDeleted) continue;
-    const periods = a.activePeriod ?? [];
-    const period = periods.find((p) => (num(p.start) ?? 0) <= now && (num(p.end) ?? Infinity) >= now);
-    if (periods.length > 0 && !period) continue;
-
+    // The cheap filter first: planned work can carry hundreds of periods.
     const informed: Entity[] = a.informedEntity ?? [];
-    const routeOf = (e: Entity) => e.routeId || e.trip?.routeId || "";
     if (match && !informed.some((e) => match(routeOf(e), e.stopId ?? ""))) continue;
+    const periods = a.activePeriod ?? [];
+    const period = periods.find((p) => inEffect(p, now));
+    if (periods.length > 0 && !period) continue;
     const header = plain(a.headerText);
     if (!header) continue;
 
     const routeIds = [...new Set(informed.map(routeOf).filter(Boolean))];
     const stops = new Map<string, string>();
     for (const e of informed) {
-      const name = e.stopId ? stopName(e.stopId) : undefined;
+      const name = e.stopId ? stopName?.(e.stopId) : undefined;
       if (name) stops.set(e.stopId!, name);
     }
     alerts.push({
@@ -76,7 +76,7 @@ export function computeAlerts(feed: FeedMessage, { now, match, route, stopName }
       planned: entity.id.includes("planned_work"),
       header,
       description: plain(a.descriptionText),
-      routes: routeIds.map(route),
+      routes: routeIds.map((id) => route?.(id) ?? fallbackRoute(id)),
       stops: [...stops].map(([id, name]) => ({ id, name })),
       start: num(period?.start) ?? null,
       end: num(period?.end) ?? null,

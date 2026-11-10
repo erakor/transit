@@ -1,6 +1,7 @@
 import { authenticated, errorResponse, json, LIVE_CACHE } from "../http.js";
 import { stationIndex } from "../stops/stations.js";
-import { feedsForRoutes, fetchFeed, type FeedMessage } from "../subway/feeds.js";
+import { tryFetchFeed } from "../gtfsrt.js";
+import { feedsForRoutes } from "../subway/feeds.js";
 import { computeSubwayTrains } from "../subway/vehicles.js";
 import type { ArrivalsDeps } from "./arrivals.js";
 
@@ -15,13 +16,8 @@ export function subwayVehiclesHandler({ fetcher, now = () => Date.now(), index =
     if (!route || !feedName) return errorResponse(404, `unknown route ${routeParam}`);
 
     const nowMs = now();
-    let feed: FeedMessage;
-    try {
-      feed = await fetchFeed(feedName, { fetcher, now: nowMs });
-    } catch (err) {
-      console.error(`feed ${feedName} failed:`, err);
-      return errorResponse(502, "MTA feeds unavailable");
-    }
+    const feed = await tryFetchFeed(feedName, { fetcher, now: nowMs });
+    if (!feed) return errorResponse(502, "MTA feeds unavailable");
     return json(computeSubwayTrains(route, feed, idx, { now: Math.floor(nowMs / 1000) }), { cache: LIVE_CACHE });
   });
 }

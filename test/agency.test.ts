@@ -1,16 +1,15 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { AGENCIES, findStop, searchStops } from "../src/agency/agencies.js";
 import { computeAgencyArrivals } from "../src/agency/arrivals.js";
 import type { AgencyData } from "../src/agency/types.js";
-import { computeAgencyVehicles, VEHICLE_MAX_AGE_S } from "../src/agency/vehicles.js";
+import { computeAgencyVehicles } from "../src/agency/vehicles.js";
 import { ALERTS_CACHE, LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from "../src/http.js";
 import { agencyHandler, agencyRoute } from "../src/routes/agency.js";
 import { buildAgencyData } from "../src/static/agency.js";
-import { clearFeedMemo, decodeFeed } from "../src/subway/feeds.js";
+import { clearFeedMemo, decodeFeed, VEHICLE_MAX_AGE_S } from "../src/gtfsrt.js";
 import { feedFrom } from "./feed.js";
-import { fixture, fixtureFetcher, FIXTURE_NOW_MS, get, TOKEN } from "./helpers.js";
+import { auth, fixture, fixtureFetcher, FIXTURE_NOW_MS, get, useRouteTestSetup } from "./helpers.js";
 
-const auth = { "x-transit-token": TOKEN };
 const NOW = 1_800_000_000;
 const FIXTURE_NOW = Math.floor(FIXTURE_NOW_MS / 1000);
 
@@ -193,15 +192,7 @@ describe("computeAgencyVehicles", () => {
 });
 
 describe("agency routes", () => {
-  beforeEach(() => {
-    vi.stubEnv("TRANSIT_TOKEN", TOKEN);
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    clearFeedMemo();
-  });
-  afterEach(() => {
-    vi.unstubAllEnvs();
-    vi.restoreAllMocks();
-  });
+  useRouteTestSetup();
 
   function call(path: string, fail: string[] = []) {
     const fetcher = fixtureFetcher(fail);

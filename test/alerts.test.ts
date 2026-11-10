@@ -1,16 +1,15 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { computeAlerts, type AlertsOptions } from "../src/alerts.js";
 import { SUBWAY_DATA } from "../src/data/subway.generated.js";
 import { ALERTS_CACHE, LIVE_CACHE } from "../src/http.js";
 import { subwayAlertsHandler } from "../src/routes/alerts.js";
 import { subwayVehiclesHandler } from "../src/routes/vehicles.js";
 import { StationIndex } from "../src/stops/stations.js";
-import { clearFeedMemo, decodeFeed } from "../src/subway/feeds.js";
-import { computeSubwayTrains, TRAIN_MAX_AGE_S } from "../src/subway/vehicles.js";
+import { decodeFeed, VEHICLE_MAX_AGE_S } from "../src/gtfsrt.js";
+import { computeSubwayTrains } from "../src/subway/vehicles.js";
 import { encodeFeed, feedFrom } from "./feed.js";
-import { fixture, fixtureFetcher, FIXTURE_NOW_MS, get, TOKEN } from "./helpers.js";
+import { auth, fixture, fixtureFetcher, FIXTURE_NOW_MS, get, useRouteTestSetup } from "./helpers.js";
 
-const auth = { "x-transit-token": TOKEN };
 const NOW = 1_800_000_000;
 const TIMES_SQ = SUBWAY_DATA.stops["127"]!.station;
 
@@ -75,15 +74,7 @@ describe("computeAlerts", () => {
 });
 
 describe("subway alerts and vehicles routes", () => {
-  beforeEach(() => {
-    vi.stubEnv("TRANSIT_TOKEN", TOKEN);
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    clearFeedMemo();
-  });
-  afterEach(() => {
-    vi.unstubAllEnvs();
-    vi.restoreAllMocks();
-  });
+  useRouteTestSetup();
 
   /** Serves the hand-built alerts above. */
   const built = async () => new Response(encodeFeed(feed) as Uint8Array<ArrayBuffer>);
@@ -181,7 +172,7 @@ describe("computeSubwayTrains", () => {
     { tripUpdate: { trip: { tripId: "south", routeId: "L" }, stopTimeUpdate: [{ stopId: "L08S", arrival: { time: NOW + 60 } }, { stopId: "L29S", arrival: { time: NOW + 900 } }] } },
     { vehicle: { trip: { tripId: "south", routeId: "L" }, currentStatus: 1, stopId: "L08S", timestamp: NOW - 10 } },
     { vehicle: { trip: { tripId: "north", routeId: "L" }, stopId: "L06N", timestamp: NOW - 5 } },
-    { vehicle: { trip: { tripId: "stale", routeId: "L" }, stopId: "L03N", timestamp: NOW - TRAIN_MAX_AGE_S - 1 } },
+    { vehicle: { trip: { tripId: "stale", routeId: "L" }, stopId: "L03N", timestamp: NOW - VEHICLE_MAX_AGE_S - 1 } },
     { vehicle: { trip: { tripId: "other", routeId: "G" }, stopId: "G22N", timestamp: NOW } },
   ]);
 

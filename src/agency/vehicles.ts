@@ -1,10 +1,6 @@
-import { num } from "../subway/arrivals.js";
-import type { FeedMessage } from "../subway/feeds.js";
+import { num, oldestTimestamp, terminalName, VEHICLE_MAX_AGE_S, VEHICLE_STATUS, type FeedMessage } from "../gtfsrt.js";
 import { routeInfo } from "./agencies.js";
-import { lastStopName } from "./arrivals.js";
 import type { AgencyData, AgencyRoute } from "./types.js";
-
-export const VEHICLE_STATUS = ["INCOMING_AT", "STOPPED_AT", "IN_TRANSIT_TO"] as const;
 
 export interface AgencyVehicle {
   id: string;
@@ -23,13 +19,10 @@ export interface AgencyVehicle {
   time: number | null;
 }
 
-/** Positions older than this are left out: the feeds keep finished trips around for hours. */
-export const VEHICLE_MAX_AGE_S = 900;
-
 /**
  * Where the agency's vehicles are. `feeds` are the trip updates and, when separate, the vehicle
  * positions; a vehicle's route and headsign come from its trip's update or the static trips.
- * Pure: takes `now` (epoch seconds).
+ * Positions older than `VEHICLE_MAX_AGE_S` are left out. Pure: takes `now` (epoch seconds).
  */
 export function computeAgencyVehicles(
   feeds: FeedMessage[],
@@ -41,7 +34,7 @@ export function computeAgencyVehicles(
     for (const entity of feed.entity) {
       const tu = entity.tripUpdate;
       if (!tu) continue;
-      const info = { route: tu.trip?.routeId ?? "", headsign: lastStopName(tu.stopTimeUpdate ?? [], data) };
+      const info = { route: tu.trip?.routeId ?? "", headsign: terminalName(tu.stopTimeUpdate ?? [], (id) => data.stops[id]?.name) };
       // Metro-North's vehicles name their trip by the entity id, not the trip id.
       for (const key of [tu.trip?.tripId, entity.id]) if (key) trips.set(key, info);
     }
@@ -77,6 +70,5 @@ export function computeAgencyVehicles(
     }
   }
   vehicles.sort((a, b) => (a.route?.name ?? "").localeCompare(b.route?.name ?? "") || a.id.localeCompare(b.id));
-  const stamps = feeds.map((f) => num(f.header?.timestamp)).filter((t): t is number => t !== undefined);
-  return { updatedAt: stamps.length ? Math.min(...stamps) : null, vehicles };
+  return { updatedAt: oldestTimestamp(feeds), vehicles };
 }

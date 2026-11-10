@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { GET as healthGET } from "../api/health.js";
 import { arrivalsHandler } from "../src/routes/arrivals.js";
 import { searchHandler } from "../src/routes/search.js";
@@ -7,25 +7,13 @@ import { agencyHandler } from "../src/routes/agency.js";
 import { subwayAlertsHandler } from "../src/routes/alerts.js";
 import { subwayVehiclesHandler } from "../src/routes/vehicles.js";
 import { pathArrivalsHandler, pathPreviewHandler, pathStationsHandler } from "../src/routes/path.js";
-import { clearPathFeedMemo } from "../src/path/feed.js";
-import { clearFeedMemo } from "../src/subway/feeds.js";
 import { LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from "../src/http.js";
 import { SUBWAY_DATA } from "../src/data/subway.generated.js";
-import { fixtureFetcher, FIXTURE_NOW_MS, get, PATH_FIXTURE_NOW_MS, TOKEN } from "./helpers.js";
+import { auth, fixtureFetcher, FIXTURE_NOW_MS, get, PATH_FIXTURE_NOW_MS, TOKEN, useRouteTestSetup } from "./helpers.js";
 
-const auth = { "x-transit-token": TOKEN };
 const TIMES_SQ = SUBWAY_DATA.stops["127"]!.station;
 
-beforeEach(() => {
-  vi.stubEnv("TRANSIT_TOKEN", TOKEN);
-  vi.spyOn(console, "error").mockImplementation(() => {});
-  clearFeedMemo();
-  clearPathFeedMemo();
-});
-afterEach(() => {
-  vi.unstubAllEnvs();
-  vi.restoreAllMocks();
-});
+useRouteTestSetup();
 
 function arrivals(fetcher = fixtureFetcher(), nowMs = FIXTURE_NOW_MS) {
   return { fetcher, GET: arrivalsHandler({ fetcher, now: () => nowMs }) };

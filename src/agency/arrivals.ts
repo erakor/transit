@@ -1,5 +1,4 @@
-import { num } from "../subway/arrivals.js";
-import type { FeedMessage } from "../subway/feeds.js";
+import { num, terminalName, type FeedMessage } from "../gtfsrt.js";
 import { routeInfo } from "./agencies.js";
 import type { AgencyData, AgencyStop } from "./types.js";
 
@@ -63,11 +62,12 @@ export function computeAgencyArrivals(
       if (typeof event?.delay === "number" && Object.hasOwn(event, "delay")) delay = event.delay;
     } else if (scheduled) {
       // Not predicted: schedule it from the last stop that is.
+      const stopIds = scheduled.stops.map(([id]) => id);
       for (let i = updates.length - 1; i >= 0 && time === undefined; i--) {
         const anchorTime = num(updates[i]!.arrival?.time) ?? num(updates[i]!.departure?.time);
-        const anchor = scheduled.stops.map(([id]) => id).lastIndexOf(updates[i]!.stopId ?? "");
+        const anchor = stopIds.lastIndexOf(updates[i]!.stopId ?? "");
         if (anchorTime === undefined || anchor === -1) continue;
-        const target = scheduled.stops.findIndex(([id], j) => j > anchor && id === stop.id);
+        const target = stopIds.indexOf(stop.id, anchor + 1);
         if (target === -1) break;
         time = anchorTime + scheduled.stops[target]![1] - scheduled.stops[anchor]![1];
       }
@@ -83,7 +83,7 @@ export function computeAgencyArrivals(
       name: route.name,
       color: route.color,
       textColor: route.textColor,
-      headsign: scheduled?.headsign || lastStopName(updates, data),
+      headsign: scheduled?.headsign || terminalName(updates, (id) => data.stops[id]?.name),
       tripId,
     });
   }
@@ -93,13 +93,4 @@ export function computeAgencyArrivals(
     updatedAt: num(feed.header?.timestamp) ?? null,
     arrivals: arrivals.slice(0, limit),
   };
-}
-
-/** The trip's last stop with a known name. */
-export function lastStopName(updates: { stopId?: string | null }[], data: AgencyData): string {
-  for (let i = updates.length - 1; i >= 0; i--) {
-    const name = data.stops[updates[i]!.stopId ?? ""]?.name;
-    if (name) return name;
-  }
-  return "";
 }

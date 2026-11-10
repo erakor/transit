@@ -35,7 +35,8 @@ Request flow for `/subway/arrivals`:
 3. `StationIndex.resolve()` (`src/stops/stations.ts`) maps the `stop` param (station id, parent
    stop id or platform id) to platform ids and the routes scheduled there.
 4. `feedsForRoutes()` picks the GTFS-realtime feeds for those routes (`FEEDS` in
-   `src/subway/feeds.ts`); `fetchFeed()` fetches them in parallel through a 15 s per-instance memo.
+   `src/subway/feeds.ts`); `fetchFeed()` (`src/gtfsrt.ts`) fetches them in parallel through a
+   15 s per-instance memo.
 5. `computeArrivals()` (`src/subway/arrivals.ts`, pure) groups stop time updates by route and
    direction. It takes decoded feeds and `now`, so tests drive it without the network.
 
@@ -45,7 +46,7 @@ fixture fetcher and a fixed clock (`test/helpers.ts`) instead of mocking modules
 PATH (`/path/arrivals`, `/path/stations`, `/preview/path`) has the same shape with less machinery:
 `src/routes/path.ts` resolves the station (`src/path/stations.ts`, a hand-written table: 13
 stations and 5 routes, no generated data), `fetchPathFeed()` (`src/path/feed.ts`) fetches the one
-JSON document through the same 15 s memo and normalizes it with `parsePathFeed()`, and
+JSON document through the same 15 s memo (`memoized()`) and normalizes it with `parsePathFeed()`, and
 `computePathArrivals()` (`src/path/arrivals.ts`, pure) groups trains by route and direction.
 
 The LIRR, Metro-North and NYC Ferry share one implementation, driven by the `AGENCIES` table in
@@ -61,11 +62,16 @@ The LIRR, Metro-North and NYC Ferry share one implementation, driven by the `AGE
   When the static data has `trips` (the ferry), stops the feed doesn't predict are scheduled
   from the last predicted stop.
 - `computeAgencyVehicles()` (`src/agency/vehicles.ts`) and `computeAlerts()` (`src/alerts.ts`,
-  also behind `/subway/alerts`) are pure too. `fetchFeed()` serves all of these feeds: it takes a
-  subway feed name, an MTA `group/feed` name, or a full URL.
+  also behind `/subway/alerts`) are pure too.
+- `src/gtfsrt.ts` holds what every GTFS-realtime provider shares: `fetchFeed()` (a subway feed
+  name, an MTA `group/feed` name, or a full URL), `tryFetchFeed()` for routes that answer 502 on
+  failure, the memo, `num()`, `terminalName()`, `fallbackRoute()`. Provider folders import from
+  it, not from each other.
+- Each function bundles what it imports: `src/routes/agency.ts` must not import the subway's
+  station index (155 KiB of data), and subway routes must not import `src/agency/agencies.ts`.
 - Adding an agency whose realtime feed is plain GTFS-realtime with its own static GTFS is a row
-  in `AGENCIES`, a source in `scripts/build-static.ts`, entries in `vercel.json` and
-  `scripts/record-fixtures.ts`, and a `MAIN_STOP` in `scripts/smoke.ts`.
+  in `AGENCIES`, a source in `scripts/build-static.ts`, entries in `vercel.json`, and a
+  `MAIN_STOP` in `scripts/smoke.ts`; the fixture recorder and the tests' fetcher follow `AGENCIES`.
 
 ### Static data
 
@@ -85,7 +91,7 @@ Ids, which clients store as favorites, so keep them stable:
 ### MTA feed quirks handled in code
 
 - Protobuf `int64` fields decode as `Long` objects; convert with the `num()` helper in
-  `src/subway/arrivals.ts`.
+  `src/gtfsrt.ts`.
 - Trips can end at yard or non-revenue stop ids absent from the static data; the headsign walks
   back to the last known stop (`terminalName`).
 - Diamond express routes (`6X`, `7X`, `FX`) are distinct route ids in both feeds and static data.

@@ -1,12 +1,8 @@
+import type { RouteDisplay } from "../gtfsrt.js";
+
 /** Compact static data for an agency served by the generic handlers (LIRR, Metro-North, NYC Ferry). */
 
-export interface AgencyRoute {
-  id: string;
-  name: string;
-  /** Hex color with leading "#". */
-  color: string;
-  textColor: string;
-}
+export type AgencyRoute = RouteDisplay;
 
 export interface AgencyStop {
   id: string;

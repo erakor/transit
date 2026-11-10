@@ -1,5 +1,5 @@
 /** Destinations listed at most, so a busy station still fits a launcher hint. */
-export const PREVIEW_MAX_DESTINATIONS = 6;
+const PREVIEW_MAX_DESTINATIONS = 6;
 
 /**
  * One line for a launcher hint, for systems where riders pick a train or boat by where it ends:

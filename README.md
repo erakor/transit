@@ -384,9 +384,10 @@ Layout:
 api/                 Vercel functions (thin: they export GET from src/routes); api/agency.ts
                      serves every LIRR, Metro-North, ferry and bus route
 src/routes/          handlers: arrivals, search, preview, alerts, vehicles, path, agency, health
-src/subway/          feed list, fetching and decoding, arrivals computation, preview line
+src/subway/          feed list, arrivals computation, train positions, preview line
 src/path/            PATH stations and routes, feed fetching and parsing, arrivals, preview line
 src/agency/          LIRR, Metro-North and NYC Ferry: registry, departures, vehicle positions
+src/gtfsrt.ts        GTFS-realtime plumbing shared by every provider: fetch, decode, memo, helpers
 src/alerts.ts        alerts in effect, from any GTFS-realtime alerts feed
 src/preview.ts       the "next departure per destination" line shared by PATH and the agencies
 src/stops/           station resolution and name search

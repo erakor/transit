@@ -1,4 +1,4 @@
-import type { Fetcher } from "../subway/feeds.js";
+import { memoized, type FetchOptions } from "../gtfsrt.js";
 import { colorsKey } from "./stations.js";
 
 /**
@@ -70,27 +70,11 @@ export function parsePathFeed(doc: unknown): PathFeed {
   return feed;
 }
 
-/** Same in-function window as the subway feeds: one upstream request serves every station. */
-const MEMO_MS = 15_000;
-let memo: { at: number; feed: Promise<PathFeed> } | undefined;
-
-export async function fetchPathFeed(
-  { fetcher = fetch, now = Date.now(), timeoutMs = 8_000 }: { fetcher?: Fetcher; now?: number; timeoutMs?: number } = {},
-): Promise<PathFeed> {
-  if (memo && now - memo.at < MEMO_MS) return memo.feed;
-  const promise = (async () => {
+/** Through the same in-function memo as the GTFS-realtime feeds: one upstream request serves every station. */
+export function fetchPathFeed({ fetcher = fetch, now = Date.now(), timeoutMs = 8_000 }: FetchOptions = {}): Promise<PathFeed> {
+  return memoized(PATH_FEED_URL, now, async () => {
     const res = await fetcher(PATH_FEED_URL, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(timeoutMs) });
     if (!res.ok) throw new Error(`PATH feed: HTTP ${res.status}`);
     return parsePathFeed(await res.json());
-  })();
-  memo = { at: now, feed: promise };
-  promise.catch(() => {
-    if (memo?.feed === promise) memo = undefined;
   });
-  return promise;
-}
-
-/** For tests. */
-export function clearPathFeedMemo(): void {
-  memo = undefined;
 }

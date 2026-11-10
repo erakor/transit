@@ -1,6 +1,6 @@
 import type { RouteInfo, SubwayData } from "../static/types.js";
 import type { ResolvedStop, StationIndex } from "../stops/stations.js";
-import type { FeedMessage } from "./feeds.js";
+import { num, oldestTimestamp, terminalName, type FeedMessage } from "../gtfsrt.js";
 
 export interface Arrival {
   /** Epoch seconds. */
@@ -28,13 +28,6 @@ export interface ArrivalsResult {
   /** Oldest header timestamp among the feeds used (epoch seconds). */
   updatedAt: number | null;
   groups: RouteDirectionArrivals[];
-}
-
-type Long = { toNumber(): number };
-export function num(v: number | Long | null | undefined): number | undefined {
-  if (v === null || v === undefined) return undefined;
-  const n = typeof v === "number" ? v : v.toNumber();
-  return n > 0 ? n : undefined;
 }
 
 const FALLBACK_ROUTE = (id: string): RouteInfo => ({
@@ -68,7 +61,7 @@ export function computeArrivals(
       const routeId = tu.trip?.routeId ?? "";
       const tripId = tu.trip?.tripId ?? entity.id;
       const updates = tu.stopTimeUpdate ?? [];
-      const headsign = terminalName(updates, index);
+      const headsign = terminalName(updates, (id) => index.stopName(id));
       for (const stu of updates) {
         const stopId = stu.stopId ?? "";
         if (!platforms.has(stopId)) continue;
@@ -99,22 +92,9 @@ export function computeArrivals(
     })
     .sort((a, b) => order(a.route) - order(b.route) || a.route.localeCompare(b.route) || a.direction.localeCompare(b.direction));
 
-  const stamps = feeds.map((f) => num(f.header?.timestamp)).filter((t): t is number => t !== undefined);
   return {
     stop: { id: stop.id, name: stop.name, stops: stop.stops },
-    updatedAt: stamps.length ? Math.min(...stamps) : null,
+    updatedAt: oldestTimestamp(feeds),
     groups: result,
   };
-}
-
-/**
- * The trip's last stop with a known name. Feeds sometimes end a trip at a yard or
- * non-revenue track id that isn't in the static stops, so walk back to the last real one.
- */
-export function terminalName(updates: { stopId?: string | null }[], index: { stopName(id: string): string | undefined }): string {
-  for (let i = updates.length - 1; i >= 0; i--) {
-    const name = index.stopName(updates[i]!.stopId ?? "");
-    if (name) return name;
-  }
-  return "";
 }

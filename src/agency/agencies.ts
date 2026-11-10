@@ -1,6 +1,7 @@
 import { FERRY_DATA } from "../data/ferry.generated.js";
 import { LIRR_DATA } from "../data/lirr.generated.js";
 import { MNR_DATA } from "../data/mnr.generated.js";
+import { fallbackRoute } from "../gtfsrt.js";
 import { rankByName, tokenize, type NameEntry } from "../stops/search.js";
 import type { AgencyData, AgencyRoute, AgencyStop } from "./types.js";
 
@@ -40,11 +41,9 @@ export const AGENCIES: Record<string, Agency> = {
   },
 };
 
-const FALLBACK_COLOR = "#808183";
-
 /** A route's display fields; a route id the static data doesn't know shows under its id. */
 export function routeInfo(data: AgencyData, id: string): AgencyRoute {
-  return data.routes[id] ?? { id, name: id, color: FALLBACK_COLOR, textColor: "#FFFFFF" };
+  return data.routes[id] ?? fallbackRoute(id);
 }
 
 /** A stop by id, case insensitive. */
