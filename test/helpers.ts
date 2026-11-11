@@ -66,3 +66,6 @@ export function get(path: string, headers: Record<string, string> = {}): Request
 /** The recorded Citi Bike feeds: `fail` and `calls` name them as `CITIBIKE_INFORMATION` and `CITIBIKE_STATUS`. */
 export const CITIBIKE_INFORMATION = "citibike-station_information.json";
 export const CITIBIKE_STATUS = "citibike-station_status.json";
+
+/** Times Sq: the centre of the recorded Citi Bike stations, and of the smoke test's nearby query. */
+export const TIMES_SQ = { lat: 40.7559, lon: -73.9871 };

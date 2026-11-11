@@ -35,12 +35,8 @@
       "destination": "/api/preview/subway"
     },
     {
-      "source": "/citibike/station",
-      "destination": "/api/citibike/station"
-    },
-    {
-      "source": "/citibike/nearby",
-      "destination": "/api/citibike/nearby"
+      "source": "/citibike/:op(station|nearby)",
+      "destination": "/api/citibike?op=:op"
     },
     {
       "source": "/preview/path",

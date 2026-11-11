@@ -425,7 +425,8 @@ Layout:
 
 ```
 api/                 Vercel functions (thin: they export GET from src/routes); api/agency.ts
-                     serves every LIRR, Metro-North, ferry and bus route
+                     serves every LIRR, Metro-North, ferry and bus route, api/citibike.ts both
+                     Citi Bike routes
 src/routes/          handlers: arrivals, search, preview, alerts, vehicles, path, agency, health
 src/subway/          feed list, arrivals computation, train positions, preview line
 src/citibike/        Citi Bike: GBFS fetching, station join and nearest-station search

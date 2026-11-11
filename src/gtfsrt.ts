@@ -63,14 +63,19 @@ export function fetchFeed(feed: string, { fetcher = fetch, now = Date.now(), tim
   });
 }
 
-/** `fetchFeed`, or undefined (logged) when the upstream fails: for routes that answer 502 then. */
-export async function tryFetchFeed(feed: string, options?: FetchOptions): Promise<FeedMessage | undefined> {
+/** `load()`, or undefined (logged under `label`) when it fails: for routes that answer 502 then. */
+export async function tryLoad<T>(label: string, load: () => Promise<T>): Promise<T | undefined> {
   try {
-    return await fetchFeed(feed, options);
+    return await load();
   } catch (err) {
-    console.error(`feed ${feed} failed:`, err);
+    console.error(`${label} failed:`, err);
     return undefined;
   }
+}
+
+/** `fetchFeed`, or undefined (logged) when the upstream fails: for routes that answer 502 then. */
+export function tryFetchFeed(feed: string, options?: FetchOptions): Promise<FeedMessage | undefined> {
+  return tryLoad(`feed ${feed}`, () => fetchFeed(feed, options));
 }
 
 type Long = { toNumber(): number };

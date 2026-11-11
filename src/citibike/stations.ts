@@ -29,8 +29,8 @@ export interface BikeStations {
 }
 
 const count = (n: unknown): number => (typeof n === "number" && Number.isFinite(n) && n > 0 ? Math.floor(n) : 0);
-/** GBFS 2.x booleans are 0/1 in Citi Bike's feed and true/false in the spec. */
-const flag = (v: unknown): boolean => v === 1 || v === true;
+/** GBFS 2.x booleans are 0/1 in Citi Bike's feed and true/false in the spec; anything else is `unknown`. */
+const flag = (v: unknown, unknown: boolean): boolean => (v === 1 || v === true ? true : v === 0 || v === false ? false : unknown);
 
 /**
  * Joins the two GBFS station feeds. Stations that aren't installed (planned, or removed for the
@@ -41,8 +41,9 @@ export function joinStations(information: GbfsFeed<GbfsStationInformation>, stat
   const byId = new Map<string, BikeStation>();
   for (const info of information.data.stations) {
     const st = statusById.get(info.station_id);
-    if (!st || !flag(st.is_installed)) continue;
-    if (typeof info.lat !== "number" || typeof info.lon !== "number") continue;
+    // A status without the flag is taken as installed: dropping every station would be worse.
+    if (!st || !flag(st.is_installed, true)) continue;
+    if (typeof info.name !== "string" || typeof info.lat !== "number" || typeof info.lon !== "number") continue;
     // num_bikes_available counts e-bikes too. (vehicle_types_available doesn't always add up
     // to it, so the split comes from num_ebikes_available.)
     const total = count(st.num_bikes_available);
@@ -56,8 +57,8 @@ export function joinStations(information: GbfsFeed<GbfsStationInformation>, stat
       bikes: total - ebikes,
       ebikes,
       docks: count(st.num_docks_available),
-      renting: flag(st.is_renting),
-      returning: flag(st.is_returning),
+      renting: flag(st.is_renting, false),
+      returning: flag(st.is_returning, false),
     };
     // Stations that never reported carry a placeholder near zero.
     if (count(st.last_reported) > 1_000_000_000) station.reportedAt = count(st.last_reported);

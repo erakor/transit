@@ -58,7 +58,7 @@ The LIRR, Metro-North and NYC Ferry share one implementation, driven by the `AGE
   `src/routes/agency.ts` reads the agency and operation from the public path or, failing that,
   from those query parameters, so it does not depend on which URL the platform passes. One
   function because Vercel has capped functions per deployment on the Hobby plan (12 when last
-  checked; there are 10 now): add operations to `OPS` rather than new files under `api/`.
+  checked; there are 11 now): add operations to `OPS` rather than new files under `api/`.
 - `computeAgencyArrivals()` (`src/agency/arrivals.ts`, pure) returns one flat list of departures.
   When the static data has `trips` (the ferry), stops the feed doesn't predict are scheduled
   from the last predicted stop.
@@ -79,8 +79,8 @@ static data and no GTFS: `fetchGbfs()` (`src/citibike/feeds.ts`) fetches the GBF
 and `station_status` JSON through `memoized()` with a per-feed TTL (10 min and 15 s), and
 `joinStations()` (`src/citibike/stations.ts`, pure) joins them. Both feeds are required: a failing
 `station_status` is a 502. A failing `station_information` falls back to the last copy that loaded
-(`staleOnError`), for up to `STALE_MAX_MS`, then is a 502 too. Its two routes are two functions
-under `api/citibike/`.
+(`staleOnError`), for up to `STALE_MAX_MS`, then is a 502 too. Both routes are one function,
+`api/citibike.ts`, behind a rewrite like the agencies' (`citibikeHandler()` reads the `op`).
 
 ### Static data
 
@@ -114,7 +114,10 @@ Ids, which clients store as favorites, so keep them stable:
   `num_ebikes_available`. `vehicle_types_available` doesn't always add up to the total, so it
   isn't used.
 - Booleans are `0`/`1`. Stations with `is_installed: 0` are listed in both feeds with zero counts
-  and a placeholder `last_reported`; the join drops them.
+  and a placeholder `last_reported`; the join drops them. A missing `is_installed` reads as
+  installed and a missing `is_renting` or `is_returning` as false.
+- `parseGbfs()` drops entries without a station id and rejects a feed with no stations, so neither
+  is memoized or becomes the copy served while a refresh fails.
 - Station ids are opaque strings (UUIDs or long digit strings) that clients store as favorites.
 
 ### PATH feed quirks handled in code

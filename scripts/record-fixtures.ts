@@ -18,14 +18,14 @@ import { fileURLToPath } from "node:url";
 import GtfsRealtimeBindings from "gtfs-realtime-bindings";
 import { AGENCIES } from "../src/agency/agencies.js";
 import { inEffect } from "../src/alerts.js";
-import { fetchGbfs } from "../src/citibike/feeds.js";
+import { gbfsUrl } from "../src/citibike/feeds.js";
 import { distanceMeters } from "../src/citibike/stations.js";
 import { decodeFeed, feedUrl } from "../src/gtfsrt.js";
 import { parsePathFeed, PATH_FEED_URL } from "../src/path/feed.js";
 import { BUS_ALERTS_FEED } from "../src/routes/agency.js";
 import { SUBWAY_ALERTS_FEED } from "../src/routes/alerts.js";
 import { FEEDS } from "../src/subway/feeds.js";
-import { fixtureName } from "../test/helpers.js";
+import { fixtureName, TIMES_SQ } from "../test/helpers.js";
 
 const { FeedMessage } = GtfsRealtimeBindings.transit_realtime;
 const out = (file: string) => fileURLToPath(new URL(`../test/fixtures/${file}`, import.meta.url));
@@ -78,14 +78,17 @@ async function recordTransit(): Promise<void> {
 }
 
 async function recordCitibike(): Promise<void> {
-  const TIMES_SQ = { lat: 40.7559, lon: -73.9871 };
   const RADIUS_M = 800;
-  const opts = { timeoutMs: 15_000 };
-  // Fetched together so the two snapshots are as close in time as possible.
-  const [information, status] = await Promise.all([fetchGbfs("station_information", opts), fetchGbfs("station_status", opts)]);
-  const feeds = { station_information: information, station_status: status };
+  type Feed = { data: { stations: { station_id: string; lat?: number; lon?: number }[] } };
+  // The raw bodies, fetched together so the two snapshots are as close in time as possible.
+  const [information, status] = await Promise.all(
+    (["station_information", "station_status"] as const).map(async (name) => (await (await get(gbfsUrl(name))).json()) as Feed),
+  );
+  const feeds = { station_information: information!, station_status: status! };
   const keep = new Set(
-    information.data.stations.filter((s) => distanceMeters(TIMES_SQ.lat, TIMES_SQ.lon, s.lat, s.lon) <= RADIUS_M).map((s) => s.station_id),
+    information!.data.stations
+      .filter((s) => distanceMeters(TIMES_SQ.lat, TIMES_SQ.lon, s.lat ?? NaN, s.lon ?? NaN) <= RADIUS_M)
+      .map((s) => s.station_id),
   );
   for (const [name, feed] of Object.entries(feeds)) {
     const total = feed.data.stations.length;

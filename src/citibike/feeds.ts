@@ -50,13 +50,19 @@ interface GbfsStations {
   station_status: GbfsFeed<GbfsStationStatus>;
 }
 
-/** Checks the envelope, so a changed or truncated feed fails here instead of deep in a handler. */
+/**
+ * Checks the envelope, so a changed or truncated feed fails here instead of deep in a handler,
+ * and drops entries without a station id (one bad entry must not take every station down). A feed
+ * left with no stations is an error too: it never becomes the copy served while a refresh fails.
+ */
 export function parseGbfs<T>(feed: string, body: unknown): GbfsFeed<T> {
   const b = body as Partial<GbfsFeed<T>> | null;
   if (!b || typeof b.last_updated !== "number" || !Array.isArray(b.data?.stations)) {
     throw new Error(`feed ${feed}: not a GBFS station feed`);
   }
-  return b as GbfsFeed<T>;
+  const stations = b.data.stations.filter((s) => typeof (s as { station_id?: unknown } | null)?.station_id === "string");
+  if (stations.length === 0) throw new Error(`feed ${feed}: no stations`);
+  return { ...b, last_updated: b.last_updated, data: { ...b.data, stations } };
 }
 
 /** The last copy that loaded, per feed with `staleOnError`, and when it loaded. */

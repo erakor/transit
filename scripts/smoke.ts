@@ -29,6 +29,7 @@ import { SUBWAY_ALERTS_FEED } from "../src/routes/alerts.js";
 import { stationIndex } from "../src/stops/stations.js";
 import { computeArrivals } from "../src/subway/arrivals.js";
 import { FEEDS } from "../src/subway/feeds.js";
+import { TIMES_SQ } from "../test/helpers.js";
 
 const problems: string[] = [];
 const fail = (msg: string) => {
@@ -37,7 +38,6 @@ const fail = (msg: string) => {
 };
 const nowS = Math.floor(Date.now() / 1000);
 const index = stationIndex();
-const TIMES_SQ = { lat: 40.7559, lon: -73.9871 };
 
 /** Every feed is fetched up front, in parallel; a failure is reported where the feed is checked. */
 const live = (feed: string) => fetchFeed(feed, { timeoutMs: 20_000 }).catch((err: Error) => err);
@@ -151,7 +151,8 @@ try {
     fetchGbfs("station_status", { timeoutMs: 20_000 }),
   ]);
   const joined = joinStations(information, status);
-  const listed = information.data.stations.length;
+  // Seasonal closures take stations off the street (is_installed 0); the join should keep the rest.
+  const installed = status.data.stations.filter((s) => s.is_installed === 1 || s.is_installed === true).length;
   const stations = [...joined.byId.values()];
   let bikes = 0, ebikes = 0, docks = 0;
   for (const s of stations) {
@@ -160,12 +161,11 @@ try {
     docks += s.docks;
   }
   console.log(
-    `citibike: ${stations.length} of ${listed} stations installed, ${bikes} bikes, ${ebikes} e-bikes, ${docks} free docks, ` +
+    `citibike: ${stations.length} of ${installed} installed stations joined, ${bikes} bikes, ${ebikes} e-bikes, ${docks} free docks, ` +
       `age ${nowS - joined.updatedAt}s`,
   );
   if (Math.abs(nowS - joined.updatedAt) > 600) fail(`citibike: station_status is ${nowS - joined.updatedAt}s old`);
-  // Seasonal closures take some stations off the street; losing most of them means a broken join.
-  if (stations.length < 1000 || stations.length < listed * 0.8) fail(`citibike: only ${stations.length} of ${listed} stations joined`);
+  if (stations.length < 1000 || stations.length < installed * 0.95) fail(`citibike: only ${stations.length} of ${installed} installed stations joined`);
   if (bikes + ebikes === 0 || docks === 0) fail("citibike: no bikes or no free docks anywhere");
   if (!stations.some((s) => s.ebikes > 0)) fail("citibike: no e-bikes anywhere (num_ebikes_available gone?)");
   const near = nearestStations(stations, TIMES_SQ.lat, TIMES_SQ.lon, 3);
