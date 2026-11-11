@@ -281,9 +281,7 @@ export const MNR_DATA: AgencyData = {
    "name": "Breakneck Ridge",
    "lat": 41.450181,
    "lon": -73.982449,
-   "routes": [
-    "1"
-   ]
+   "routes": []
   },
   "46": {
    "id": "46",
@@ -1088,6 +1086,7 @@ export const MNR_DATA: AgencyData = {
    "lat": 40.8253,
    "lon": -73.9299,
    "routes": [
+    "2",
     "1"
    ]
   },
