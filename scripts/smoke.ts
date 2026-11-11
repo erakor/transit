@@ -10,12 +10,16 @@
  * doesn't know, stale data, or Journal Square with no trains. For LIRR, Metro-North and NYC
  * Ferry: stale or empty feeds, stop or route ids missing from the static data, ferry trips missing
  * from the static schedule, a main stop with no departures, or no vehicle positions. For alerts:
- * a feed that no longer decodes or has gone a day without an update.
+ * a feed that no longer decodes or has gone a day without an update. For Citi Bike: a feed that
+ * changed shape, stale status, no bikes, e-bikes or free docks anywhere, or no station within
+ * 500 m of Times Sq.
  */
 import { AGENCIES } from "../src/agency/agencies.js";
 import { computeAgencyArrivals } from "../src/agency/arrivals.js";
 import { computeAgencyVehicles } from "../src/agency/vehicles.js";
 import { computeAlerts } from "../src/alerts.js";
+import { fetchGbfs } from "../src/citibike/feeds.js";
+import { joinStations, nearestStations } from "../src/citibike/stations.js";
 import { fetchFeed, type FeedMessage } from "../src/gtfsrt.js";
 import { computePathArrivals } from "../src/path/arrivals.js";
 import { fetchPathFeed } from "../src/path/feed.js";
@@ -25,6 +29,7 @@ import { SUBWAY_ALERTS_FEED } from "../src/routes/alerts.js";
 import { stationIndex } from "../src/stops/stations.js";
 import { computeArrivals } from "../src/subway/arrivals.js";
 import { FEEDS } from "../src/subway/feeds.js";
+import { TIMES_SQ } from "../test/helpers.js";
 
 const problems: string[] = [];
 const fail = (msg: string) => {
@@ -139,6 +144,37 @@ for (const agency of agencies) {
   if (n === 0) fail(`${id}: no departures at ${main.name}`);
 }
 
+// Citi Bike.
+try {
+  const [information, status] = await Promise.all([
+    fetchGbfs("station_information", { timeoutMs: 20_000 }),
+    fetchGbfs("station_status", { timeoutMs: 20_000 }),
+  ]);
+  const joined = joinStations(information, status);
+  // Seasonal closures take stations off the street (is_installed 0); the join should keep the rest.
+  const installed = status.data.stations.filter((s) => s.is_installed === 1 || s.is_installed === true).length;
+  const stations = [...joined.byId.values()];
+  let bikes = 0, ebikes = 0, docks = 0;
+  for (const s of stations) {
+    bikes += s.bikes;
+    ebikes += s.ebikes;
+    docks += s.docks;
+  }
+  console.log(
+    `citibike: ${stations.length} of ${installed} installed stations joined, ${bikes} bikes, ${ebikes} e-bikes, ${docks} free docks, ` +
+      `age ${nowS - joined.updatedAt}s`,
+  );
+  if (Math.abs(nowS - joined.updatedAt) > 600) fail(`citibike: station_status is ${nowS - joined.updatedAt}s old`);
+  if (stations.length < 1000 || stations.length < installed * 0.95) fail(`citibike: only ${stations.length} of ${installed} installed stations joined`);
+  if (bikes + ebikes === 0 || docks === 0) fail("citibike: no bikes or no free docks anywhere");
+  if (!stations.some((s) => s.ebikes > 0)) fail("citibike: no e-bikes anywhere (num_ebikes_available gone?)");
+  const near = nearestStations(stations, TIMES_SQ.lat, TIMES_SQ.lon, 3);
+  console.log(`citibike near Times Sq: ${near.map((s) => `${s.name} (${s.distance} m)`).join(", ")}`);
+  if (!near[0] || near[0].distance > 500) fail("citibike: no station within 500 m of Times Sq");
+} catch (err) {
+  fail(`citibike: ${(err as Error).message}`);
+}
+
 // Alerts.
 for (const name of alertFeeds) {
   const label = name.split("/").slice(-2).join("/");
@@ -198,6 +234,18 @@ if (base) {
   const others = ["/mnr/stations?q=grand%20central", "/ferry/stops", "/ferry/vehicles", "/mnr/alerts", "/bus/alerts", "/subway/alerts?route=A", "/subway/vehicles?route=L"];
   for (const [i, res] of (await Promise.all(others.map((path) => call(path, true)))).entries()) expectStatus(res, 200, others[i]!);
   expectStatus(await call("/lirr/nope", true), 404, "an unknown agency route");
+
+  const nearby = `/citibike/nearby?lat=${TIMES_SQ.lat}&lon=${TIMES_SQ.lon}&n=3&smoke=${nowS}`;
+  expectStatus(await call(nearby, false), 401, "Citi Bike nearby without token");
+  const nearRes = await call(nearby, true);
+  expectStatus(nearRes, 200, "Citi Bike nearby with token");
+  const first = nearRes.ok ? ((await nearRes.json()) as { stations?: { id: string; name: string }[] }).stations?.[0] : undefined;
+  if (!first) fail("Citi Bike nearby: no stations");
+  else {
+    console.log(`citibike nearby: ${first.name}`);
+    expectStatus(await call(`/citibike/station?id=${encodeURIComponent(first.id)}&smoke=${nowS}`, true), 200, "Citi Bike station with token");
+  }
+
   await expectPreview(`/preview/mnr?station=${MAIN_STOP.mnr}`, AGENCIES.mnr!.data.stops[MAIN_STOP.mnr!]!.name);
 }
 

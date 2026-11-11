@@ -13,8 +13,9 @@ pnpm typecheck                       # tsc --noEmit over api, src, scripts, test
 pnpm build:static                    # regenerate every src/data/*.generated.ts (subway, lirr, mnr, ferry)
 pnpm build:static lirr               # one of them
 pnpm build:static ferry path/to.zip  # one of them, from a local zip (a bare zip path means the subway)
-pnpm record-fixtures                 # re-record test/fixtures/*.pb from the live feeds
-pnpm smoke                           # live feed checks (+ deployment checks if TRANSIT_BASE_URL is set)
+pnpm record-fixtures                 # re-record test/fixtures from the live feeds
+pnpm record-fixtures citibike        # only the Citi Bike feeds (`transit`: only everything else)
+pnpm smoke                           # live feed checks, Citi Bike included (+ deployment checks if TRANSIT_BASE_URL is set)
 ```
 
 There is no lint step and no build step: Vercel compiles `api/**/*.ts` itself. To check what
@@ -57,7 +58,7 @@ The LIRR, Metro-North and NYC Ferry share one implementation, driven by the `AGE
   `src/routes/agency.ts` reads the agency and operation from the public path or, failing that,
   from those query parameters, so it does not depend on which URL the platform passes. One
   function because Vercel has capped functions per deployment on the Hobby plan (12 when last
-  checked; there are 10 now): add operations to `OPS` rather than new files under `api/`.
+  checked; there are 11 now): add operations to `OPS` rather than new files under `api/`.
 - `computeAgencyArrivals()` (`src/agency/arrivals.ts`, pure) returns one flat list of departures.
   When the static data has `trips` (the ferry), stops the feed doesn't predict are scheduled
   from the last predicted stop.
@@ -72,6 +73,14 @@ The LIRR, Metro-North and NYC Ferry share one implementation, driven by the `AGE
 - Adding an agency whose realtime feed is plain GTFS-realtime with its own static GTFS is a row
   in `AGENCIES`, a source in `scripts/build-static.ts`, entries in `vercel.json`, and a
   `MAIN_STOP` in `scripts/smoke.ts`; the fixture recorder and the tests' fetcher follow `AGENCIES`.
+
+Citi Bike (`/citibike/station`, `/citibike/nearby`, both in `src/routes/citibike.ts`) has no
+static data and no GTFS: `fetchGbfs()` (`src/citibike/feeds.ts`) fetches the GBFS `station_information`
+and `station_status` JSON through `memoized()` with a per-feed TTL (10 min and 15 s), and
+`joinStations()` (`src/citibike/stations.ts`, pure) joins them. Both feeds are required: a failing
+`station_status` is a 502. A failing `station_information` falls back to the last copy that loaded
+(`staleOnError`), for up to `STALE_MAX_MS`, then is a 502 too. Both routes are one function,
+`api/citibike.ts`, behind a rewrite like the agencies' (`citibikeHandler()` reads the `op`).
 
 ### Static data
 
@@ -98,6 +107,18 @@ Ids, which clients store as favorites, so keep them stable:
   Search hides them next to their base route; arrivals keep them.
 - Each realtime route must appear in `FEEDS`. A test checks every static route is covered, and the
   smoke test fails if a live feed carries a route `FEEDS` does not list.
+
+### Citi Bike feed quirks handled in code
+
+- `num_bikes_available` includes e-bikes; classic bikes are the difference with
+  `num_ebikes_available`. `vehicle_types_available` doesn't always add up to the total, so it
+  isn't used.
+- Booleans are `0`/`1`. Stations with `is_installed: 0` are listed in both feeds with zero counts
+  and a placeholder `last_reported`; the join drops them. A missing `is_installed` reads as
+  installed and a missing `is_renting` or `is_returning` as false.
+- `parseGbfs()` drops entries without a station id and rejects a feed with no stations, so neither
+  is memoized or becomes the copy served while a refresh fails.
+- Station ids are opaque strings (UUIDs or long digit strings) that clients store as favorites.
 
 ### PATH feed quirks handled in code
 
@@ -153,12 +174,14 @@ Ids, which clients store as favorites, so keep them stable:
 - pnpm refuses to install when a dependency's build script hasn't been approved. Approvals live in
   `allowBuilds` in `pnpm-workspace.yaml` (`pnpm approve-builds <pkg>` edits it).
 - On Node 26, `fetch` can use HTTP/2, where `statusText` is empty: check `res.status` only.
-- After `pnpm record-fixtures`, update `FIXTURE_NOW_MS` in `test/helpers.ts` to the newest feed
+- After `pnpm record-fixtures` (or `pnpm record-fixtures transit`), update `FIXTURE_NOW_MS` in `test/helpers.ts` to the newest feed
   header timestamp it prints, or the fixture tests will see every train as already gone. It
   records every GTFS-realtime feed at once (subway, LIRR, Metro-North, ferry, alerts), so they
   share that clock, and the PATH feed too: set `PATH_FIXTURE_NOW_MS` to the newest update it prints. Tests on recordings assert shapes and
   invariants, not the trains of one recording, so a re-record should not need test changes. If the static data
-  changed, regenerate it before recording so stop ids match.
+  changed, regenerate it before recording so stop ids match. The Citi Bike fixtures
+  (`pnpm record-fixtures citibike`) are the live feeds trimmed to the stations around Times Sq;
+  after re-recording them, update the counts and names that `test/citibike.test.ts` expects.
 - New providers (see the README roadmap) that don't fit `AGENCIES` go under `api/<provider>/`
   with a handler in `src/routes/` (mind the function count above), fixture-based parsing tests, and a check in `scripts/smoke.ts`. Upstream keys
   belong in Vercel environment variables.

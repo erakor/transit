@@ -27,16 +27,16 @@ export function decodeFeed(bytes: Uint8Array): FeedMessage {
  * same window, concurrent misses) and coalesces concurrent fetches of the same feed.
  */
 const MEMO_MS = 15_000;
-const memo = new Map<string, { at: number; value: Promise<unknown> }>();
+const memo = new Map<string, { at: number; ttlMs: number; value: Promise<unknown> }>();
 
-/** `load()`, or its still-fresh earlier result for `key`. A failed load is not kept. */
-export function memoized<T>(key: string, now: number, load: () => Promise<T>): Promise<T> {
+/** `load()`, or its earlier result for `key` if it is under `ttlMs` old. A failed load is not kept. */
+export function memoized<T>(key: string, now: number, load: () => Promise<T>, ttlMs = MEMO_MS): Promise<T> {
   const hit = memo.get(key);
-  if (hit && now - hit.at < MEMO_MS) return hit.value as Promise<T>;
+  if (hit && now - hit.at < ttlMs) return hit.value as Promise<T>;
   // A miss is a good time to let go of feeds nobody asked for lately.
-  for (const [k, entry] of memo) if (now - entry.at >= MEMO_MS) memo.delete(k);
+  for (const [k, entry] of memo) if (now - entry.at >= entry.ttlMs) memo.delete(k);
   const value = load();
-  memo.set(key, { at: now, value });
+  memo.set(key, { at: now, ttlMs, value });
   value.catch(() => {
     if (memo.get(key)?.value === value) memo.delete(key);
   });
@@ -63,14 +63,19 @@ export function fetchFeed(feed: string, { fetcher = fetch, now = Date.now(), tim
   });
 }
 
-/** `fetchFeed`, or undefined (logged) when the upstream fails: for routes that answer 502 then. */
-export async function tryFetchFeed(feed: string, options?: FetchOptions): Promise<FeedMessage | undefined> {
+/** `load()`, or undefined (logged under `label`) when it fails: for routes that answer 502 then. */
+export async function tryLoad<T>(label: string, load: () => Promise<T>): Promise<T | undefined> {
   try {
-    return await fetchFeed(feed, options);
+    return await load();
   } catch (err) {
-    console.error(`feed ${feed} failed:`, err);
+    console.error(`${label} failed:`, err);
     return undefined;
   }
+}
+
+/** `fetchFeed`, or undefined (logged) when the upstream fails: for routes that answer 502 then. */
+export function tryFetchFeed(feed: string, options?: FetchOptions): Promise<FeedMessage | undefined> {
+  return tryLoad(`feed ${feed}`, () => fetchFeed(feed, options));
 }
 
 type Long = { toNumber(): number };

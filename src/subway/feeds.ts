@@ -7,7 +7,7 @@ export const FEEDS: Record<string, readonly string[]> = {
   "gtfs-jz": ["J", "Z"],
   "gtfs-nqrw": ["N", "Q", "R", "W"],
   "gtfs-l": ["L"],
-  "gtfs-si": ["SI"],
+  "gtfs-si": ["SI", "SS"],
 };
 
 const FEED_OF_ROUTE = new Map<string, string>();
