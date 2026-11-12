@@ -6,82 +6,96 @@
  *   pnpm build:static ferry path/to.zip  # one source, from a local zip
  *   pnpm build:static path/to.zip        # the subway, from a local zip
  */
-import { readFile, writeFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
-import { strFromU8, unzipSync } from "fflate";
-import { buildAgencyData } from "#src/static/agency.js";
-import { buildSubwayData, type GtfsFiles } from "#src/static/build.js";
+import { readFile, writeFile } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
+import { strFromU8, unzipSync } from 'fflate'
+import { buildAgencyData } from '#src/static/agency.js'
+import { buildSubwayData, type GtfsFiles } from '#src/static/build.js'
 
 interface Source {
-  url: string;
-  title: string;
+  url: string
+  title: string
   /** The data's type and the module that declares it. */
-  type: string;
-  typeFrom: string;
+  type: string
+  typeFrom: string
   /** The data to write, and a line about it for the log. */
-  build(files: GtfsFiles): { data: { feedVersion: string }; summary: string };
+  build(files: GtfsFiles): { data: { feedVersion: string }; summary: string }
 }
 
-const count = (o: object | undefined) => Object.keys(o ?? {}).length;
+const count = (o: object | undefined) => Object.keys(o ?? {}).length
 const agency = (title: string, url: string, trips = false): Source => ({
   url,
   title,
-  type: "AgencyData",
-  typeFrom: "#src/agency/types.js",
+  type: 'AgencyData',
+  typeFrom: '#src/agency/types.js',
   build(files) {
-    const data = buildAgencyData(files, { trips });
-    return { data, summary: `${count(data.routes)} routes, ${count(data.stops)} stops, ${count(data.trips)} trips` };
+    const data = buildAgencyData(files, { trips })
+    return { data, summary: `${count(data.routes)} routes, ${count(data.stops)} stops, ${count(data.trips)} trips` }
   },
-});
+})
 
 /** By name: the name of the data file (`<name>.generated.ts`) and of its constant (`<NAME>_DATA`). */
 const SOURCES: Record<string, Source> = {
   subway: {
-    url: "https://rrgtfsfeeds.s3.amazonaws.com/gtfs_subway.zip",
-    title: "MTA static subway GTFS",
-    type: "SubwayData",
-    typeFrom: "#src/static/types.js",
+    url: 'https://rrgtfsfeeds.s3.amazonaws.com/gtfs_subway.zip',
+    title: 'MTA static subway GTFS',
+    type: 'SubwayData',
+    typeFrom: '#src/static/types.js',
     build(files) {
-      const data = buildSubwayData(files);
-      return { data, summary: `${count(data.routes)} routes, ${count(data.stops)} stops, ${data.stations.length} stations` };
+      const data = buildSubwayData(files)
+      return {
+        data,
+        summary: `${count(data.routes)} routes, ${count(data.stops)} stops, ${data.stations.length} stations`,
+      }
     },
   },
-  lirr: agency("LIRR static GTFS", "https://rrgtfsfeeds.s3.amazonaws.com/gtfslirr.zip"),
-  mnr: agency("Metro-North static GTFS", "https://rrgtfsfeeds.s3.amazonaws.com/gtfsmnr.zip"),
+  lirr: agency('LIRR static GTFS', 'https://rrgtfsfeeds.s3.amazonaws.com/gtfslirr.zip'),
+  mnr: agency('Metro-North static GTFS', 'https://rrgtfsfeeds.s3.amazonaws.com/gtfsmnr.zip'),
   // The ferry's realtime feed needs the scheduled trips, see src/agency/arrivals.ts.
-  ferry: agency("NYC Ferry static GTFS", "https://nycferry.connexionz.net/rtt/public/resource/gtfs.zip", true),
-};
+  ferry: agency('NYC Ferry static GTFS', 'https://nycferry.connexionz.net/rtt/public/resource/gtfs.zip', true),
+}
 
-const WANTED = new Set(["routes.txt", "stops.txt", "trips.txt", "stop_times.txt", "transfers.txt", "feed_info.txt"]);
+const WANTED = new Set(['routes.txt', 'stops.txt', 'trips.txt', 'stop_times.txt', 'transfers.txt', 'feed_info.txt'])
 
 async function loadZip(url: string, local: string | undefined): Promise<Uint8Array> {
-  if (local) return new Uint8Array(await readFile(local));
-  const res = await fetch(url, { signal: AbortSignal.timeout(60_000) });
-  if (!res.ok) throw new Error(`GET ${url}: HTTP ${res.status}`);
-  return new Uint8Array(await res.arrayBuffer());
+  if (local) return new Uint8Array(await readFile(local))
+  const res = await fetch(url, { signal: AbortSignal.timeout(60_000) })
+  if (!res.ok) throw new Error(`GET ${url}: HTTP ${res.status}`)
+  return new Uint8Array(await res.arrayBuffer())
 }
 
 async function build(name: string, local?: string): Promise<void> {
-  const source = SOURCES[name];
-  if (!source) throw new Error(`unknown source ${name}: expected one of ${Object.keys(SOURCES).join(", ")}`);
-  const entries = unzipSync(await loadZip(source.url, local), { filter: (f) => WANTED.has(f.name.split("/").pop()!) });
-  const files: GtfsFiles = {};
-  for (const [file, bytes] of Object.entries(entries)) files[file.split("/").pop()!] = strFromU8(bytes);
+  const source = SOURCES[name]
+  if (!source) throw new Error(`unknown source ${name}: expected one of ${Object.keys(SOURCES).join(', ')}`)
+  const entries = unzipSync(await loadZip(source.url, local), { filter: f => WANTED.has(f.name.split('/').pop()!) })
+  const files: GtfsFiles = {}
+  for (const [file, bytes] of Object.entries(entries)) files[file.split('/').pop()!] = strFromU8(bytes)
 
-  const { data, summary } = source.build(files);
+  const { data, summary } = source.build(files)
   // One line per [stop, offset] pair keeps a file with trips readable.
-  const json = JSON.stringify(data, null, 1).replace(/\[\s+("[^"]*"),\s+(-?\d+)\s+\]/g, "[$1, $2]");
-  const out = fileURLToPath(new URL(`../src/data/${name}.generated.ts`, import.meta.url));
+  const json = JSON.stringify(data, null, 1).replace(/\[\s+("[^"]*"),\s+(-?\d+)\s+\]/g, '[$1, $2]')
+  const out = fileURLToPath(new URL(`../src/data/${name}.generated.ts`, import.meta.url))
   const text =
     `// Generated by scripts/build-static.ts from the ${source.title}. Do not edit.\n` +
     `// Refresh with \`pnpm build:static\` (the "Refresh static GTFS" workflow does this on a schedule).\n` +
     `import type { ${source.type} } from "${source.typeFrom}";\n\n` +
-    `export const ${name.toUpperCase()}_DATA: ${source.type} = ${json};\n`;
-  await writeFile(out, text);
-  console.log(`wrote ${out}: feed ${data.feedVersion || "(no version)"}, ${summary}, ${(text.length / 1024).toFixed(0)} KiB`);
+    `export const ${name.toUpperCase()}_DATA: ${source.type} = ${json};\n`
+  await writeFile(out, text)
+  if (name === 'subway') {
+    // The version alone, so /health reports it without bundling the data.
+    const version = fileURLToPath(new URL(`../src/data/${name}.version.generated.ts`, import.meta.url))
+    await writeFile(
+      version,
+      `// Generated by scripts/build-static.ts from the ${source.title}. Do not edit.\n` +
+        `export const ${name.toUpperCase()}_FEED_VERSION = ${JSON.stringify(data.feedVersion)};\n`
+    )
+  }
+  console.log(
+    `wrote ${out}: feed ${data.feedVersion || '(no version)'}, ${summary}, ${(text.length / 1024).toFixed(0)} KiB`
+  )
 }
 
-const [first, second] = process.argv.slice(2);
-if (first?.endsWith(".zip")) await build("subway", first);
-else if (first) await build(first, second);
-else for (const name of Object.keys(SOURCES)) await build(name);
+const [first, second] = process.argv.slice(2)
+if (first?.endsWith('.zip')) await build('subway', first)
+else if (first) await build(first, second)
+else for (const name of Object.keys(SOURCES)) await build(name)

@@ -6,17 +6,17 @@
  * JSON Schema for the API docs (`z.toJSONSchema`). Descriptions go in `.meta()` rather than in
  * comments so they end up in those docs too.
  */
-import * as z from "zod";
-import { errorResponse } from "./http.js";
+import * as z from 'zod'
+import { errorResponse } from './http.js'
 
 /** Times in responses: whole seconds since the Unix epoch. */
-export const EpochSeconds = z.int().nonnegative().meta({ description: "Epoch seconds." });
+export const EpochSeconds = z.int().nonnegative().meta({ description: 'Epoch seconds.' })
 
 /** Route colors: `#` and six uppercase hex digits, as the static data stores them. */
-export const HexColor = z.string().regex(/^#[0-9A-F]{6}$/);
+export const HexColor = z.string().regex(/^#[0-9A-F]{6}$/)
 
 /** The body of every 4xx and 5xx answer. */
-export const ErrorBody = z.strictObject({ error: z.string() });
+export const ErrorBody = z.strictObject({ error: z.string() })
 
 /**
  * A required query parameter, trimmed. Missing, empty and blank all answer "<name> is required".
@@ -24,8 +24,8 @@ export const ErrorBody = z.strictObject({ error: z.string() });
  * undefined") with the one this API has always answered.
  */
 export function requiredParam(name: string, description: string) {
-  const error = `${name} is required`;
-  return z.string({ error }).trim().min(1, { error }).meta({ description });
+  const error = `${name} is required`
+  return z.string({ error }).trim().min(1, { error }).meta({ description })
 }
 
 /**
@@ -42,15 +42,19 @@ export function requiredParam(name: string, description: string) {
  * a default that follows a transform out of the JSON Schema it generates for requests.
  */
 export function countParam(name: string, fallback: number, max: number, description: string) {
-  const error = `${name} must be a positive integer`;
-  return z
-    .string()
-    .regex(/^\d+$/, { error })
-    // Clamp before the int check: z.int() rejects values past 2^53, which intParam lowers to max.
-    .transform((s) => Math.min(Number(s), max))
-    .pipe(z.int().min(1, { error }))
-    .prefault(String(fallback))
-    .meta({ description: `${description} Default ${fallback}, at most ${max} (larger values are lowered to ${max}).` });
+  const error = `${name} must be a positive integer`
+  return (
+    z
+      .string()
+      .regex(/^\d+$/, { error })
+      // Clamp before the int check: z.int() rejects values past 2^53, which intParam lowers to max.
+      .transform(s => Math.min(Number(s), max))
+      .pipe(z.int().min(1, { error }))
+      .prefault(String(fallback))
+      .meta({
+        description: `${description} Default ${fallback}, at most ${max} (larger values are lowered to ${max}).`,
+      })
+  )
 }
 
 /**
@@ -63,13 +67,13 @@ export function countParam(name: string, fallback: number, max: number, descript
  */
 export function parseQuery<S extends z.ZodType>(
   schema: S,
-  url: URL,
+  url: URL
 ): { ok: true; query: z.output<S> } | { ok: false; response: Response } {
   // No prototype, so names like `constructor` are ordinary keys.
-  const raw: Record<string, string> = Object.create(null);
-  for (const [key, value] of url.searchParams) if (!(key in raw)) raw[key] = value;
-  for (const key in raw) if (raw[key] === "") delete raw[key];
-  const parsed = schema.safeParse(raw);
-  if (parsed.success) return { ok: true, query: parsed.data };
-  return { ok: false, response: errorResponse(400, parsed.error.issues[0]?.message ?? "invalid query") };
+  const raw: Record<string, string> = Object.create(null)
+  for (const [key, value] of url.searchParams) if (!(key in raw)) raw[key] = value
+  for (const key in raw) if (raw[key] === '') delete raw[key]
+  const parsed = schema.safeParse(raw)
+  if (parsed.success) return { ok: true, query: parsed.data }
+  return { ok: false, response: errorResponse(400, parsed.error.issues[0]?.message ?? 'invalid query') }
 }

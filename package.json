@@ -12,21 +12,41 @@
   },
   "scripts": {
     "build:static": "tsx scripts/build-static.ts",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm knip && pnpm test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "knip": "knip",
+    "lint": "eslint .",
+    "prepare": "node .husky/install.mjs",
     "record-fixtures": "tsx scripts/record-fixtures.ts",
     "smoke": "tsx scripts/smoke.ts",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "gtfs-realtime-bindings": "^2.2.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.6",
+    "eslint": "^10.14.0",
     "fflate": "^0.8.3",
+    "husky": "^9.1.7",
+    "knip": "^6.45.1",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.9.10",
     "tsx": "^4.23.15",
     "typescript": "5.9",
+    "typescript-eslint": "^8.72.2",
     "vitest": "^5.1.0"
   },
-  "packageManager": "pnpm@12.18.0"
+  "packageManager": "pnpm@12.18.0",
+  "lint-staged": {
+    "*.{js,mjs,cjs,ts}": [
+      "eslint --fix --no-warn-ignored",
+      "prettier --write"
+    ],
+    "*.{json,yml,yaml}": "prettier --write"
+  }
 }

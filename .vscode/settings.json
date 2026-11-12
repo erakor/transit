@@ -1,0 +1,13 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": { "source.fixAll.eslint": "explicit" },
+  // The workspace TypeScript (pinned to 5.9), not the editor's bundled one. Both spellings: the js/ts.* names
+  // are VS Code 1.130+, the typescript.* ones what older versions and forks read.
+  "js/ts.tsdk.path": "node_modules/typescript/lib",
+  "js/ts.tsdk.promptToUseWorkspaceVersion": true,
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  // Generated static data and recorded feeds are committed but huge; keep them out of search results.
+  "search.exclude": { "src/data/*.generated.ts": true, "test/fixtures/**": true }
+}

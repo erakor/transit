@@ -1,3 +1,3 @@
-import { subwayAlertsHandler } from "#src/routes/alerts.js";
+import { subwayAlertsHandler } from '#src/routes/alerts.js'
 
-export const GET = subwayAlertsHandler();
+export const GET = subwayAlertsHandler()
