@@ -10,6 +10,7 @@ pnpm test                            # vitest, all tests (offline: uses test/fix
 pnpm vitest run test/routes.test.ts  # one file
 pnpm vitest run -t "caps limit"      # tests whose name matches
 pnpm typecheck                       # tsc --noEmit over api, src, scripts, test
+pnpm format                          # prettier over the code, JSON and YAML (CI runs format:check)
 pnpm build:static                    # regenerate every src/data/*.generated.ts (subway, lirr, mnr, ferry)
 pnpm build:static lirr               # one of them
 pnpm build:static ferry path/to.zip  # one of them, from a local zip (a bare zip path means the subway)
@@ -17,6 +18,10 @@ pnpm record-fixtures                 # re-record test/fixtures from the live fee
 pnpm record-fixtures citibike        # only the Citi Bike feeds (`transit`: only everything else)
 pnpm smoke                           # live feed checks, Citi Bike included (+ deployment checks if TRANSIT_BASE_URL is set)
 ```
+
+Prettier formats the code, JSON and YAML (`.prettierrc.json`; `.prettierignore` skips the generated
+data, the fixtures and Markdown, whose prose is wrapped by hand). Format before committing: CI fails
+on unformatted files.
 
 There is no lint step and no build step: Vercel compiles `api/**/*.ts` itself. To check what
 Vercel will produce, `pnpm dlx vercel build` works offline with a stub `.vercel/project.json`
