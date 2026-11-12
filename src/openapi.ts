@@ -1,7 +1,4 @@
-/**
- * The OpenAPI document for the routes that have schemas, built from those schemas. Only
- * `scripts/build-openapi.ts` and the tests import this: no function bundles it.
- */
+/** The OpenAPI document, built from the route schemas. No function bundles this (test/bundles.test.ts). */
 import * as z from 'zod'
 import { TOKEN_HEADER } from '#src/auth.js'
 import { ErrorBody } from '#src/schema.js'
@@ -9,25 +6,22 @@ import { Arrival, ArrivalsQuery, ArrivalsResponse, RouteDirectionArrivals } from
 
 interface Route {
   path: string
-  /** Names the operation in generated clients. */
-  operationId: string
   summary: string
   description: string
   query: z.ZodObject
   response: z.ZodType
-  /** Error statuses besides 401, with when each happens. */
+  /** Error statuses besides 401 and 500, with when each happens. */
   errors: Record<number, string>
 }
 
-/** Documented routes. A route gets an entry when it gets schemas (AGENTS.md). */
+/** Documented routes: the ones with schemas. */
 export const ROUTES: Route[] = [
   {
     path: '/subway/arrivals',
-    operationId: 'subwayArrivals',
     summary: 'Next trains at a subway station',
     description:
       'Next trains per route and direction. If some upstream feeds failed, the answer is still 200 with ' +
-      'what was available, `unavailableFeeds`, and a 5 s cache instead of 20 s.',
+      'what was available, `unavailableFeeds`, and a shorter cache.',
     query: ArrivalsQuery,
     response: ArrivalsResponse,
     errors: { 400: 'Missing `stop` or bad `limit`.', 404: 'Unknown stop.', 502: 'Every MTA feed failed.' },
@@ -48,7 +42,7 @@ export function buildOpenApi(version: string) {
   for (const [id, schema] of Object.entries(NAMED)) registry.add(schema, { id })
   const { schemas } = z.toJSONSchema(registry, { uri: id => `#/components/schemas/${id}` })
   const ref = (schema: z.ZodType) => {
-    const id = Object.keys(NAMED).find(id => NAMED[id] === schema)
+    const id = registry.get(schema)?.id
     if (!id) throw new Error('response schemas must be listed in NAMED')
     return { $ref: `#/components/schemas/${id}` }
   }
@@ -62,15 +56,18 @@ export function buildOpenApi(version: string) {
     ROUTES.map(route => {
       const query = z.toJSONSchema(route.query, { io: 'input' })
       const parameters = Object.entries(query.properties ?? {}).map(([name, property]) => {
-        const { description, ...schema } = embedded(property as object)
+        const { description, ...schema } = property as Record<string, unknown>
         return { name, in: 'query', required: query.required?.includes(name) ?? false, description, schema }
       })
       const responses = {
         200: json(ref(route.response), 'OK'),
         401: error('Missing or wrong token.'),
+        500: error('Unexpected failure.'),
         ...Object.fromEntries(Object.entries(route.errors).map(([status, why]) => [status, error(why)])),
       }
-      const { path, operationId, summary, description } = route
+      const { path, summary, description } = route
+      // `/subway/arrivals` -> `subwayArrivals`: names the operation in generated clients.
+      const operationId = path.slice(1).replace(/[/-](\w)/g, (_, c: string) => c.toUpperCase())
       return [path, { get: { operationId, summary, description, parameters, responses } }]
     })
   )

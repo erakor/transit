@@ -20,7 +20,7 @@
       "get": {
         "operationId": "subwayArrivals",
         "summary": "Next trains at a subway station",
-        "description": "Next trains per route and direction. If some upstream feeds failed, the answer is still 200 with what was available, `unavailableFeeds`, and a 5 s cache instead of 20 s.",
+        "description": "Next trains per route and direction. If some upstream feeds failed, the answer is still 200 with what was available, `unavailableFeeds`, and a shorter cache.",
         "parameters": [
           {
             "name": "stop",
@@ -77,6 +77,16 @@
           },
           "404": {
             "description": "Unknown stop.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
             "content": {
               "application/json": {
                 "schema": {

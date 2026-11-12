@@ -29,7 +29,7 @@ and ESLint (`eslint.config.js`) turns the import rules below into errors. A pre-
 reformat that touches many lines goes in its own commit, listed in `.git-blame-ignore-revs`.
 
 There is no build step: Vercel compiles `api/**/*.ts` itself and serves `public/` as static files
-(the docs page and `openapi.json`). Without a `public/` folder it would serve the whole repository. To check what
+(`outputDirectory` in `vercel.json`; without it, Vercel serves the whole repository). To check what
 Vercel will produce, `pnpm dlx vercel build` works offline with a stub `.vercel/project.json`
 (`{"projectId":"x","orgId":"y","settings":{"framework":null}}`); `.vercel/` is gitignored. Delete
 `.vercel/output` afterwards: vitest picks up the test files copied into it.

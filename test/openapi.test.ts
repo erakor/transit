@@ -9,6 +9,11 @@ describe('public/openapi.json', () => {
     expect(read('public/openapi.json')).toEqual(buildOpenApi(read('package.json').version))
   })
 
+  it('is the only folder Vercel serves as static files', () => {
+    // Without it, Vercel serves the whole repository.
+    expect(read('vercel.json').outputDirectory).toBe('public')
+  })
+
   it('documents only public paths that exist', () => {
     const sources = (read('vercel.json').rewrites as { source: string }[]).map(r => r.source)
     for (const route of ROUTES) expect(sources).toContain(route.path)
