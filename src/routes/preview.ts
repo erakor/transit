@@ -1,4 +1,6 @@
 import { authenticated, errorResponse, PREVIEW_CACHE, text } from '#src/http.js'
+import { parseQuery } from '#src/schema.js'
+import { PreviewQuery } from '#src/subway/schemas.js'
 import { StopSearch } from '#src/stops/search.js'
 import { stationIndex } from '#src/stops/stations.js'
 import { previewLine } from '#src/subway/preview.js'
@@ -16,18 +18,13 @@ const PARTIAL_PREVIEW_CACHE = 'public, max-age=5, s-maxage=5'
 export function subwayPreviewHandler({ fetcher, now = () => Date.now(), index = stationIndex }: ArrivalsDeps = {}) {
   let search: StopSearch | undefined
   return authenticated(async (_request, url) => {
-    const q = url.searchParams.get('q')?.trim()
-    const stopParam = url.searchParams.get('stop')?.trim()
-    if (!q && !stopParam) return errorResponse(400, 'q or stop is required')
-    if (q && q.length > 100) return errorResponse(400, 'q is too long')
+    const parsed = parseQuery(PreviewQuery, url)
+    if (!parsed.ok) return parsed.response
+    const query = parsed.query
 
     const idx = index()
-    let stopId = stopParam
-    if (!stopId) {
-      search ??= new StopSearch(idx.data)
-      stopId = search.search(q!, 1)[0]?.id
-      if (!stopId) return errorResponse(404, 'no matching station')
-    }
+    const stopId = query.id !== undefined ? query.id : (search ??= new StopSearch(idx.data)).search(query.q, 1)[0]?.id
+    if (!stopId) return errorResponse(404, 'no matching station')
     const stop = idx.resolve(stopId)
     if (!stop) return errorResponse(404, `unknown stop ${stopId}`)
 

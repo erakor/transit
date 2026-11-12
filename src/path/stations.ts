@@ -1,4 +1,4 @@
-import type { RouteDisplay } from '#src/gtfsrt.js'
+import type { RouteDisplay } from '#src/schema.js'
 import { rankByName, tokenize } from '#src/stops/search.js'
 
 export type PathRoute = RouteDisplay

@@ -1,6 +1,8 @@
 import { fetchGbfs } from '#src/citibike/feeds.js'
 import { joinStations, nearestStations, type BikeStations } from '#src/citibike/stations.js'
-import { authenticated, errorResponse, intParam, json, LIVE_CACHE } from '#src/http.js'
+import { NearbyQuery, StationQuery, type NearbyResponse, type StationResponse } from '#src/citibike/schemas.js'
+import { authenticated, errorResponse, json, LIVE_CACHE } from '#src/http.js'
+import { parseQuery } from '#src/schema.js'
 import { tryLoad, type Fetcher } from '#src/gtfsrt.js'
 
 export interface CitibikeDeps {
@@ -40,24 +42,15 @@ export function citibikeStationHandler(deps: CitibikeDeps = {}) {
 
 function stationHandler(loadStations: Loader) {
   return authenticated(async (_request, url) => {
-    const id = url.searchParams.get('id')?.trim()
-    if (!id) return errorResponse(400, 'id is required')
+    const parsed = parseQuery(StationQuery, url)
+    if (!parsed.ok) return parsed.response
+    const { id } = parsed.query
     const stations = await loadStations()
     if (!stations) return errorResponse(502, UNAVAILABLE)
     const station = stations.byId.get(id)
     if (!station) return errorResponse(404, `unknown station ${id}`)
-    return json({ updatedAt: stations.updatedAt, station }, { cache: LIVE_CACHE })
+    return json({ updatedAt: stations.updatedAt, station } satisfies StationResponse, { cache: LIVE_CACHE })
   })
-}
-
-function coordinate(url: URL, name: string, max: number): number | { error: string } {
-  const raw = url.searchParams.get(name)?.trim()
-  if (!raw) return { error: `${name} is required` }
-  const value = Number(raw)
-  // Decimal forms only (Number() alone would also take hex and binary literals).
-  if (!/^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i.test(raw) || Math.abs(value) > max)
-    return { error: `${name} must be a number between -${max} and ${max}` }
-  return value
 }
 
 /** GET /citibike/nearby?lat=<lat>&lon=<lon>&n=<default 5, max 25>: the closest stations, nearest first. */
@@ -67,19 +60,16 @@ export function citibikeNearbyHandler(deps: CitibikeDeps = {}) {
 
 function nearbyHandler(loadStations: Loader) {
   return authenticated(async (_request, url) => {
-    const lat = coordinate(url, 'lat', 90)
-    if (typeof lat !== 'number') return errorResponse(400, lat.error)
-    const lon = coordinate(url, 'lon', 180)
-    if (typeof lon !== 'number') return errorResponse(400, lon.error)
-    const n = intParam(url, 'n', 5, 25)
-    if (typeof n !== 'number') return errorResponse(400, n.error)
+    const parsed = parseQuery(NearbyQuery, url)
+    if (!parsed.ok) return parsed.response
+    const { lat, lon, n } = parsed.query
 
     const stations = await loadStations()
     if (!stations) return errorResponse(502, UNAVAILABLE)
-    return json(
-      { lat, lon, updatedAt: stations.updatedAt, stations: nearestStations(stations.byId.values(), lat, lon, n) },
-      { cache: LIVE_CACHE }
-    )
+    const nearest = nearestStations(stations.byId.values(), lat, lon, n)
+    return json({ lat, lon, updatedAt: stations.updatedAt, stations: nearest } satisfies NearbyResponse, {
+      cache: LIVE_CACHE,
+    })
   })
 }
 

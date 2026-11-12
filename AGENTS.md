@@ -181,19 +181,23 @@ Ids, which clients store as favorites, so keep them stable:
   HTML), with `PREVIEW_CACHE`, whose `max-age` is how long the client keeps the line. Their
   errors stay JSON and `no-store`. The line's format is built by a pure function with its own
   tests (`src/subway/preview.ts`, and `src/preview.ts` for PATH and the agencies).
-- Request and response schemas (zod) are being added route by route; `/subway/arrivals` has them
-  (`src/subway/schemas.ts`, shared pieces in `src/schema.ts`). For such a route the schema is the
-  definition: its types are `z.infer`red from it, it reads the query (`parseQuery()`, which keeps
-  the error messages clients see), and the tests check real responses against it. Response
-  objects are `z.strictObject`, so a field added in code but not in the schema fails the tests.
-  Response schemas run in tests only, never per request. Pure modules import only their types
-  (`import type`), and code shared with other functions lives outside the route module (the
-  preview imports `loadArrivals` from `src/subway/load.ts`), so they don't load zod. Build
-  parameters with `requiredParam()` and `countParam()`, which match the rules and messages of
-  the routes without schemas. Descriptions go in `.meta()`: they become the API docs. A route with
-  schemas gets an entry in `ROUTES` (`src/openapi.ts`); `pnpm build:openapi` then rewrites
-  `public/openapi.json`, which `/docs` renders (Scalar, pinned on a CDN), and a test fails while
-  the committed file is out of date.
+- Every route has request and response schemas (zod): `schemas.ts` in each provider folder, and
+  the shared pieces (routes, alerts, `/health`, parameter helpers) in `src/schema.ts`. The schema
+  is the definition: types are `z.infer`red from it, it reads the query (`parseQuery()`, which
+  keeps the error messages clients see), and the tests check real responses against it
+  (`test/responses.test.ts` sends a request to every documented route and fails for a route
+  without one). Response objects are `z.strictObject`, so a field added in code but not in the
+  schema fails the tests. Response schemas run in tests only, never per request. Pure modules
+  import only their types (`import type`), so the smoke test and the data scripts don't load zod.
+  Build parameters with `requiredParam()`, `optionalParam()` (blank reads as absent; both take a
+  maximum length, 100 for search text), `countParam()` and `coordinateParam()`, which keep the
+  API's messages (`stop is required`, `q is too long`). Rules across parameters (`q or stop is
+  required`) are a `.refine()` on the query object. Agency schemas name the stop `station` or
+  `stop` (`STOP_SCHEMAS` in `src/agency/schemas.ts`) and their queries hand it to the handler as
+  `stop`. Descriptions go in `.meta()`: they become the API docs. Each route has an entry in
+  `ROUTES` (`src/openapi.ts`; the agency routes come from `AGENCIES`), each response schema a name
+  in `NAMED`; `pnpm build:openapi` then rewrites `public/openapi.json`, which `/docs` renders
+  (Scalar, pinned on a CDN), and a test fails while the committed file is out of date.
 - ESM with `NodeNext` resolution and `verbatimModuleSyntax`: imports end in `.js` even though the
   files are `.ts`, and type-only imports say so (`import type`, or `type` inline), since Vercel
   compiles each file on its own. Import anything in `src/` from another folder through the

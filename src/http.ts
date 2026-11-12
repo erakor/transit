@@ -70,15 +70,3 @@ export function authenticated(handler: (request: Request, url: URL) => Promise<R
     return res
   }
 }
-
-/**
- * Parses an optional positive integer query parameter, clamped to [1, max]. Routes with schemas
- * use `countParam()` in `schema.ts` instead, which follows the same rule; delete this once every
- * route has moved over.
- */
-export function intParam(url: URL, name: string, fallback: number, max: number): number | { error: string } {
-  const raw = url.searchParams.get(name)
-  if (raw === null || raw === '') return fallback
-  if (!/^\d+$/.test(raw) || Number(raw) < 1) return { error: `${name} must be a positive integer` }
-  return Math.min(Number(raw), max)
-}

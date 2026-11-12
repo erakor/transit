@@ -1,16 +1,9 @@
-import {
-  authenticated,
-  errorResponse,
-  intParam,
-  json,
-  LIVE_CACHE,
-  PREVIEW_CACHE,
-  STATIC_CACHE,
-  text,
-} from '#src/http.js'
+import { authenticated, errorResponse, json, LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE, text } from '#src/http.js'
 import { computePathArrivals } from '#src/path/arrivals.js'
 import { fetchPathFeed, type PathFeed } from '#src/path/feed.js'
 import { pathPreviewLine } from '#src/path/preview.js'
+import { PathArrivalsQuery, PathPreviewQuery, type PathStationsResponse } from '#src/path/schemas.js'
+import { parseQuery } from '#src/schema.js'
 import { PATH_STATIONS, pathStation, routesOf, searchPathStations } from '#src/path/stations.js'
 import type { Fetcher } from '#src/gtfsrt.js'
 
@@ -31,10 +24,9 @@ async function loadFeed(fetcher: Fetcher | undefined, nowMs: number): Promise<Pa
 /** GET /path/arrivals?station=<id>&limit=<per route and direction, default 3, max 10> */
 export function pathArrivalsHandler({ fetcher, now = () => Date.now() }: PathDeps = {}) {
   return authenticated(async (_request, url) => {
-    const stationParam = url.searchParams.get('station')?.trim()
-    if (!stationParam) return errorResponse(400, 'station is required')
-    const limit = intParam(url, 'limit', 3, 10)
-    if (typeof limit !== 'number') return errorResponse(400, limit.error)
+    const parsed = parseQuery(PathArrivalsQuery, url)
+    if (!parsed.ok) return parsed.response
+    const { station: stationParam, limit } = parsed.query
     const station = pathStation(stationParam)
     if (!station) return errorResponse(404, `unknown station ${stationParam}`)
 
@@ -49,7 +41,9 @@ export function pathArrivalsHandler({ fetcher, now = () => Date.now() }: PathDep
 export function pathStationsHandler() {
   return authenticated(() =>
     json(
-      { stations: PATH_STATIONS.map(s => ({ id: s.id, name: s.name, routes: routesOf(s) })) },
+      {
+        stations: PATH_STATIONS.map(s => ({ id: s.id, name: s.name, routes: routesOf(s) })),
+      } satisfies PathStationsResponse,
       { cache: STATIC_CACHE }
     )
   )
@@ -61,13 +55,12 @@ export function pathStationsHandler() {
  */
 export function pathPreviewHandler({ fetcher, now = () => Date.now() }: PathDeps = {}) {
   return authenticated(async (_request, url) => {
-    const q = url.searchParams.get('q')?.trim()
-    const stationParam = url.searchParams.get('station')?.trim()
-    if (!q && !stationParam) return errorResponse(400, 'q or station is required')
-    if (q && q.length > 100) return errorResponse(400, 'q is too long')
+    const parsed = parseQuery(PathPreviewQuery, url)
+    if (!parsed.ok) return parsed.response
+    const { id } = parsed.query
 
-    const station = stationParam ? pathStation(stationParam) : searchPathStations(q!)[0]
-    if (!station) return errorResponse(404, stationParam ? `unknown station ${stationParam}` : 'no matching station')
+    const station = id !== undefined ? pathStation(id) : searchPathStations(parsed.query.q)[0]
+    if (!station) return errorResponse(404, id !== undefined ? `unknown station ${id}` : 'no matching station')
 
     const nowMs = now()
     const feed = await loadFeed(fetcher, nowMs)

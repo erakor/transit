@@ -1,5 +1,6 @@
 /** GTFS-realtime plumbing shared by every provider: fetching, decoding and reading feeds. */
 import GtfsRealtimeBindings from 'gtfs-realtime-bindings'
+import type { RouteDisplay, VehicleStatus } from './schema.js'
 
 const { transit_realtime } = GtfsRealtimeBindings
 export type FeedMessage = GtfsRealtimeBindings.transit_realtime.FeedMessage
@@ -111,19 +112,10 @@ export function terminalName(
 }
 
 /** `VehiclePosition.current_status`, by enum value. */
-export const VEHICLE_STATUS = ['INCOMING_AT', 'STOPPED_AT', 'IN_TRANSIT_TO'] as const
+export const VEHICLE_STATUS = ['INCOMING_AT', 'STOPPED_AT', 'IN_TRANSIT_TO'] as const satisfies VehicleStatus[]
 
 /** Positions older than this are left out: the feeds keep finished trips around for hours. */
 export const VEHICLE_MAX_AGE_S = 900
-
-/** How a route is shown: every response that names a route carries these. */
-export interface RouteDisplay {
-  id: string
-  name: string
-  /** Hex color with leading "#". */
-  color: string
-  textColor: string
-}
 
 /** A route nobody has display data for shows under its id, in gray. */
 export function fallbackRoute(id: string): RouteDisplay {

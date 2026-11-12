@@ -1,13 +1,13 @@
 import { AGENCIES, findStop, routeInfo, searchStops, type Agency } from '#src/agency/agencies.js'
 import { computeAgencyArrivals } from '#src/agency/arrivals.js'
 import { computeAgencyVehicles } from '#src/agency/vehicles.js'
+import { AgencyVehiclesQuery, BusAlertsQuery, STOP_SCHEMAS } from '#src/agency/schemas.js'
 import { computeAlerts } from '#src/alerts.js'
 import { tryFetchFeed, type FeedMessage, type Fetcher } from '#src/gtfsrt.js'
 import {
   ALERTS_CACHE,
   authenticated,
   errorResponse,
-  intParam,
   json,
   LIVE_CACHE,
   PREVIEW_CACHE,
@@ -15,6 +15,7 @@ import {
   text,
 } from '#src/http.js'
 import { destinationsLine } from '#src/preview.js'
+import { parseQuery } from '#src/schema.js'
 
 export const BUS_ALERTS_FEED = 'camsys/bus-alerts'
 
@@ -76,7 +77,9 @@ function unavailable(agency: Agency): Response {
  * data yet, so routes carry their id as name and no stop is named.
  */
 async function busAlerts(url: URL, now: number, load: Context['load']): Promise<Response> {
-  const routeParam = url.searchParams.get('route')?.trim().toUpperCase()
+  const parsed = parseQuery(BusAlertsQuery, url)
+  if (!parsed.ok) return parsed.response
+  const routeParam = parsed.query.route?.toUpperCase()
   const feed = await load(BUS_ALERTS_FEED)
   if (!feed) return errorResponse(502, 'MTA alerts unavailable')
   const result = computeAlerts(feed, { now, match: routeParam ? r => r.toUpperCase() === routeParam : undefined })
@@ -86,10 +89,9 @@ async function busAlerts(url: URL, now: number, load: Context['load']): Promise<
 const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
   /** GET /<agency>/arrivals?station=<id>&limit=<default 10, max 30> (`stop` for the ferry). */
   async arrivals({ agency, url, now, load }) {
-    const param = url.searchParams.get(agency.stopParam)?.trim()
-    if (!param) return errorResponse(400, `${agency.stopParam} is required`)
-    const limit = intParam(url, 'limit', 10, 30)
-    if (typeof limit !== 'number') return errorResponse(400, limit.error)
+    const parsed = parseQuery(STOP_SCHEMAS[agency.stopParam].ArrivalsQuery, url)
+    if (!parsed.ok) return parsed.response
+    const { stop: param, limit } = parsed.query
     const stop = findStop(agency.data, param)
     if (!stop) return errorResponse(404, `unknown ${agency.stopParam} ${param}`)
     const feed = await load(agency.tripsFeed)
@@ -100,8 +102,10 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
 
   /** GET /<agency>/alerts, optionally `?route=<id>` or `?station=<id>`: the alerts in effect now. */
   async alerts({ agency, url, now, load }) {
-    const routeParam = url.searchParams.get('route')?.trim().toLowerCase()
-    const stopParam = url.searchParams.get(agency.stopParam)?.trim()
+    const parsed = parseQuery(STOP_SCHEMAS[agency.stopParam].AlertsQuery, url)
+    if (!parsed.ok) return parsed.response
+    const routeParam = parsed.query.route?.toLowerCase()
+    const stopParam = parsed.query.stop
     const stop = stopParam ? findStop(agency.data, stopParam) : undefined
     if (stopParam && !stop) return errorResponse(404, `unknown ${agency.stopParam} ${stopParam}`)
     const feed = await load(agency.alertsFeed)
@@ -124,7 +128,9 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
 
   /** GET /<agency>/vehicles, optionally `?route=<id>`: where the trains or boats are. */
   async vehicles({ agency, url, now, load }) {
-    const routeParam = url.searchParams.get('route')?.trim().toLowerCase()
+    const parsed = parseQuery(AgencyVehiclesQuery, url)
+    if (!parsed.ok) return parsed.response
+    const routeParam = parsed.query.route?.toLowerCase()
     const route = routeParam ? Object.keys(agency.data.routes).find(id => id.toLowerCase() === routeParam) : undefined
     if (routeParam && !route) return errorResponse(404, `unknown route ${routeParam}`)
     // The feed with the positions is required; separate trip updates only add routes and headsigns.
@@ -140,13 +146,15 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
 
   /** GET /preview/<agency>?q=<name> or ?station=<id>: one plain-text line, next departure per destination. */
   async preview({ agency, url, now, load }) {
-    const q = url.searchParams.get('q')?.trim()
-    const param = url.searchParams.get(agency.stopParam)?.trim()
-    if (!q && !param) return errorResponse(400, `q or ${agency.stopParam} is required`)
-    if (q && q.length > 100) return errorResponse(400, 'q is too long')
-    const stop = param ? findStop(agency.data, param) : searchStops(agency.data, q!)[0]
+    const parsed = parseQuery(STOP_SCHEMAS[agency.stopParam].PreviewQuery, url)
+    if (!parsed.ok) return parsed.response
+    const { id } = parsed.query
+    const stop = id !== undefined ? findStop(agency.data, id) : searchStops(agency.data, parsed.query.q)[0]
     if (!stop)
-      return errorResponse(404, param ? `unknown ${agency.stopParam} ${param}` : `no matching ${agency.stopParam}`)
+      return errorResponse(
+        404,
+        id !== undefined ? `unknown ${agency.stopParam} ${id}` : `no matching ${agency.stopParam}`
+      )
     const feed = await load(agency.tripsFeed)
     if (!feed) return unavailable(agency)
     const { arrivals } = computeAgencyArrivals(stop, feed, agency.data, { now, limit: Infinity })
@@ -162,10 +170,9 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
 
 /** GET /<agency>/stations (`/ferry/stops`): all of them by name, or `?q=<name>&limit=<default 10, max 25>`. */
 function list({ agency, url }: Context): Response {
-  const q = url.searchParams.get('q')?.trim()
-  if (q && q.length > 100) return errorResponse(400, 'q is too long')
-  const limit = intParam(url, 'limit', 10, 25)
-  if (typeof limit !== 'number') return errorResponse(400, limit.error)
+  const parsed = parseQuery(STOP_SCHEMAS[agency.stopParam].StopsQuery, url)
+  if (!parsed.ok) return parsed.response
+  const { q, limit } = parsed.query
   const stops = q
     ? searchStops(agency.data, q).slice(0, limit)
     : Object.values(agency.data.stops).sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id))

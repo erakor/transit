@@ -1,5 +1,7 @@
 import { SUBWAY_DATA } from '#src/data/subway.generated.js'
-import { authenticated, errorResponse, intParam, json, STATIC_CACHE } from '#src/http.js'
+import { authenticated, json, STATIC_CACHE } from '#src/http.js'
+import { parseQuery } from '#src/schema.js'
+import { SearchQuery, type SearchResponse } from '#src/subway/schemas.js'
 import { StopSearch } from '#src/stops/search.js'
 import type { SubwayData } from '#src/static/types.js'
 
@@ -7,14 +9,12 @@ import type { SubwayData } from '#src/static/types.js'
 export function searchHandler(data: SubwayData = SUBWAY_DATA) {
   let search: StopSearch | undefined
   return authenticated((_request, url) => {
-    const q = url.searchParams.get('q')?.trim()
-    if (!q) return errorResponse(400, 'q is required')
-    if (q.length > 100) return errorResponse(400, 'q is too long')
-    const limit = intParam(url, 'limit', 10, 25)
-    if (typeof limit !== 'number') return errorResponse(400, limit.error)
+    const parsed = parseQuery(SearchQuery, url)
+    if (!parsed.ok) return parsed.response
+    const { q, limit } = parsed.query
 
     search ??= new StopSearch(data)
-    const results = search.search(q, limit).map(s => ({
+    const results: SearchResponse['results'] = search.search(q, limit).map(s => ({
       id: s.id,
       name: s.name,
       lat: s.lat,

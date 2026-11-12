@@ -15,8 +15,8 @@ Runs on Vercel, one serverless function per route, TypeScript.
 All JSON. Times are epoch seconds. Every route needs the client token except `/health`, `/docs` and
 `/openapi.json`.
 
-`/docs` is an interactive reference, generated from the routes' schemas (`/openapi.json`). It
-covers the routes that have schemas so far, `/subway/arrivals` for now; this README covers them all.
+`/docs` is an interactive reference for every route, generated from the routes' schemas
+(`/openapi.json`).
 
 ### `GET /subway/arrivals?stop=<id>&limit=<n>`
 

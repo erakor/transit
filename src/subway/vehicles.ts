@@ -1,26 +1,7 @@
 import type { RouteInfo } from '#src/static/types.js'
 import type { StationIndex } from '#src/stops/stations.js'
 import { num, terminalName, VEHICLE_MAX_AGE_S, VEHICLE_STATUS, type FeedMessage } from '#src/gtfsrt.js'
-
-export interface SubwayTrain {
-  tripId: string
-  /** "N" or "S", from the platform the train is at or heading to. */
-  direction: 'N' | 'S' | null
-  /** Name of the trip's last passenger stop in the feed. */
-  headsign: string
-  /** Relative to `stop`. */
-  status: (typeof VEHICLE_STATUS)[number]
-  stop: { id: string; name: string } | null
-  /** When the train last reported (epoch seconds). */
-  time: number | null
-}
-
-export interface SubwayTrainsResult {
-  route: { id: string; name: string; color: string; textColor: string }
-  /** Header timestamp of the feed (epoch seconds). */
-  updatedAt: number | null
-  vehicles: SubwayTrain[]
-}
+import type { SubwayTrain, VehiclesResponse } from './schemas.js'
 
 /**
  * Where a route's trains are: the stop each one is at or heading to. The subway feeds carry no
@@ -33,7 +14,7 @@ export function computeSubwayTrains(
   feed: FeedMessage,
   index: StationIndex,
   { now }: { now: number }
-): SubwayTrainsResult {
+): VehiclesResponse {
   const headsigns = new Map<string, string>()
   for (const entity of feed.entity) {
     const tu = entity.tripUpdate

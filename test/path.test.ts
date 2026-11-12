@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from '#src/http.js'
-import { BOARDING_GRACE_S, computePathArrivals, type PathArrivalsResult } from '#src/path/arrivals.js'
+import { BOARDING_GRACE_S, computePathArrivals } from '#src/path/arrivals.js'
+import type { PathArrivalsResponse } from '#src/path/schemas.js'
 import { parsePathFeed, PATH_FEED_URL } from '#src/path/feed.js'
 import { pathPreviewLine } from '#src/path/preview.js'
 import { PATH_ROUTES, PATH_STATIONS, pathStation, routeForColors, searchPathStations } from '#src/path/stations.js'
@@ -232,7 +233,7 @@ describe('pathPreviewLine', () => {
   })
 
   it('says so when no train is coming', () => {
-    const none: PathArrivalsResult = { station: { id: 'GRV', name: 'Grove Street' }, updatedAt: null, groups: [] }
+    const none: PathArrivalsResponse = { station: { id: 'GRV', name: 'Grove Street' }, updatedAt: null, groups: [] }
     expect(pathPreviewLine(none, NOW)).toBe('Grove Street · no trains soon')
   })
 })

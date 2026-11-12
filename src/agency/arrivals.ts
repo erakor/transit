@@ -1,27 +1,7 @@
 import { num, terminalName, type FeedMessage } from '#src/gtfsrt.js'
 import { routeInfo } from './agencies.js'
+import type { AgencyArrival, AgencyArrivalsResult } from './schemas.js'
 import type { AgencyData, AgencyStop } from './types.js'
-
-export interface AgencyArrival {
-  /** Epoch seconds: when it leaves this stop, or arrives where its trip ends. */
-  time: number
-  /** Seconds behind schedule (negative: ahead), when the feed says. */
-  delay?: number
-  route: string
-  name: string
-  color: string
-  textColor: string
-  /** Where the trip ends. */
-  headsign: string
-  tripId: string
-}
-
-export interface AgencyArrivalsResult {
-  stop: { id: string; name: string }
-  /** The feed's header timestamp (epoch seconds). */
-  updatedAt: number | null
-  arrivals: AgencyArrival[]
-}
 
 const SKIPPED = 1
 const CANCELED = 3
