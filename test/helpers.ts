@@ -4,7 +4,7 @@ import { afterEach, beforeEach, vi } from 'vitest'
 import { AGENCIES } from '#src/agency/agencies.js'
 import { clearFeedMemo, type Fetcher } from '#src/gtfsrt.js'
 
-export const TOKEN = 'test-token'
+const TOKEN = 'test-token'
 export const auth = { 'x-transit-token': TOKEN }
 
 /** What every route test needs: a server token, quiet error logs and an empty feed memo. */
