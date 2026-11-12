@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { SUBWAY_DATA } from "#src/data/subway.generated.js";
 import { StationIndex } from "#src/stops/stations.js";
 import { computeArrivals } from "#src/subway/arrivals.js";
+import { ArrivalsResult } from "#src/subway/schemas.js";
 import { decodeFeed } from "#src/gtfsrt.js";
 import { FEEDS, feedsForRoutes } from "#src/subway/feeds.js";
 import { fixture, FIXTURE_NOW_MS } from "./helpers.js";
@@ -61,9 +62,10 @@ describe("computeArrivals on recorded MTA feeds", () => {
       let total = 0;
       for (const s of stations) {
         const r = computeArrivals(index.resolve(s.id)!, [feed], index, { now, limit: 3 });
+        // Throws, naming the field, when real data doesn't match the documented shape.
+        ArrivalsResult.parse(r);
         for (const g of r.groups) {
           expect(FEEDS[name]).toContain(g.route);
-          expect(g.color).toMatch(/^#[0-9A-F]{6}$/);
           expect(g.arrivals.length).toBeGreaterThan(0);
           expect(g.arrivals.length).toBeLessThanOrEqual(3);
           for (const a of g.arrivals) {
