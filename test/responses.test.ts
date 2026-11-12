@@ -12,7 +12,15 @@ import { subwayPreviewHandler } from '#src/routes/preview.js'
 import { searchHandler } from '#src/routes/search.js'
 import { subwayVehiclesHandler } from '#src/routes/vehicles.js'
 import { ErrorBody } from '#src/schema.js'
-import { auth, fixtureFetcher, FIXTURE_NOW_MS, get, PATH_FIXTURE_NOW_MS, useRouteTestSetup } from './helpers.js'
+import {
+  auth,
+  BUS_STOP,
+  fixtureFetcher,
+  FIXTURE_NOW_MS,
+  get,
+  PATH_FIXTURE_NOW_MS,
+  useRouteTestSetup,
+} from './helpers.js'
 
 useRouteTestSetup()
 
@@ -67,6 +75,8 @@ const REQUESTS = [
   '/ferry/alerts?stop=87',
   '/ferry/vehicles',
   '/preview/ferry?q=wall',
+  `/bus/arrivals?stop=${BUS_STOP}`,
+  `/preview/bus?stop=${BUS_STOP}`,
   '/bus/alerts',
   '/bus/alerts?route=M15',
   '/citibike/station?id=f72a253f-3cef-4da8-9591-0cbd3a692162',
@@ -100,7 +110,9 @@ describe('documented routes', () => {
       // The route's id parameter, the one an unknown value of is a 404.
       const params = Object.keys(z.toJSONSchema(route.query, { io: 'input' }).properties ?? {})
       const param = ['stop', 'station', 'id', 'route'].find(p => params.includes(p))
-      const res = await handlerFor(route.path)(get(`${route.path}?${param}=nope`, auth))
+      // Bus stop codes have a format: anything else is a 400, before Bus Time is asked.
+      const unknown = route.tag === 'Bus' ? '999999' : 'nope'
+      const res = await handlerFor(route.path)(get(`${route.path}?${param}=${unknown}`, auth))
       expect(res.status).toBe(404)
       expect(ErrorBody.safeParse(await res.json()).success).toBe(true)
     }

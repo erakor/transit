@@ -60,8 +60,12 @@
       "destination": "/api/agency?agency=:agency&op=preview"
     },
     {
-      "source": "/bus/alerts",
-      "destination": "/api/agency?agency=bus&op=alerts"
+      "source": "/bus/:op(arrivals|alerts)",
+      "destination": "/api/agency?agency=bus&op=:op"
+    },
+    {
+      "source": "/preview/bus",
+      "destination": "/api/agency?agency=bus&op=preview"
     }
   ],
   "functions": {

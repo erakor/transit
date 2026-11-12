@@ -12,24 +12,28 @@
  * from the static schedule, a main stop with no departures, or no vehicle positions. For alerts:
  * a feed that no longer decodes or has gone a day without an update. For Citi Bike: a feed that
  * changed shape, stale status, no bikes, e-bikes or free docks anywhere, or no station within
- * 500 m of Times Sq.
+ * 500 m of Times Sq. For buses, when BUSTIME_KEY is set: a Bus Time answer that changed shape or
+ * is stale, routes missing from the static bus data, no bus on its way to 1 Av/E 14 St, or an
+ * unknown stop no longer answered as one.
  */
 import { AGENCIES } from '#src/agency/agencies.js'
 import { computeAgencyArrivals } from '#src/agency/arrivals.js'
 import { computeAgencyVehicles } from '#src/agency/vehicles.js'
 import { computeAlerts } from '#src/alerts.js'
+import { fetchStopMonitoring } from '#src/bus/siri.js'
 import { fetchGbfs } from '#src/citibike/feeds.js'
 import { joinStations, nearestStations } from '#src/citibike/stations.js'
+import { BUS_DATA } from '#src/data/bus.generated.js'
 import { fetchFeed, type FeedMessage } from '#src/gtfsrt.js'
 import { computePathArrivals } from '#src/path/arrivals.js'
 import { fetchPathFeed } from '#src/path/feed.js'
 import { PATH_STATIONS, pathStation, routeForColors } from '#src/path/stations.js'
-import { BUS_ALERTS_FEED } from '#src/routes/agency.js'
+import { BUS_ALERTS_FEED } from '#src/routes/bus.js'
 import { SUBWAY_ALERTS_FEED } from '#src/routes/alerts.js'
 import { stationIndex } from '#src/stops/stations.js'
 import { computeArrivals } from '#src/subway/arrivals.js'
 import { FEEDS } from '#src/subway/feeds.js'
-import { TIMES_SQ } from '../test/helpers.js'
+import { BUS_STOP, TIMES_SQ } from '../test/helpers.js'
 
 const problems: string[] = []
 const fail = (msg: string) => {
@@ -189,6 +193,33 @@ try {
   fail(`citibike: ${(err as Error).message}`)
 }
 
+// Buses: Bus Time needs a key, which the scheduled run may not have.
+const busKey = process.env.BUSTIME_KEY?.trim()
+if (!busKey) console.log('bus: skipped, BUSTIME_KEY is not set')
+else {
+  try {
+    const [stop, unknown] = await Promise.all(
+      [BUS_STOP, '999999'].map(s => fetchStopMonitoring(s, busKey, { timeoutMs: 20_000 }))
+    )
+    const unknownRoutes = [...new Set(stop!.visits.map(v => v.routeId))].filter(r => !BUS_DATA.routes[r])
+    const timed = stop!.visits.filter(v => v.time !== undefined).length
+    const name = stop!.visits[0]?.stopName ?? BUS_STOP
+    console.log(
+      `bus ${name}: ${stop!.visits.length} buses, ${timed} with a time, age ${nowS - (stop!.updatedAt ?? 0)}s`
+    )
+    if (stop!.error) fail(`bus stop ${BUS_STOP}: ${stop!.error}`)
+    if (Math.abs(nowS - (stop!.updatedAt ?? 0)) > 600)
+      fail(`bus stop ${BUS_STOP}: response timestamp ${stop!.updatedAt}`)
+    if (stop!.visits.length === 0) fail(`bus stop ${BUS_STOP}: no buses on their way`)
+    if (unknownRoutes.length) fail(`bus: routes missing from the static data: ${unknownRoutes.join(',')}`)
+    // src/routes/bus.ts answers 404 on this text.
+    if (!/no such stop/i.test(unknown!.error ?? ''))
+      fail(`bus: unknown stop answered ${JSON.stringify(unknown!.error)}`)
+  } catch (err) {
+    fail(`bus: ${(err as Error).message}`)
+  }
+}
+
 // Alerts.
 for (const name of alertFeeds) {
   const label = name.split('/').slice(-2).join('/')
@@ -263,6 +294,11 @@ if (base) {
   for (const [i, res] of (await Promise.all(others.map(path => call(path, true)))).entries())
     expectStatus(res, 200, others[i]!)
   expectStatus(await call('/lirr/nope', true), 404, 'an unknown agency route')
+  if (busKey) {
+    const bus = `/bus/arrivals?stop=${BUS_STOP}&smoke=${nowS}`
+    expectStatus(await call(bus, false), 401, 'bus arrivals without token')
+    expectStatus(await call(bus, true), 200, 'bus arrivals with token (is BUSTIME_KEY set on the deployment?)')
+  }
 
   const nearby = `/citibike/nearby?lat=${TIMES_SQ.lat}&lon=${TIMES_SQ.lon}&n=3&smoke=${nowS}`
   expectStatus(await call(nearby, false), 401, 'Citi Bike nearby without token')

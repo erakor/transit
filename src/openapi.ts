@@ -6,10 +6,10 @@ import {
   AgencyVehicle,
   AgencyVehiclesQuery,
   AgencyVehiclesResponse,
-  BusAlertsQuery,
   STOP_SCHEMAS,
 } from '#src/agency/schemas.js'
 import { TOKEN_HEADER } from '#src/auth.js'
+import { BusAlertsQuery, BusArrival, BusArrivalsQuery, BusArrivalsResponse, BusPreviewQuery } from '#src/bus/schemas.js'
 import {
   BikeStation,
   NearbyQuery,
@@ -213,10 +213,38 @@ export const ROUTES: Route[] = [
   },
   ...agencyRoutes(),
   {
+    path: '/bus/arrivals',
+    tag: 'Bus',
+    summary: 'Next buses at a bus stop',
+    description:
+      'The buses on their way to one stop, from MTA Bus Time, every route in one list. Stops are found by the ' +
+      'code on their sign; there is no bus stop search yet.',
+    query: BusArrivalsQuery,
+    response: BusArrivalsResponse,
+    errors: {
+      400: 'Missing or malformed `stop`, or bad `limit`.',
+      404: 'Bus Time knows no such stop.',
+      502: 'Bus Time failed.',
+    },
+  },
+  {
+    path: '/preview/bus',
+    tag: 'Bus',
+    summary: 'Bus arrivals as one line of text',
+    description: `${PREVIEW} The next bus of each route.`,
+    query: BusPreviewQuery,
+    response: 'text',
+    errors: {
+      400: 'Missing or malformed `stop`.',
+      404: 'Bus Time knows no such stop.',
+      502: 'Bus Time failed.',
+    },
+  },
+  {
     path: '/bus/alerts',
     tag: 'Bus',
     summary: 'Bus service alerts',
-    description: 'The alerts in effect now, optionally for one route. Routes show under their id.',
+    description: 'The alerts in effect now, optionally for one route. No stop is named.',
     query: BusAlertsQuery,
     response: AlertsResult,
     errors: { 502: 'The alerts feed failed.' },
@@ -273,6 +301,8 @@ const NAMED: Record<string, z.ZodType> = {
   FerryAlertsResponse: STOP_SCHEMAS.stop.AlertsResponse,
   AgencyVehiclesResponse,
   AgencyVehicle,
+  BusArrivalsResponse,
+  BusArrival,
   AlertsResponse: AlertsResult,
   Alert,
   CitibikeStationResponse: StationResponse,

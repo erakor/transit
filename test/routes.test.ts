@@ -11,7 +11,16 @@ import { LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from '#src/http.js'
 import { SUBWAY_DATA } from '#src/data/subway.generated.js'
 import { ErrorBody } from '#src/schema.js'
 import { ArrivalsResponse } from '#src/subway/schemas.js'
-import { auth, fixtureFetcher, FIXTURE_NOW_MS, get, PATH_FIXTURE_NOW_MS, useRouteTestSetup } from './helpers.js'
+import {
+  auth,
+  BUS_FIXTURE_NOW_MS,
+  BUS_STOP,
+  fixtureFetcher,
+  FIXTURE_NOW_MS,
+  get,
+  PATH_FIXTURE_NOW_MS,
+  useRouteTestSetup,
+} from './helpers.js'
 
 const TIMES_SQ = SUBWAY_DATA.stops['127']!.station
 
@@ -59,6 +68,11 @@ describe.each([
   ['/mnr/stations', '?q=rye', () => agencyHandler()],
   ['/ferry/vehicles', '', () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
   ['/bus/alerts', '', () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
+  [
+    '/bus/arrivals',
+    `?stop=${BUS_STOP}`,
+    () => agencyHandler({ fetcher: fixtureFetcher(), now: () => BUS_FIXTURE_NOW_MS }),
+  ],
   ['/preview/mnr', '?station=1', () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
 ])('%s auth and caching', (path, query, handler) => {
   it('is 401 without a token, uncached and varying on the token header', async () => {

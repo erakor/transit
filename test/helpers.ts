@@ -5,12 +5,15 @@ import { AGENCIES } from '#src/agency/agencies.js'
 import { clearFeedMemo, type Fetcher } from '#src/gtfsrt.js'
 
 const TOKEN = 'test-token'
+/** The Bus Time key route tests run with: errors and logs must never show it. */
+export const BUS_KEY = 'test-bustime-key'
 export const auth = { 'x-transit-token': TOKEN }
 
 /** What every route test needs: a server token, quiet error logs and an empty feed memo. */
 export function useRouteTestSetup(): void {
   beforeEach(() => {
     vi.stubEnv('TRANSIT_TOKEN', TOKEN)
+    vi.stubEnv('BUSTIME_KEY', BUS_KEY)
     vi.spyOn(console, 'error').mockImplementation(() => {})
     clearFeedMemo()
   })
@@ -24,9 +27,11 @@ export function useRouteTestSetup(): void {
  * The fixture a feed URL is recorded under (without extension): its last path segment
  * ("nyct/gtfs-ace" -> gtfs-ace, "camsys/subway-alerts" -> subway-alerts), prefixed with the
  * agency id for an agency's own host (the ferry's "tripupdate" -> ferry-tripupdate), and Citi Bike's
- * GBFS feeds ("station_status.json" -> citibike-station_status.json).
+ * GBFS feeds ("station_status.json" -> citibike-station_status.json), and a Bus Time stop by its
+ * code (bustime-401687.json).
  */
 export function fixtureName(url: string): string {
+  if (url.includes('bustime.mta.info')) return `bustime-${new URL(url).searchParams.get('MonitoringRef')}.json`
   const name = decodeURIComponent(url).split('/').pop()!
   if (url.includes('/gbfs/')) return `citibike-${name}`
   const agency = Object.values(AGENCIES).find(a => [a.tripsFeed, a.vehiclesFeed, a.alertsFeed].includes(url))
@@ -38,8 +43,8 @@ export function fixture(name: string): Uint8Array<ArrayBuffer> {
 }
 
 /**
- * Serves test/fixtures/<feed>.pb for GTFS-realtime feed URLs and test/fixtures/ridepath.json for
- * the PATH feed, and records which feeds were requested. Feeds in `fail`, which tests may add to,
+ * Serves test/fixtures/<feed>.pb for GTFS-realtime feed URLs, and the JSON fixtures (PATH, Citi
+ * Bike, Bus Time) for the others, and records which feeds were requested. Feeds in `fail`, which tests may add to,
  * answer 503.
  */
 export function fixtureFetcher(fail: string[] = []): Fetcher & { calls: string[]; fail: string[] } {
@@ -62,6 +67,13 @@ export const PATH_FIXTURE_NOW_MS = 1794334700_000
 export function get(path: string, headers: Record<string, string> = {}): Request {
   return new Request(`https://transit.test${path}`, { headers })
 }
+
+/**
+ * The stop of the Bus Time fixture (1 Av/E 14 St, M15 and M15-SBS), and when its answer was made.
+ * test/fixtures/bustime-999999.json is Bus Time's answer for a stop it doesn't know.
+ */
+export const BUS_STOP = '401687'
+export const BUS_FIXTURE_NOW_MS = 1794334736_000
 
 /** The recorded Citi Bike feeds: `fail` and `calls` name them as `CITIBIKE_INFORMATION` and `CITIBIKE_STATUS`. */
 export const CITIBIKE_INFORMATION = 'citibike-station_information.json'

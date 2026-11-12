@@ -1,0 +1,147 @@
+{
+ "Siri": {
+  "ServiceDelivery": {
+   "ResponseTimestamp": "2026-11-10T13:18:56.123-05:00",
+   "StopMonitoringDelivery": [
+    {
+     "MonitoredStopVisit": [
+      {
+       "MonitoredVehicleJourney": {
+        "LineRef": "MTA NYCT_M15+",
+        "DirectionRef": "0",
+        "FramedVehicleJourneyRef": {
+         "DataFrameRef": "2026-11-10",
+         "DatedVehicleJourneyRef": "MTA NYCT_MQ_D6-Weekday-SDon-077800_M15+_731"
+        },
+        "JourneyPatternRef": "MTA_M150371",
+        "PublishedLineName": ["M15-SBS"],
+        "OperatorRef": "MTA NYCT",
+        "OriginRef": "MTA_903013",
+        "DestinationRef": "MTA_803101",
+        "DestinationName": ["SBS EAST HARLEM 126 ST via 1 AV"],
+        "Monitored": true,
+        "VehicleLocation": { "Longitude": -73.983795, "Latitude": 40.728911 },
+        "Bearing": 54.8,
+        "ProgressRate": "normalProgress",
+        "BlockRef": "MTA NYCT_MQ_D6-Weekday-SDon_E_MQ_47640_M15+-731",
+        "VehicleRef": "MTA NYCT_5791",
+        "MonitoredCall": {
+         "ExpectedArrivalTime": "2026-11-10T13:21:10.000-05:00",
+         "ExpectedDepartureTime": "2026-11-10T13:21:10.000-05:00",
+         "ArrivalProximityText": "approaching",
+         "DistanceFromStop": 412,
+         "NumberOfStopsAway": 1,
+         "StopPointRef": "MTA_401687",
+         "VisitNumber": 1,
+         "StopPointName": ["1 AV/E 14 ST"]
+        }
+       },
+       "RecordedAtTime": "2026-11-10T13:18:41.000-05:00"
+      },
+      {
+       "MonitoredVehicleJourney": {
+        "LineRef": "MTA NYCT_M15",
+        "DirectionRef": "0",
+        "FramedVehicleJourneyRef": {
+         "DataFrameRef": "2026-11-10",
+         "DatedVehicleJourneyRef": "MTA NYCT_MQ_D6-Weekday-SDon-078300_M15_708"
+        },
+        "JourneyPatternRef": "MTA_M150339",
+        "PublishedLineName": ["M15"],
+        "OperatorRef": "MTA NYCT",
+        "OriginRef": "MTA_903012",
+        "DestinationRef": "MTA_803101",
+        "DestinationName": ["EAST HARLEM 126 ST via 1 AV"],
+        "Monitored": true,
+        "VehicleLocation": { "Longitude": -73.988215, "Latitude": 40.72165 },
+        "Bearing": 55.2,
+        "ProgressRate": "normalProgress",
+        "BlockRef": "MTA NYCT_MQ_D6-Weekday-SDon_E_MQ_43260_M15-708",
+        "VehicleRef": "MTA NYCT_6434",
+        "MonitoredCall": {
+         "ExpectedArrivalTime": "2026-11-10T13:24:40.000-05:00",
+         "ExpectedDepartureTime": "2026-11-10T13:24:40.000-05:00",
+         "ArrivalProximityText": "5 stops away",
+         "DistanceFromStop": 1630,
+         "NumberOfStopsAway": 5,
+         "StopPointRef": "MTA_401687",
+         "VisitNumber": 1,
+         "StopPointName": ["1 AV/E 14 ST"]
+        }
+       },
+       "RecordedAtTime": "2026-11-10T13:18:30.000-05:00"
+      },
+      {
+       "MonitoredVehicleJourney": {
+        "LineRef": "MTA NYCT_M15+",
+        "DirectionRef": "0",
+        "FramedVehicleJourneyRef": {
+         "DataFrameRef": "2026-11-10",
+         "DatedVehicleJourneyRef": "MTA NYCT_MQ_D6-Weekday-SDon-079000_M15+_733"
+        },
+        "JourneyPatternRef": "MTA_M150371",
+        "PublishedLineName": ["M15-SBS"],
+        "OperatorRef": "MTA NYCT",
+        "OriginRef": "MTA_903013",
+        "DestinationRef": "MTA_803101",
+        "DestinationName": ["SBS EAST HARLEM 126 ST via 1 AV"],
+        "Monitored": true,
+        "VehicleLocation": { "Longitude": -74.011802, "Latitude": 40.702068 },
+        "Bearing": 30.1,
+        "ProgressRate": "normalProgress",
+        "BlockRef": "MTA NYCT_MQ_D6-Weekday-SDon_E_MQ_48010_M15+-733",
+        "VehicleRef": "MTA NYCT_5802",
+        "MonitoredCall": {
+         "ExpectedArrivalTime": "2026-11-10T13:31:05.000-05:00",
+         "ExpectedDepartureTime": "2026-11-10T13:31:05.000-05:00",
+         "ArrivalProximityText": "2.6 miles away",
+         "DistanceFromStop": 4210,
+         "NumberOfStopsAway": 9,
+         "StopPointRef": "MTA_401687",
+         "VisitNumber": 1,
+         "StopPointName": ["1 AV/E 14 ST"]
+        }
+       },
+       "RecordedAtTime": "2026-11-10T13:18:50.000-05:00"
+      },
+      {
+       "MonitoredVehicleJourney": {
+        "LineRef": "MTA NYCT_M15",
+        "DirectionRef": "0",
+        "FramedVehicleJourneyRef": {
+         "DataFrameRef": "2026-11-10",
+         "DatedVehicleJourneyRef": "MTA NYCT_MQ_D6-Weekday-SDon-080100_M15_712"
+        },
+        "JourneyPatternRef": "MTA_M150339",
+        "PublishedLineName": ["M15"],
+        "OperatorRef": "MTA NYCT",
+        "OriginRef": "MTA_903012",
+        "DestinationRef": "MTA_803101",
+        "DestinationName": ["EAST HARLEM 126 ST via 1 AV"],
+        "Monitored": true,
+        "VehicleLocation": { "Longitude": -74.01306, "Latitude": 40.70158 },
+        "Bearing": 31.4,
+        "ProgressRate": "noProgress",
+        "ProgressStatus": ["layover"],
+        "BlockRef": "MTA NYCT_MQ_D6-Weekday-SDon_E_MQ_44100_M15-712",
+        "VehicleRef": "MTA NYCT_6521",
+        "MonitoredCall": {
+         "ArrivalProximityText": "3.1 miles away",
+         "DistanceFromStop": 4990,
+         "NumberOfStopsAway": 22,
+         "StopPointRef": "MTA_401687",
+         "VisitNumber": 1,
+         "StopPointName": ["1 AV/E 14 ST"]
+        }
+       },
+       "RecordedAtTime": "2026-11-10T13:17:58.000-05:00"
+      }
+     ],
+     "ResponseTimestamp": "2026-11-10T13:18:56.123-05:00",
+     "ValidUntil": "2026-11-10T13:19:56.123-05:00"
+    }
+   ],
+   "SituationExchangeDelivery": []
+  }
+ }
+}

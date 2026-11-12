@@ -3,6 +3,7 @@ import { AGENCIES, findStop, searchStops } from '#src/agency/agencies.js'
 import { computeAgencyArrivals } from '#src/agency/arrivals.js'
 import type { AgencyData } from '#src/agency/types.js'
 import { computeAgencyVehicles } from '#src/agency/vehicles.js'
+import { BUS_DATA } from '#src/data/bus.generated.js'
 import { ALERTS_CACHE, LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from '#src/http.js'
 import { agencyHandler, agencyRoute } from '#src/routes/agency.js'
 import { buildAgencyData } from '#src/static/agency.js'
@@ -376,7 +377,6 @@ describe('agency routes', () => {
     ['/ferry/stations', 404, 'not found'],
     ['/lirr/toString', 404, 'not found'],
     ['/njt/arrivals', 404, 'not found'],
-    ['/bus/arrivals', 404, 'not found'],
     ['/api/agency', 404, 'not found'],
   ])('rejects %s with %i', async (path, status, error) => {
     const r = await call(path).res
@@ -503,12 +503,17 @@ describe('agency routes', () => {
     expect((await (await call('/ferry/alerts').res).json()).alerts).toEqual([])
   })
 
-  it('returns bus alerts by route, whatever the case', async () => {
+  it('returns bus alerts by route, whatever the case, with route names and colors', async () => {
     const all = await (await call('/bus/alerts').res).json()
     const routeId: string = all.alerts[0].routes[0].id
     const one = await (await call(`/bus/alerts?route=${routeId.toLowerCase()}`).res).json()
     expect(one.alerts.length).toBeGreaterThan(0)
     expect(one.alerts.length).toBeLessThan(all.alerts.length)
-    expect(one.alerts[0].routes).toContainEqual({ id: routeId, name: routeId, color: '#808183', textColor: '#FFFFFF' })
+    expect(one.alerts[0].routes).toContainEqual(BUS_DATA.routes[routeId])
+    // Select Bus Service routes are `+` in the feed and `-SBS` on the bus.
+    const sbs = all.alerts
+      .flatMap((a: { routes: { id: string; name: string }[] }) => a.routes)
+      .find((r: { id: string }) => r.id.endsWith('+'))
+    expect(sbs.name).toBe(sbs.id.replace('+', '-SBS').replace(/^BX/, 'Bx'))
   })
 })

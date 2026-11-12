@@ -4,6 +4,7 @@
  *   pnpm record-fixtures            # everything
  *   pnpm record-fixtures transit    # GTFS-realtime and PATH feeds
  *   pnpm record-fixtures citibike   # the Citi Bike feeds
+ *   pnpm record-fixtures bus        # the Bus Time fixtures (needs BUSTIME_KEY; skipped without it)
  *
  * Transit: every GTFS-realtime feed as <name>.pb (named by
  * `fixtureName`, which the tests' fetcher uses too) and the PATH feed as ridepath.json. Alert
@@ -12,6 +13,9 @@
  *
  * Citi Bike: test/fixtures/citibike-<feed>.json, the live feeds trimmed to the stations around
  * Times Sq (the full ones are about 1 MB each), untouched, in feed order.
+ *
+ * Bus: Bus Time's answers for the fixture stop (`BUS_STOP`) and for a stop it doesn't know, as
+ * test/fixtures/bustime-<stop>.json. The key is in the request only, never in what is written.
  */
 import { writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
@@ -22,10 +26,11 @@ import { gbfsUrl } from '#src/citibike/feeds.js'
 import { distanceMeters } from '#src/citibike/stations.js'
 import { decodeFeed, feedUrl } from '#src/gtfsrt.js'
 import { parsePathFeed, PATH_FEED_URL } from '#src/path/feed.js'
-import { BUS_ALERTS_FEED } from '#src/routes/agency.js'
+import { BUS_ALERTS_FEED } from '#src/routes/bus.js'
 import { SUBWAY_ALERTS_FEED } from '#src/routes/alerts.js'
 import { FEEDS } from '#src/subway/feeds.js'
-import { fixtureName, TIMES_SQ } from '../test/helpers.js'
+import { stopMonitoringUrl } from '#src/bus/siri.js'
+import { BUS_STOP, fixtureName, TIMES_SQ } from '../test/helpers.js'
 
 const { FeedMessage } = GtfsRealtimeBindings.transit_realtime
 const out = (file: string) => fileURLToPath(new URL(`../test/fixtures/${file}`, import.meta.url))
@@ -112,7 +117,34 @@ async function recordCitibike(): Promise<void> {
   }
 }
 
-const recorders: Record<string, () => Promise<void>> = { transit: recordTransit, citibike: recordCitibike }
+async function recordBus(): Promise<void> {
+  const key = process.env.BUSTIME_KEY?.trim()
+  if (!key) {
+    if (only === 'bus') throw new Error('BUSTIME_KEY is not set')
+    console.log('bus: skipped, BUSTIME_KEY is not set')
+    return
+  }
+  for (const stop of [BUS_STOP, '999999']) {
+    const url = stopMonitoringUrl(stop, key)
+    // `get` would put the URL, and so the key, in its error.
+    const res = await fetch(url, { signal: AbortSignal.timeout(15_000) })
+    if (!res.ok) throw new Error(`bustime stop ${stop}: HTTP ${res.status}`)
+    const body = JSON.stringify(await res.json(), null, 1) + '\n'
+    await writeFile(out(fixtureName(url)), body)
+    console.log(`${fixtureName(url)}: ${body.length} bytes`)
+    if (stop === BUS_STOP) {
+      const stamp = (JSON.parse(body) as { Siri?: { ServiceDelivery?: { ResponseTimestamp?: string } } }).Siri
+        ?.ServiceDelivery?.ResponseTimestamp
+      console.log(`Update BUS_FIXTURE_NOW_MS in test/helpers.ts to ${Math.floor(Date.parse(stamp ?? '') / 1000)}_000.`)
+    }
+  }
+}
+
+const recorders: Record<string, () => Promise<void>> = {
+  transit: recordTransit,
+  citibike: recordCitibike,
+  bus: recordBus,
+}
 const only = process.argv[2]
-if (only && !recorders[only]) throw new Error(`unknown provider ${only}: ${Object.keys(recorders).join(' or ')}`)
+if (only && !recorders[only]) throw new Error(`unknown provider ${only}: ${Object.keys(recorders).join(', ')}`)
 for (const [name, record] of Object.entries(recorders)) if (!only || only === name) await record()
