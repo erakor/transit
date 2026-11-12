@@ -1,25 +1,17 @@
 /**
- * Request and response schemas for `/subway/arrivals`. The TypeScript types the code uses
- * (`ArrivalsResult` and friends) are inferred from these, so the schema is the single definition:
- * change a field here and both the types and the checks follow.
- *
- * Response objects are `z.strictObject`: an unknown key is an error, so the tests that check real
- * responses against these schemas catch a field added to the code but not to the schema.
+ * Request and response schemas for `/subway/arrivals`, and the types inferred from them. Response
+ * objects are `z.strictObject` so the tests catch a field the schema doesn't list.
  */
 import * as z from "zod";
-import { countParam, EpochSeconds, HexColor } from "#src/schema.js";
+import { countParam, EpochSeconds, HexColor, requiredParam } from "#src/schema.js";
 
 export const ArrivalsQuery = z.object({
-  stop: z
-    .string({ error: "stop is required" })
-    .trim()
-    .min(1, { error: "stop is required" })
-    .meta({
-      description:
-        "A station id from /stops/search (stop ids joined with `+`, such as `127+725+902+A27+R16`), " +
-        "a GTFS stop id (`127`) or one platform (`127N`). Case insensitive.",
-    }),
-  limit: countParam("limit", 3, 10).meta({ description: "Trains per route and direction. Default 3, at most 10." }),
+  stop: requiredParam(
+    "stop",
+    "A station id from /stops/search (stop ids joined with `+`, such as `127+725+902+A27+R16`), " +
+      "a GTFS stop id (`127`) or one platform (`127N`). Case insensitive.",
+  ),
+  limit: countParam("limit", 3, 10, "Trains per route and direction."),
 });
 
 export const Arrival = z.strictObject({

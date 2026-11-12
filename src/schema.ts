@@ -19,26 +19,38 @@ export const HexColor = z.string().regex(/^#[0-9A-F]{6}$/);
 export const ErrorBody = z.strictObject({ error: z.string() });
 
 /**
+ * A required query parameter, trimmed. Missing, empty and blank all answer "<name> is required".
+ * The custom `error` replaces zod's default messages ("Invalid input: expected string, received
+ * undefined") with the one this API has always answered.
+ */
+export function requiredParam(name: string, description: string) {
+  const error = `${name} is required`;
+  return z.string({ error }).trim().min(1, { error }).meta({ description });
+}
+
+/**
  * An optional positive integer query parameter: `fallback` when absent, clamped to `max` when
  * larger (a too-large value is not an error, so clients can ask for "as many as you allow").
  *
- * Query parameters are always strings; `z.coerce.number()` turns "5" into 5 before the number
- * checks run. The custom `error` replaces zod's default messages ("Invalid input: expected
- * number, received NaN") with the one this API has always answered.
+ * Query parameters are strings, so the schema checks the text first: digits only, like
+ * `intParam()` in `http.ts`, which the routes without schemas still use. (`z.coerce.number()`
+ * would be shorter, but `Number()` also reads "1e1", "0x10" and " 5".) The transforms then turn
+ * it into a number; the JSON Schema for requests shows the text rule, which is what clients send.
  *
  * `.prefault()` rather than `.default()`: a default is an output value and skips the schema, a
  * prefault is fed in as input and goes through it. The result is the same here, but zod leaves
  * a default that follows a transform out of the JSON Schema it generates for requests.
  */
-export function countParam(name: string, fallback: number, max: number) {
+export function countParam(name: string, fallback: number, max: number, description: string) {
   const error = `${name} must be a positive integer`;
-  return z.coerce
-    .number({ error })
-    .int({ error })
-    .min(1, { error })
+  return z
+    .string()
+    .regex(/^\d+$/, { error })
+    .transform(Number)
+    .pipe(z.int().min(1, { error }))
     .transform((n) => Math.min(n, max))
-    .prefault(fallback)
-    .meta({ description: `Default ${fallback}, at most ${max} (larger values are lowered to ${max}).` });
+    .prefault(String(fallback))
+    .meta({ description: `${description} Default ${fallback}, at most ${max} (larger values are lowered to ${max}).` });
 }
 
 /**

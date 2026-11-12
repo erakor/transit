@@ -2,7 +2,8 @@ import { authenticated, errorResponse, PREVIEW_CACHE, text } from "#src/http.js"
 import { StopSearch } from "#src/stops/search.js";
 import { stationIndex } from "#src/stops/stations.js";
 import { previewLine } from "#src/subway/preview.js";
-import { loadArrivals, type ArrivalsDeps } from "./arrivals.js";
+import { loadArrivals } from "#src/subway/load.js";
+import type { ArrivalsDeps } from "./arrivals.js";
 
 /** Shorter windows when some feeds failed, so a full answer comes back soon. */
 const PARTIAL_PREVIEW_CACHE = "public, max-age=5, s-maxage=5";

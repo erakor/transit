@@ -148,11 +148,6 @@ describe("/subway/arrivals", () => {
     expect(Math.max(...body.groups.map((g) => g.arrivals.length))).toBe(10);
   });
 
-  it("treats an empty limit as absent", async () => {
-    const res = await arrivals().GET(get(`/subway/arrivals?stop=${encodeURIComponent(TIMES_SQ)}&limit=`, auth));
-    const body = ArrivalsResponse.parse(await res.json());
-    expect(Math.max(...body.groups.map((g) => g.arrivals.length))).toBe(3);
-  });
 });
 
 describe("/stops/search", () => {

@@ -2,11 +2,8 @@ import type { RouteInfo, SubwayData } from "#src/static/types.js";
 import type { ResolvedStop, StationIndex } from "#src/stops/stations.js";
 import { num, oldestTimestamp, terminalName, type FeedMessage } from "#src/gtfsrt.js";
 
+// Type-only: this pure module, the preview and the smoke test don't load zod.
 import type { ArrivalsResult, RouteDirectionArrivals } from "./schemas.js";
-
-// The result types are inferred from the schemas (the fields are documented there). A type-only
-// import, so this pure module, the preview and the smoke test don't load zod.
-export type { Arrival, ArrivalsResult, RouteDirectionArrivals } from "./schemas.js";
 
 const FALLBACK_ROUTE = (id: string): RouteInfo => ({
   id,

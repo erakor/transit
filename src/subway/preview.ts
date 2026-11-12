@@ -1,4 +1,4 @@
-import type { ArrivalsResult } from "./arrivals.js";
+import type { ArrivalsResult } from "./schemas.js";
 
 /** Routes listed at most, so a big complex still fits a launcher hint. */
 export const PREVIEW_MAX_ROUTES = 6;

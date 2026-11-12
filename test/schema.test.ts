@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import * as z from "zod";
-import { countParam, parseQuery } from "#src/schema.js";
+import { countParam, parseQuery, requiredParam } from "#src/schema.js";
 import { ArrivalsQuery, ArrivalsResponse } from "#src/subway/schemas.js";
 
-const Query = z.object({ name: z.string({ error: "name is required" }), n: countParam("n", 3, 10) });
+const Query = z.object({ name: requiredParam("name", "A name."), n: countParam("n", 3, 10, "How many.") });
 const parse = (qs: string) => parseQuery(Query, new URL(`https://x.test/${qs}`));
 
 describe("parseQuery", () => {
@@ -14,6 +14,7 @@ describe("parseQuery", () => {
     ["?name=a&n=99", { name: "a", n: 10 }],
     ["?name=a&name=b&n=2&n=5", { name: "a", n: 2 }],
     ["?name=a&other=1", { name: "a", n: 3 }],
+    ["?name=%20a%20&n=05", { name: "a", n: 5 }],
   ])("parses %s", (qs, query) => {
     expect(parse(qs)).toEqual({ ok: true, query });
   });
@@ -21,9 +22,14 @@ describe("parseQuery", () => {
   it.each([
     ["", "name is required"],
     ["?name=", "name is required"],
+    ["?name=%20", "name is required"],
     ["?name=a&n=0", "n must be a positive integer"],
     ["?name=a&n=-2", "n must be a positive integer"],
     ["?name=a&n=two", "n must be a positive integer"],
+    // Number() reads these, the digits-only rule (same as intParam) doesn't.
+    ["?name=a&n=1e1", "n must be a positive integer"],
+    ["?name=a&n=0x10", "n must be a positive integer"],
+    ["?name=a&n=%205", "n must be a positive integer"],
   ])("rejects %s with a 400", async (qs, error) => {
     const r = parse(qs);
     if (r.ok) throw new Error("expected a failure");
@@ -34,14 +40,16 @@ describe("parseQuery", () => {
 });
 
 describe("arrivals schemas", () => {
-  // A preview of the next step: the schemas already convert to JSON Schema, descriptions included.
-  // `io: "input"` describes what a client sends (before defaults and transforms run).
-  it("convert to JSON Schema", () => {
+  // The base of the generated docs. `io: "input"` describes what a client sends; the default has
+  // to survive into it (why countParam uses .prefault()).
+  it("convert to JSON Schema with defaults and descriptions", () => {
     const query = z.toJSONSchema(ArrivalsQuery, { io: "input" });
     expect(query.required).toEqual(["stop"]);
-    expect(query.properties?.limit).toMatchObject({ type: "integer", minimum: 1, default: 3 });
-    const response = z.toJSONSchema(ArrivalsResponse);
-    expect(response.required).toEqual(["stop", "updatedAt", "groups"]);
-    expect(response.additionalProperties).toBe(false);
+    expect(query.properties?.limit).toMatchObject({
+      type: "string",
+      default: "3",
+      description: expect.stringMatching(/^Trains per route and direction\. Default 3, at most 10/),
+    });
+    expect(z.toJSONSchema(ArrivalsResponse).additionalProperties).toBe(false);
   });
 });

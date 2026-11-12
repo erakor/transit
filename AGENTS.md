@@ -172,7 +172,10 @@ Ids, which clients store as favorites, so keep them stable:
   the error messages clients see), and the tests check real responses against it. Response
   objects are `z.strictObject`, so a field added in code but not in the schema fails the tests.
   Response schemas run in tests only, never per request. Pure modules import only their types
-  (`import type`), so they don't load zod. Descriptions go in `.meta()`: they become the API docs.
+  (`import type`), and code shared with other functions lives outside the route module (the
+  preview imports `loadArrivals` from `src/subway/load.ts`), so they don't load zod. Build
+  parameters with `requiredParam()` and `countParam()`, which match the rules and messages of
+  the routes without schemas. Descriptions go in `.meta()`: they become the API docs.
 - ESM with `NodeNext` resolution: imports end in `.js` even though the files are `.ts`. Import
   anything in `src/` from another folder through the `#src/*` alias (`#src/http.js`), and use
   `./` within a folder. The alias is Node's own `imports` field in `package.json`, not tsconfig
