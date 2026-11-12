@@ -2,7 +2,7 @@
 # Their ids must be on main: merge a branch that adds one with a merge commit, not squash or rebase.
 
 # Format with Prettier
-7ed24b457d4c753f86492c99bc2b6b7c6abf2756
+bdac6021c5305ec92fc0e88b2a554c3d9800b9c2
 
 # Format with the new Prettier settings
-723a5db5c3e8d7f039eb42a8ef9ab35c8a0587d2
+12bb42aa8ca220c83f62e5941ecfd2ca96f9db0e
