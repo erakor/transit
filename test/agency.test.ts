@@ -3,7 +3,6 @@ import { AGENCIES, findStop, searchStops } from '#src/agency/agencies.js'
 import { computeAgencyArrivals } from '#src/agency/arrivals.js'
 import type { AgencyData } from '#src/agency/types.js'
 import { computeAgencyVehicles } from '#src/agency/vehicles.js'
-import { BUS_DATA } from '#src/data/bus.generated.js'
 import { ALERTS_CACHE, LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from '#src/http.js'
 import { agencyHandler, agencyRoute } from '#src/routes/agency.js'
 import { buildAgencyData } from '#src/static/agency.js'
@@ -390,7 +389,6 @@ describe('agency routes', () => {
     ['/preview/mnr?q=rye', 'gtfs-mnr', 'Metro-North feed unavailable'],
     ['/ferry/vehicles', 'ferry-vehicleposition', 'NYC Ferry feed unavailable'],
     ['/mnr/alerts', 'mnr-alerts', 'Metro-North alerts unavailable'],
-    ['/bus/alerts', 'bus-alerts', 'MTA alerts unavailable'],
   ])('%s is 502 when its feed fails', async (path, feed, error) => {
     const r = await call(path, [feed]).res
     expect(r.status).toBe(502)
@@ -501,19 +499,5 @@ describe('agency routes', () => {
     const byStation = await (await call('/lirr/alerts?station=102').res).json()
     expect(byStation.station).toEqual({ id: '102', name: 'Jamaica' })
     expect((await (await call('/ferry/alerts').res).json()).alerts).toEqual([])
-  })
-
-  it('returns bus alerts by route, whatever the case, with route names and colors', async () => {
-    const all = await (await call('/bus/alerts').res).json()
-    const routeId: string = all.alerts[0].routes[0].id
-    const one = await (await call(`/bus/alerts?route=${routeId.toLowerCase()}`).res).json()
-    expect(one.alerts.length).toBeGreaterThan(0)
-    expect(one.alerts.length).toBeLessThan(all.alerts.length)
-    expect(one.alerts[0].routes).toContainEqual(BUS_DATA.routes[routeId])
-    // Select Bus Service routes are `+` in the feed and `-SBS` on the bus.
-    const sbs = all.alerts
-      .flatMap((a: { routes: { id: string; name: string }[] }) => a.routes)
-      .find((r: { id: string }) => r.id.endsWith('+'))
-    expect(sbs.name).toBe(sbs.id.replace('+', '-SBS').replace(/^BX/, 'Bx'))
   })
 })

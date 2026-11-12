@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { busRoute, computeBusArrivals } from '#src/bus/arrivals.js'
 import { parseStopMonitoring, stopMonitoringUrl, stripOperator, type StopMonitoring } from '#src/bus/siri.js'
 import { BUS_DATA } from '#src/data/bus.generated.js'
-import { LIVE_CACHE, PREVIEW_CACHE } from '#src/http.js'
-import { agencyHandler, agencyRoute } from '#src/routes/agency.js'
+import { LIVE_CACHE, PREVIEW_CACHE, providerOp } from '#src/http.js'
+import { busHandler } from '#src/routes/bus.js'
 import { buildBusData } from '#src/static/bus.js'
 import {
   auth,
@@ -12,6 +12,7 @@ import {
   BUS_STOP,
   fixture,
   fixtureFetcher,
+  FIXTURE_NOW_MS,
   get,
   useRouteTestSetup,
 } from './helpers.js'
@@ -203,17 +204,17 @@ describe('computeBusArrivals', () => {
 })
 
 describe('bus routes', () => {
-  function call(path: string, fail: string[] = [], busKey?: () => string | undefined) {
+  function call(path: string, fail: string[] = [], busKey?: () => string | undefined, nowMs = BUS_FIXTURE_NOW_MS) {
     const fetcher = fixtureFetcher(fail)
-    const handler = agencyHandler({ fetcher, now: () => BUS_FIXTURE_NOW_MS, ...(busKey ? { busKey } : {}) })
+    const handler = busHandler({ fetcher, now: () => nowMs, ...(busKey ? { busKey } : {}) })
     return { fetcher, res: handler(get(path, auth)) }
   }
 
   it('reads the operation from the public path or the rewritten query', () => {
-    const route = (path: string) => agencyRoute(new URL(`https://transit.test${path}`))
-    expect(route('/bus/arrivals?stop=1')).toEqual({ agency: 'bus', op: 'arrivals' })
-    expect(route('/preview/bus?stop=1')).toEqual({ agency: 'bus', op: 'preview' })
-    expect(route('/api/agency?agency=bus&op=arrivals&stop=1')).toEqual({ agency: 'bus', op: 'arrivals' })
+    const op = (path: string) => providerOp(new URL(`https://transit.test${path}`), 'bus')
+    expect(op('/bus/arrivals?stop=1')).toBe('arrivals')
+    expect(op('/preview/bus?stop=1')).toBe('preview')
+    expect(op('/api/bus?op=arrivals&stop=1')).toBe('arrivals')
   })
 
   it('answers the buses at a stop, live-cached, varying on the token', async () => {
@@ -229,14 +230,14 @@ describe('bus routes', () => {
   })
 
   it('accepts the stop as Bus Time writes it', async () => {
-    const r = await call(`/api/agency?agency=bus&op=arrivals&stop=MTA_${BUS_STOP}`).res
+    const r = await call(`/api/bus?op=arrivals&stop=MTA_${BUS_STOP}`).res
     expect(r.status).toBe(200)
     expect((await r.json()).stop.id).toBe(BUS_STOP)
   })
 
   it('asks Bus Time once per stop within the memo window', async () => {
     const fetcher = fixtureFetcher()
-    const handler = agencyHandler({ fetcher, now: () => BUS_FIXTURE_NOW_MS })
+    const handler = busHandler({ fetcher, now: () => BUS_FIXTURE_NOW_MS })
     await handler(get(`/bus/arrivals?stop=${BUS_STOP}`, auth))
     await handler(get(`/preview/bus?stop=${BUS_STOP}`, auth))
     expect(fetcher.calls).toHaveLength(1)
@@ -253,6 +254,8 @@ describe('bus routes', () => {
     ['/preview/bus?stop=999999', 404, 'unknown stop 999999'],
     ['/bus/stops', 404, 'not found'],
     ['/bus/toString', 404, 'not found'],
+    ['/bus/lirr', 404, 'not found'],
+    ['/api/bus', 404, 'not found'],
   ])('rejects %s with %i', async (path, status, error) => {
     const { res, fetcher } = call(path)
     const r = await res
@@ -288,5 +291,27 @@ describe('bus routes', () => {
     expect(r.headers.get('content-type')).toBe('text/plain; charset=utf-8')
     expect(r.headers.get('cache-control')).toBe(PREVIEW_CACHE)
     expect(await r.text()).toBe('1 AV/E 14 ST · M15-SBS 2 · M15 5 min\n')
+  })
+
+  it('returns bus alerts by route, whatever the case, with route names and colors', async () => {
+    const all = await (await call('/bus/alerts', [], undefined, FIXTURE_NOW_MS).res).json()
+    const routeId: string = all.alerts[0].routes[0].id
+    const one = await (
+      await call(`/bus/alerts?route=${routeId.toLowerCase()}`, [], undefined, FIXTURE_NOW_MS).res
+    ).json()
+    expect(one.alerts.length).toBeGreaterThan(0)
+    expect(one.alerts.length).toBeLessThan(all.alerts.length)
+    expect(one.alerts[0].routes).toContainEqual(BUS_DATA.routes[routeId])
+    // Select Bus Service routes are `+` in the feed and `-SBS` on the bus.
+    const sbs = all.alerts
+      .flatMap((a: { routes: { id: string; name: string }[] }) => a.routes)
+      .find((r: { id: string }) => r.id.endsWith('+'))
+    expect(sbs.name).toBe(sbs.id.replace('+', '-SBS').replace(/^BX/, 'Bx'))
+  })
+
+  it('/bus/alerts is 502 when its feed fails', async () => {
+    const r = await call('/bus/alerts', ['bus-alerts'], undefined, FIXTURE_NOW_MS).res
+    expect(r.status).toBe(502)
+    expect(await r.json()).toEqual({ error: 'MTA alerts unavailable' })
   })
 })

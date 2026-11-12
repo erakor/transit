@@ -7,13 +7,15 @@ import { agencyHandler } from '#src/routes/agency.js'
 import { subwayAlertsHandler } from '#src/routes/alerts.js'
 import { arrivalsHandler } from '#src/routes/arrivals.js'
 import { citibikeHandler } from '#src/routes/citibike.js'
-import { pathArrivalsHandler, pathPreviewHandler, pathStationsHandler } from '#src/routes/path.js'
+import { busHandler } from '#src/routes/bus.js'
+import { pathHandler } from '#src/routes/path.js'
 import { subwayPreviewHandler } from '#src/routes/preview.js'
 import { searchHandler } from '#src/routes/search.js'
 import { subwayVehiclesHandler } from '#src/routes/vehicles.js'
 import { ErrorBody } from '#src/schema.js'
 import {
   auth,
+  BUS_FIXTURE_NOW_MS,
   BUS_STOP,
   fixtureFetcher,
   FIXTURE_NOW_MS,
@@ -33,9 +35,11 @@ const HANDLERS: Record<string, () => Handler> = {
   '/subway/alerts': () => subwayAlertsHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
   '/subway/vehicles': () => subwayVehiclesHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
   '/preview/subway': () => subwayPreviewHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
-  '/path/arrivals': () => pathArrivalsHandler({ fetcher: fixtureFetcher(), now: () => PATH_FIXTURE_NOW_MS }),
-  '/path/stations': () => pathStationsHandler(),
-  '/preview/path': () => pathPreviewHandler({ fetcher: fixtureFetcher(), now: () => PATH_FIXTURE_NOW_MS }),
+  '/path/': () => pathHandler({ fetcher: fixtureFetcher(), now: () => PATH_FIXTURE_NOW_MS }),
+  '/preview/path': () => pathHandler({ fetcher: fixtureFetcher(), now: () => PATH_FIXTURE_NOW_MS }),
+  '/bus/alerts': () => busHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
+  '/bus/': () => busHandler({ fetcher: fixtureFetcher(), now: () => BUS_FIXTURE_NOW_MS }),
+  '/preview/bus': () => busHandler({ fetcher: fixtureFetcher(), now: () => BUS_FIXTURE_NOW_MS }),
   // The Citi Bike feeds were recorded at another time, but a station's counts don't expire.
   '/citibike/': () => citibikeHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
   '/health': () => healthGET,

@@ -10,8 +10,8 @@ import {
   type GbfsStationStatus,
 } from '#src/citibike/feeds.js'
 import { distanceMeters, joinStations, nearestStations } from '#src/citibike/stations.js'
-import { citibikeHandler, citibikeNearbyHandler, citibikeOp, citibikeStationHandler } from '#src/routes/citibike.js'
-import { LIVE_CACHE } from '#src/http.js'
+import { citibikeHandler, citibikeNearbyHandler, citibikeStationHandler } from '#src/routes/citibike.js'
+import { LIVE_CACHE, providerOp } from '#src/http.js'
 import {
   auth,
   CITIBIKE_INFORMATION,
@@ -360,9 +360,12 @@ describe('one function for both routes', () => {
   const GET = () => citibikeHandler({ fetcher: fixtureFetcher(), now: () => NOW_MS })
 
   it("reads the operation from the public path or the rewrite's query", () => {
-    expect(citibikeOp(new URL('https://x.test/citibike/nearby'))).toBe('nearby')
-    expect(citibikeOp(new URL('https://x.test/api/citibike?op=station'))).toBe('station')
-    expect(citibikeOp(new URL('https://x.test/api/citibike'))).toBeUndefined()
+    const op = (url: string) => providerOp(new URL(url), 'citibike')
+    expect(op('https://x.test/citibike/nearby')).toBe('nearby')
+    expect(op('https://x.test/api/citibike?op=station')).toBe('station')
+    expect(op('https://x.test/api/citibike')).toBeUndefined()
+    expect(providerOp(new URL('https://x.test/preview/bus?stop=1'), 'bus')).toBe('preview')
+    expect(providerOp(new URL('https://x.test/path/stations'), 'path')).toBe('stations')
   })
 
   it.each([

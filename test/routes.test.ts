@@ -4,6 +4,7 @@ import { arrivalsHandler } from '#src/routes/arrivals.js'
 import { searchHandler } from '#src/routes/search.js'
 import { subwayPreviewHandler } from '#src/routes/preview.js'
 import { agencyHandler } from '#src/routes/agency.js'
+import { busHandler } from '#src/routes/bus.js'
 import { subwayAlertsHandler } from '#src/routes/alerts.js'
 import { subwayVehiclesHandler } from '#src/routes/vehicles.js'
 import { pathArrivalsHandler, pathPreviewHandler, pathStationsHandler } from '#src/routes/path.js'
@@ -67,11 +68,11 @@ describe.each([
   ['/lirr/arrivals', '?station=102', () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
   ['/mnr/stations', '?q=rye', () => agencyHandler()],
   ['/ferry/vehicles', '', () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
-  ['/bus/alerts', '', () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
+  ['/bus/alerts', '', () => busHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
   [
     '/bus/arrivals',
     `?stop=${BUS_STOP}`,
-    () => agencyHandler({ fetcher: fixtureFetcher(), now: () => BUS_FIXTURE_NOW_MS }),
+    () => busHandler({ fetcher: fixtureFetcher(), now: () => BUS_FIXTURE_NOW_MS }),
   ],
   ['/preview/mnr', '?station=1', () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
 ])('%s auth and caching', (path, query, handler) => {

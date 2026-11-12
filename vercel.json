@@ -28,12 +28,8 @@
       "destination": "/api/stops/search"
     },
     {
-      "source": "/path/arrivals",
-      "destination": "/api/path/arrivals"
-    },
-    {
-      "source": "/path/stations",
-      "destination": "/api/path/stations"
+      "source": "/path/:op(arrivals|stations)",
+      "destination": "/api/path?op=:op"
     },
     {
       "source": "/preview/subway",
@@ -45,7 +41,7 @@
     },
     {
       "source": "/preview/path",
-      "destination": "/api/preview/path"
+      "destination": "/api/path?op=preview"
     },
     {
       "source": "/:agency(lirr|mnr)/:op(arrivals|stations|alerts|vehicles)",
@@ -61,11 +57,11 @@
     },
     {
       "source": "/bus/:op(arrivals|alerts)",
-      "destination": "/api/agency?agency=bus&op=:op"
+      "destination": "/api/bus?op=:op"
     },
     {
       "source": "/preview/bus",
-      "destination": "/api/agency?agency=bus&op=preview"
+      "destination": "/api/bus?op=preview"
     }
   ],
   "functions": {

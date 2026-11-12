@@ -8,7 +8,7 @@ It covers the MTA subway (arrivals, alerts, train positions), PATH, the LIRR, Me
 NYC Ferry, MTA buses (arrivals by stop code, alerts) and Citi Bike stations. NJ Transit will be
 added later as its own route group with the same conventions.
 
-Runs on Vercel, one serverless function per route, TypeScript.
+Runs on Vercel, TypeScript: ten serverless functions, most serving a provider's routes together.
 
 ## Endpoints
 
@@ -482,8 +482,8 @@ Layout:
 
 ```
 api/                 Vercel functions (thin: they export GET from src/routes); api/agency.ts
-                     serves every LIRR, Metro-North, ferry and bus route, api/citibike.ts both
-                     Citi Bike routes
+                     serves every LIRR, Metro-North and ferry route, api/bus.ts, api/path.ts and
+                     api/citibike.ts each their provider's routes
 src/routes/          handlers: arrivals, search, preview, alerts, vehicles, path, agency, bus, health
 src/subway/          feed list, arrivals computation, train positions, preview line
 src/citibike/        Citi Bike: GBFS fetching, station join and nearest-station search
@@ -582,12 +582,13 @@ Or run `TRANSIT_BASE_URL=$BASE TRANSIT_TOKEN=$TOKEN pnpm smoke`, which does the 
 Not built yet. Each new source follows the subway's conventions: token in a header,
 `Cache-Control: s-maxage` for the CDN, times as epoch seconds, names joined in,
 fixture-based parsing tests and a scheduled smoke test against the live feed.
-In code, that means one function per route under `api/<provider>/`, a handler in `src/routes/`
+In code, that means one function for the provider, `api/<provider>.ts` (Vercel's Hobby plan
+allows 12 and there are 10), with its routes dispatched by `byOp()`, handlers in `src/routes/`
 wrapped in `authenticated(...)`, and the `LIVE_CACHE` or `STATIC_CACHE` headers from `src/http.ts`.
 
 - **Bus stops**: search by name and nearby stops for `/bus/arrivals`, which today takes the code
-  on the stop's sign. Needs the static bus stops (about 13,500), too large for the agency
-  function: a function of its own, or Bus Time's stops API.
+  on the stop's sign. Needs the static bus stops (about 13,500) in the bus function, or Bus
+  Time's stops API.
 - **Bus positions**: `/bus/vehicles?route=`, from Bus Time's vehicle monitoring.
 - **NJ Transit**: rail and bus arrivals. Source: NJ Transit's GTFS-realtime feeds, which need a
   developer account.
