@@ -6,7 +6,12 @@ const NOW = 1_000_000;
 
 function group(name: string, direction: "N" | "S", secondsAway: number[], route = name): RouteDirectionArrivals {
   return {
-    route, name, direction, color: "#000000", textColor: "#FFFFFF", headsign: "",
+    route,
+    name,
+    direction,
+    color: "#000000",
+    textColor: "#FFFFFF",
+    headsign: "",
     arrivals: secondsAway.map((s, i) => ({ time: NOW + s, headsign: "", tripId: `${route}${direction}${i}` })),
   };
 }
@@ -17,7 +22,9 @@ function result(groups: RouteDirectionArrivals[]): ArrivalsResult {
 
 describe("previewLine", () => {
   it("lists each route's next train per direction, rounded down", () => {
-    expect(previewLine(result([group("L", "N", [150, 500]), group("L", "S", [299])]), NOW)).toBe("Bedford Av · L ↑2 ↓4 min");
+    expect(previewLine(result([group("L", "N", [150, 500]), group("L", "S", [299])]), NOW)).toBe(
+      "Bedford Av · L ↑2 ↓4 min",
+    );
   });
 
   it("shows a train already due as 0 and a single direction alone", () => {

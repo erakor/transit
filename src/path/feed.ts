@@ -50,7 +50,10 @@ export function parsePathFeed(doc: unknown): PathFeed {
     for (const destination of list(result.destinations)) {
       const direction = DIRECTIONS[String(destination.label)];
       for (const m of list(destination.messages)) {
-        const seconds = typeof m.secondsToArrival === "string" || typeof m.secondsToArrival === "number" ? Number(m.secondsToArrival) : NaN;
+        const seconds =
+          typeof m.secondsToArrival === "string" || typeof m.secondsToArrival === "number"
+            ? Number(m.secondsToArrival)
+            : NaN;
         const updatedMs = typeof m.lastUpdated === "string" ? Date.parse(m.lastUpdated) : NaN;
         if (!direction || !Number.isFinite(seconds) || seconds < 0 || !Number.isFinite(updatedMs)) {
           feed.skipped++;
@@ -71,9 +74,16 @@ export function parsePathFeed(doc: unknown): PathFeed {
 }
 
 /** Through the same in-function memo as the GTFS-realtime feeds: one upstream request serves every station. */
-export function fetchPathFeed({ fetcher = fetch, now = Date.now(), timeoutMs = 8_000 }: FetchOptions = {}): Promise<PathFeed> {
+export function fetchPathFeed({
+  fetcher = fetch,
+  now = Date.now(),
+  timeoutMs = 8_000,
+}: FetchOptions = {}): Promise<PathFeed> {
   return memoized(PATH_FEED_URL, now, async () => {
-    const res = await fetcher(PATH_FEED_URL, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(timeoutMs) });
+    const res = await fetcher(PATH_FEED_URL, {
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(timeoutMs),
+    });
     if (!res.ok) throw new Error(`PATH feed: HTTP ${res.status}`);
     return parsePathFeed(await res.json());
   });

@@ -37,14 +37,21 @@ const get = async (url: string) => {
 
 async function recordTransit(): Promise<void> {
   const agencies = Object.values(AGENCIES);
-  const feeds = [...Object.keys(FEEDS), ...agencies.flatMap((a) => [a.tripsFeed, ...(a.vehiclesFeed ? [a.vehiclesFeed] : [])])];
+  const feeds = [
+    ...Object.keys(FEEDS),
+    ...agencies.flatMap((a) => [a.tripsFeed, ...(a.vehiclesFeed ? [a.vehiclesFeed] : [])]),
+  ];
   const alertFeeds = new Set([SUBWAY_ALERTS_FEED, BUS_ALERTS_FEED, ...agencies.map((a) => a.alertsFeed)]);
 
   // All at once, so the recordings share one clock.
   const recorded = await Promise.all(
     [...feeds, ...alertFeeds].map(async (feed) => {
       const url = feedUrl(feed);
-      return { feed, name: fixtureName(url), bytes: new Uint8Array(await (await get(url)).arrayBuffer()) as Uint8Array };
+      return {
+        feed,
+        name: fixtureName(url),
+        bytes: new Uint8Array(await (await get(url)).arrayBuffer()) as Uint8Array,
+      };
     }),
   );
 
@@ -74,7 +81,9 @@ async function recordTransit(): Promise<void> {
   const trains = Object.values(parsePathFeed(JSON.parse(body)).stations).flat();
   await writeFile(out("ridepath.json"), body);
   console.log(`ridepath.json: ${body.length} bytes, ${trains.length} trains`);
-  console.log(`Update PATH_FIXTURE_NOW_MS in test/helpers.ts to the newest update: ${Math.max(...trains.map((t) => t.updatedAt))}_000.`);
+  console.log(
+    `Update PATH_FIXTURE_NOW_MS in test/helpers.ts to the newest update: ${Math.max(...trains.map((t) => t.updatedAt))}_000.`,
+  );
 }
 
 async function recordCitibike(): Promise<void> {
@@ -82,7 +91,9 @@ async function recordCitibike(): Promise<void> {
   type Feed = { data: { stations: { station_id: string; lat?: number; lon?: number }[] } };
   // The raw bodies, fetched together so the two snapshots are as close in time as possible.
   const [information, status] = await Promise.all(
-    (["station_information", "station_status"] as const).map(async (name) => (await (await get(gbfsUrl(name))).json()) as Feed),
+    (["station_information", "station_status"] as const).map(
+      async (name) => (await (await get(gbfsUrl(name))).json()) as Feed,
+    ),
   );
   const feeds = { station_information: information!, station_status: status! };
   const keep = new Set(
@@ -92,7 +103,10 @@ async function recordCitibike(): Promise<void> {
   );
   for (const [name, feed] of Object.entries(feeds)) {
     const total = feed.data.stations.length;
-    const kept = { ...feed, data: { ...feed.data, stations: feed.data.stations.filter((s) => keep.has(s.station_id)) } };
+    const kept = {
+      ...feed,
+      data: { ...feed.data, stations: feed.data.stations.filter((s) => keep.has(s.station_id)) },
+    };
     await writeFile(out(`citibike-${name}.json`), JSON.stringify(kept, null, 1) + "\n");
     console.log(`citibike ${name}: kept ${kept.data.stations.length} of ${total} stations`);
   }

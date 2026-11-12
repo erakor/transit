@@ -13,18 +13,69 @@ import { auth, fixture, fixtureFetcher, FIXTURE_NOW_MS, get, useRouteTestSetup }
 const NOW = 1_800_000_000;
 const TIMES_SQ = SUBWAY_DATA.stops["127"]!.station;
 
-const en = (text: string, html = `<p>${text}</p>`) => ({ translation: [{ text: html, language: "en-html" }, { text, language: "en" }] });
+const en = (text: string, html = `<p>${text}</p>`) => ({
+  translation: [
+    { text: html, language: "en-html" },
+    { text, language: "en" },
+  ],
+});
 const feed = feedFrom(NOW - 30, [
-  { id: "lmm:alert:1", alert: { activePeriod: [{ start: NOW - 600 }], informedEntity: [{ agencyId: "MTASBWY", routeId: "A" }, { agencyId: "MTASBWY", routeId: "C" }], headerText: en(" [A][C] trains are delayed. ") } },
-  { id: "lmm:planned_work:2", alert: {
-    activePeriod: [{ start: NOW - 9000, end: NOW - 8000 }, { start: NOW - 100, end: NOW + 5000 }, { start: NOW + 90000, end: NOW + 99000 }],
-    informedEntity: [{ agencyId: "MTASBWY", routeId: "1", stopId: "127" }, { agencyId: "MTASBWY", routeId: "1", stopId: "127N" }, { agencyId: "MTASBWY", routeId: "1", stopId: "ghost" }],
-    headerText: en("[1] trains skip Times Sq"), descriptionText: en("Use 34 St instead."),
-  } },
-  { id: "lmm:planned_work:3", alert: { activePeriod: [{ start: NOW + 3600, end: NOW + 7200 }], informedEntity: [{ routeId: "A" }], headerText: en("Tonight") } },
-  { id: "lmm:planned_work:4", alert: { activePeriod: [{ start: NOW - 7200, end: NOW - 1 }], informedEntity: [{ routeId: "A" }], headerText: en("Last night") } },
-  { id: "lmm:alert:5", alert: { informedEntity: [{ trip: { tripId: "t", routeId: "L" } }], headerText: en("The 8:15 [L] is late") } },
-  { id: "lmm:alert:6", alert: { activePeriod: [{ start: NOW - 60 }], informedEntity: [{ routeId: "ZZ" }], headerText: en("New route ZZ is delayed") } },
+  {
+    id: "lmm:alert:1",
+    alert: {
+      activePeriod: [{ start: NOW - 600 }],
+      informedEntity: [
+        { agencyId: "MTASBWY", routeId: "A" },
+        { agencyId: "MTASBWY", routeId: "C" },
+      ],
+      headerText: en(" [A][C] trains are delayed. "),
+    },
+  },
+  {
+    id: "lmm:planned_work:2",
+    alert: {
+      activePeriod: [
+        { start: NOW - 9000, end: NOW - 8000 },
+        { start: NOW - 100, end: NOW + 5000 },
+        { start: NOW + 90000, end: NOW + 99000 },
+      ],
+      informedEntity: [
+        { agencyId: "MTASBWY", routeId: "1", stopId: "127" },
+        { agencyId: "MTASBWY", routeId: "1", stopId: "127N" },
+        { agencyId: "MTASBWY", routeId: "1", stopId: "ghost" },
+      ],
+      headerText: en("[1] trains skip Times Sq"),
+      descriptionText: en("Use 34 St instead."),
+    },
+  },
+  {
+    id: "lmm:planned_work:3",
+    alert: {
+      activePeriod: [{ start: NOW + 3600, end: NOW + 7200 }],
+      informedEntity: [{ routeId: "A" }],
+      headerText: en("Tonight"),
+    },
+  },
+  {
+    id: "lmm:planned_work:4",
+    alert: {
+      activePeriod: [{ start: NOW - 7200, end: NOW - 1 }],
+      informedEntity: [{ routeId: "A" }],
+      headerText: en("Last night"),
+    },
+  },
+  {
+    id: "lmm:alert:5",
+    alert: { informedEntity: [{ trip: { tripId: "t", routeId: "L" } }], headerText: en("The 8:15 [L] is late") },
+  },
+  {
+    id: "lmm:alert:6",
+    alert: {
+      activePeriod: [{ start: NOW - 60 }],
+      informedEntity: [{ routeId: "ZZ" }],
+      headerText: en("New route ZZ is delayed"),
+    },
+  },
   { id: "lmm:alert:7", alert: { activePeriod: [{ start: NOW - 60 }], informedEntity: [{ routeId: "A" }] } },
 ]);
 const options: AlertsOptions = {
@@ -43,13 +94,29 @@ describe("computeAlerts", () => {
   it("returns plain text, the period in effect, and routes and stops with names", () => {
     const [, incident, trip, work] = computeAlerts(feed, options).alerts;
     expect(incident).toEqual({
-      id: "lmm:alert:1", planned: false, header: "[A][C] trains are delayed.", description: "",
-      routes: [{ id: "A", name: "A train", color: "#000000", textColor: "#FFFFFF" }, { id: "C", name: "C train", color: "#000000", textColor: "#FFFFFF" }],
-      stops: [], start: NOW - 600, end: null,
+      id: "lmm:alert:1",
+      planned: false,
+      header: "[A][C] trains are delayed.",
+      description: "",
+      routes: [
+        { id: "A", name: "A train", color: "#000000", textColor: "#FFFFFF" },
+        { id: "C", name: "C train", color: "#000000", textColor: "#FFFFFF" },
+      ],
+      stops: [],
+      start: NOW - 600,
+      end: null,
     });
     expect(work).toMatchObject({
-      planned: true, header: "[1] trains skip Times Sq", description: "Use 34 St instead.", start: NOW - 100, end: NOW + 5000,
-      routes: [{ id: "1" }], stops: [{ id: "127", name: "Times Sq-42 St" }, { id: "127N", name: "Times Sq-42 St" }],
+      planned: true,
+      header: "[1] trains skip Times Sq",
+      description: "Use 34 St instead.",
+      start: NOW - 100,
+      end: NOW + 5000,
+      routes: [{ id: "1" }],
+      stops: [
+        { id: "127", name: "Times Sq-42 St" },
+        { id: "127N", name: "Times Sq-42 St" },
+      ],
     });
     expect(trip).toMatchObject({ routes: [{ id: "L" }], start: null, end: null });
   });
@@ -61,16 +128,22 @@ describe("computeAlerts", () => {
     expect(ids(() => false)).toEqual([]);
   });
 
-  it.each(["subway-alerts", "bus-alerts", "lirr-alerts", "mnr-alerts", "ferry-alert"])("reads the recorded %s feed", (name) => {
-    const { alerts, updatedAt } = computeAlerts(decodeFeed(fixture(`${name}.pb`)), { ...options, now: Math.floor(FIXTURE_NOW_MS / 1000) });
-    expect(updatedAt).toBeGreaterThan(0);
-    if (name !== "ferry-alert") expect(alerts.length).toBeGreaterThan(0);
-    for (const a of alerts) {
-      expect(a.header).not.toBe("");
-      expect(a.header + a.description).not.toMatch(/<\/?(p|strong|br|a)\b/);
-      expect(a.routes.length + a.stops.length).toBeGreaterThan(0);
-    }
-  });
+  it.each(["subway-alerts", "bus-alerts", "lirr-alerts", "mnr-alerts", "ferry-alert"])(
+    "reads the recorded %s feed",
+    (name) => {
+      const { alerts, updatedAt } = computeAlerts(decodeFeed(fixture(`${name}.pb`)), {
+        ...options,
+        now: Math.floor(FIXTURE_NOW_MS / 1000),
+      });
+      expect(updatedAt).toBeGreaterThan(0);
+      if (name !== "ferry-alert") expect(alerts.length).toBeGreaterThan(0);
+      for (const a of alerts) {
+        expect(a.header).not.toBe("");
+        expect(a.header + a.description).not.toMatch(/<\/?(p|strong|br|a)\b/);
+        expect(a.routes.length + a.stops.length).toBeGreaterThan(0);
+      }
+    },
+  );
 });
 
 describe("subway alerts and vehicles routes", () => {
@@ -78,7 +151,8 @@ describe("subway alerts and vehicles routes", () => {
 
   /** Serves the hand-built alerts above. */
   const built = async () => new Response(encodeFeed(feed) as Uint8Array<ArrayBuffer>);
-  const alerts = (path: string, fetcher = built) => subwayAlertsHandler({ fetcher, now: () => NOW * 1000 })(get(path, auth));
+  const alerts = (path: string, fetcher = built) =>
+    subwayAlertsHandler({ fetcher, now: () => NOW * 1000 })(get(path, auth));
 
   it("/subway/alerts returns every alert in effect with names and colors joined in", async () => {
     const fetcher = fixtureFetcher();
@@ -96,7 +170,12 @@ describe("subway alerts and vehicles routes", () => {
   it("/subway/alerts filters by route, case insensitively", async () => {
     const body = await (await alerts("/subway/alerts?route=a")).json();
     expect(body.alerts.map((a: { id: string }) => a.id)).toEqual(["lmm:alert:1"]);
-    expect(body.alerts[0].routes[0]).toEqual({ id: "A", name: "A", color: SUBWAY_DATA.routes.A!.color, textColor: SUBWAY_DATA.routes.A!.textColor });
+    expect(body.alerts[0].routes[0]).toEqual({
+      id: "A",
+      name: "A",
+      color: SUBWAY_DATA.routes.A!.color,
+      textColor: SUBWAY_DATA.routes.A!.textColor,
+    });
     expect(body.stop).toBeUndefined();
   });
 
@@ -169,7 +248,15 @@ describe("computeSubwayTrains", () => {
   const index = new StationIndex(SUBWAY_DATA);
   const L = SUBWAY_DATA.routes.L!;
   const trains = feedFrom(NOW, [
-    { tripUpdate: { trip: { tripId: "south", routeId: "L" }, stopTimeUpdate: [{ stopId: "L08S", arrival: { time: NOW + 60 } }, { stopId: "L29S", arrival: { time: NOW + 900 } }] } },
+    {
+      tripUpdate: {
+        trip: { tripId: "south", routeId: "L" },
+        stopTimeUpdate: [
+          { stopId: "L08S", arrival: { time: NOW + 60 } },
+          { stopId: "L29S", arrival: { time: NOW + 900 } },
+        ],
+      },
+    },
     { vehicle: { trip: { tripId: "south", routeId: "L" }, currentStatus: 1, stopId: "L08S", timestamp: NOW - 10 } },
     { vehicle: { trip: { tripId: "north", routeId: "L" }, stopId: "L06N", timestamp: NOW - 5 } },
     { vehicle: { trip: { tripId: "stale", routeId: "L" }, stopId: "L03N", timestamp: NOW - VEHICLE_MAX_AGE_S - 1 } },
@@ -180,8 +267,22 @@ describe("computeSubwayTrains", () => {
     const r = computeSubwayTrains(L, trains, index, { now: NOW });
     expect(r.updatedAt).toBe(NOW);
     expect(r.vehicles).toEqual([
-      { tripId: "north", direction: "N", headsign: "", status: "IN_TRANSIT_TO", stop: { id: "L06N", name: "1 Av" }, time: NOW - 5 },
-      { tripId: "south", direction: "S", headsign: SUBWAY_DATA.stops.L29!.name, status: "STOPPED_AT", stop: { id: "L08S", name: "Bedford Av" }, time: NOW - 10 },
+      {
+        tripId: "north",
+        direction: "N",
+        headsign: "",
+        status: "IN_TRANSIT_TO",
+        stop: { id: "L06N", name: "1 Av" },
+        time: NOW - 5,
+      },
+      {
+        tripId: "south",
+        direction: "S",
+        headsign: SUBWAY_DATA.stops.L29!.name,
+        status: "STOPPED_AT",
+        stop: { id: "L08S", name: "Bedford Av" },
+        time: NOW - 10,
+      },
     ]);
   });
 });

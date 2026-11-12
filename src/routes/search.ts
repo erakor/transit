@@ -21,10 +21,17 @@ export function searchHandler(data: SubwayData = SUBWAY_DATA) {
       lon: s.lon,
       stops: s.stops.map((id) => ({ id, name: data.stops[id]?.name ?? id })),
       // Diamond express variants (6X, 7X, FX) run on the same line as their base route.
-      routes: s.routes.filter((r) => !(r.endsWith("X") && s.routes.includes(r.slice(0, -1)))).map((r) => {
-        const route = data.routes[r];
-        return { id: r, name: route?.shortName ?? r, color: route?.color ?? "#808183", textColor: route?.textColor ?? "#FFFFFF" };
-      }),
+      routes: s.routes
+        .filter((r) => !(r.endsWith("X") && s.routes.includes(r.slice(0, -1))))
+        .map((r) => {
+          const route = data.routes[r];
+          return {
+            id: r,
+            name: route?.shortName ?? r,
+            color: route?.color ?? "#808183",
+            textColor: route?.textColor ?? "#FFFFFF",
+          };
+        }),
     }));
     return json({ query: q, results }, { cache: STATIC_CACHE });
   });

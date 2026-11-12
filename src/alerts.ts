@@ -39,7 +39,9 @@ export function inEffect(period: Period, now: number): boolean {
   return (num(period.start) ?? 0) <= now && (num(period.end) ?? Infinity) >= now;
 }
 
-function plain(text: { translation?: { text?: string | null; language?: string | null }[] | null } | null | undefined): string {
+function plain(
+  text: { translation?: { text?: string | null; language?: string | null }[] | null } | null | undefined,
+): string {
   const all = text?.translation ?? [];
   const pick = all.find((t) => t.language === "en") ?? all.find((t) => !t.language?.endsWith("html")) ?? all[0];
   return (pick?.text ?? "").trim();
@@ -83,6 +85,8 @@ export function computeAlerts(feed: FeedMessage, { now, match, route, stopName }
     });
   }
   // What just happened first, then planned work; newest first within each.
-  alerts.sort((a, b) => Number(a.planned) - Number(b.planned) || (b.start ?? 0) - (a.start ?? 0) || a.id.localeCompare(b.id));
+  alerts.sort(
+    (a, b) => Number(a.planned) - Number(b.planned) || (b.start ?? 0) - (a.start ?? 0) || a.id.localeCompare(b.id),
+  );
   return { updatedAt: num(feed.header?.timestamp) ?? null, alerts };
 }

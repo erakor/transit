@@ -28,11 +28,20 @@ export interface SubwayTrainsResult {
  * Trains that last reported over `VEHICLE_MAX_AGE_S` ago are left out.
  * Trains go northbound first, each direction in stop id order, which follows the line.
  */
-export function computeSubwayTrains(route: RouteInfo, feed: FeedMessage, index: StationIndex, { now }: { now: number }): SubwayTrainsResult {
+export function computeSubwayTrains(
+  route: RouteInfo,
+  feed: FeedMessage,
+  index: StationIndex,
+  { now }: { now: number },
+): SubwayTrainsResult {
   const headsigns = new Map<string, string>();
   for (const entity of feed.entity) {
     const tu = entity.tripUpdate;
-    if (tu?.trip?.tripId) headsigns.set(tu.trip.tripId, terminalName(tu.stopTimeUpdate ?? [], (id) => index.stopName(id)));
+    if (tu?.trip?.tripId)
+      headsigns.set(
+        tu.trip.tripId,
+        terminalName(tu.stopTimeUpdate ?? [], (id) => index.stopName(id)),
+      );
   }
   const trains: SubwayTrain[] = [];
   for (const entity of feed.entity) {
@@ -54,7 +63,10 @@ export function computeSubwayTrains(route: RouteInfo, feed: FeedMessage, index: 
     });
   }
   trains.sort(
-    (a, b) => (a.direction ?? "Z").localeCompare(b.direction ?? "Z") || (a.stop?.id ?? "").localeCompare(b.stop?.id ?? "") || a.tripId.localeCompare(b.tripId),
+    (a, b) =>
+      (a.direction ?? "Z").localeCompare(b.direction ?? "Z") ||
+      (a.stop?.id ?? "").localeCompare(b.stop?.id ?? "") ||
+      a.tripId.localeCompare(b.tripId),
   );
   return {
     route: { id: route.id, name: route.shortName, color: route.color, textColor: route.textColor },

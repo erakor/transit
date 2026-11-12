@@ -28,16 +28,32 @@ const FERRY = "https://nycferry.connexionz.net/rtt/public/utility/gtfsrealtime.a
 
 export const AGENCIES: Record<string, Agency> = {
   lirr: {
-    id: "lirr", name: "LIRR", stopParam: "station", vehicleWord: "trains",
-    tripsFeed: "lirr/gtfs-lirr", alertsFeed: "camsys/lirr-alerts", data: LIRR_DATA,
+    id: "lirr",
+    name: "LIRR",
+    stopParam: "station",
+    vehicleWord: "trains",
+    tripsFeed: "lirr/gtfs-lirr",
+    alertsFeed: "camsys/lirr-alerts",
+    data: LIRR_DATA,
   },
   mnr: {
-    id: "mnr", name: "Metro-North", stopParam: "station", vehicleWord: "trains",
-    tripsFeed: "mnr/gtfs-mnr", alertsFeed: "camsys/mnr-alerts", data: MNR_DATA,
+    id: "mnr",
+    name: "Metro-North",
+    stopParam: "station",
+    vehicleWord: "trains",
+    tripsFeed: "mnr/gtfs-mnr",
+    alertsFeed: "camsys/mnr-alerts",
+    data: MNR_DATA,
   },
   ferry: {
-    id: "ferry", name: "NYC Ferry", stopParam: "stop", vehicleWord: "ferries",
-    tripsFeed: FERRY + "tripupdate", vehiclesFeed: FERRY + "vehicleposition", alertsFeed: FERRY + "alert", data: FERRY_DATA,
+    id: "ferry",
+    name: "NYC Ferry",
+    stopParam: "stop",
+    vehicleWord: "ferries",
+    tripsFeed: FERRY + "tripupdate",
+    vehiclesFeed: FERRY + "vehicleposition",
+    alertsFeed: FERRY + "alert",
+    data: FERRY_DATA,
   },
 };
 

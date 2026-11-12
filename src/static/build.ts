@@ -149,8 +149,6 @@ function stationName(members: StopInfo[]): string {
   for (const m of members) counts.set(m.name, (counts.get(m.name) ?? 0) + 1);
   return [...members].sort(
     (a, b) =>
-      counts.get(b.name)! - counts.get(a.name)! ||
-      b.routes.length - a.routes.length ||
-      a.id.localeCompare(b.id),
+      counts.get(b.name)! - counts.get(a.name)! || b.routes.length - a.routes.length || a.id.localeCompare(b.id),
   )[0]!.name;
 }

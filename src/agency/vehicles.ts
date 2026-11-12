@@ -1,4 +1,11 @@
-import { num, oldestTimestamp, terminalName, VEHICLE_MAX_AGE_S, VEHICLE_STATUS, type FeedMessage } from "#src/gtfsrt.js";
+import {
+  num,
+  oldestTimestamp,
+  terminalName,
+  VEHICLE_MAX_AGE_S,
+  VEHICLE_STATUS,
+  type FeedMessage,
+} from "#src/gtfsrt.js";
 import { routeInfo } from "./agencies.js";
 import type { AgencyData, AgencyRoute } from "./types.js";
 
@@ -34,7 +41,10 @@ export function computeAgencyVehicles(
     for (const entity of feed.entity) {
       const tu = entity.tripUpdate;
       if (!tu) continue;
-      const info = { route: tu.trip?.routeId ?? "", headsign: terminalName(tu.stopTimeUpdate ?? [], (id) => data.stops[id]?.name) };
+      const info = {
+        route: tu.trip?.routeId ?? "",
+        headsign: terminalName(tu.stopTimeUpdate ?? [], (id) => data.stops[id]?.name),
+      };
       // Metro-North's vehicles name their trip by the entity id, not the trip id.
       for (const key of [tu.trip?.tripId, entity.id]) if (key) trips.set(key, info);
     }
@@ -46,7 +56,8 @@ export function computeAgencyVehicles(
       const v = entity.vehicle;
       const lat = v?.position?.latitude;
       const lon = v?.position?.longitude;
-      if (!v || entity.isDeleted || typeof lat !== "number" || typeof lon !== "number" || (lat === 0 && lon === 0)) continue;
+      if (!v || entity.isDeleted || typeof lat !== "number" || typeof lon !== "number" || (lat === 0 && lon === 0))
+        continue;
       const time = num(v.timestamp) ?? null;
       if (time !== null && time < now - VEHICLE_MAX_AGE_S) continue;
       const tripId = v.trip?.tripId ?? "";

@@ -78,6 +78,10 @@ export class StopSearch {
 
   /** See `rankByName`; ties go to busier stations, then by name. */
   search(query: string, limit: number): StationInfo[] {
-    return rankByName(this.entries, query, (a, b) => b.routes.length - a.routes.length || a.name.localeCompare(b.name)).slice(0, limit);
+    return rankByName(
+      this.entries,
+      query,
+      (a, b) => b.routes.length - a.routes.length || a.name.localeCompare(b.name),
+    ).slice(0, limit);
   }
 }

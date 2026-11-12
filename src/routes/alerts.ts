@@ -38,6 +38,8 @@ export function subwayAlertsHandler({ fetcher, now = () => Date.now(), index = s
       },
       stopName: (id) => idx.stopName(id),
     });
-    return json(stop ? { stop: { id: stop.id, name: stop.name, stops: stop.stops }, ...result } : result, { cache: ALERTS_CACHE });
+    return json(stop ? { stop: { id: stop.id, name: stop.name, stops: stop.stops }, ...result } : result, {
+      cache: ALERTS_CACHE,
+    });
   });
 }

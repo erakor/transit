@@ -33,12 +33,28 @@ describe("/health", () => {
 describe.each([
   ["/subway/arrivals", `?stop=${encodeURIComponent(TIMES_SQ)}`, () => arrivals().GET],
   ["/stops/search", "?q=times", () => searchHandler()],
-  ["/preview/subway", "?q=bedford", () => subwayPreviewHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
-  ["/path/arrivals", "?station=WTC", () => pathArrivalsHandler({ fetcher: fixtureFetcher(), now: () => PATH_FIXTURE_NOW_MS })],
+  [
+    "/preview/subway",
+    "?q=bedford",
+    () => subwayPreviewHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
+  ],
+  [
+    "/path/arrivals",
+    "?station=WTC",
+    () => pathArrivalsHandler({ fetcher: fixtureFetcher(), now: () => PATH_FIXTURE_NOW_MS }),
+  ],
   ["/path/stations", "", () => pathStationsHandler()],
-  ["/preview/path", "?q=hoboken", () => pathPreviewHandler({ fetcher: fixtureFetcher(), now: () => PATH_FIXTURE_NOW_MS })],
+  [
+    "/preview/path",
+    "?q=hoboken",
+    () => pathPreviewHandler({ fetcher: fixtureFetcher(), now: () => PATH_FIXTURE_NOW_MS }),
+  ],
   ["/subway/alerts", "?route=A", () => subwayAlertsHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
-  ["/subway/vehicles", "?route=L", () => subwayVehiclesHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
+  [
+    "/subway/vehicles",
+    "?route=L",
+    () => subwayVehiclesHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
+  ],
   ["/lirr/arrivals", "?station=102", () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
   ["/mnr/stations", "?q=rye", () => agencyHandler()],
   ["/ferry/vehicles", "", () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
@@ -69,8 +85,12 @@ describe.each([
   it("returns a CDN-cacheable answer keyed by the token header", async () => {
     const res = await handler()(get(path + query, auth));
     expect(res.status).toBe(200);
-    expect(res.headers.get("content-type")).toMatch(path.startsWith("/preview/") ? /^text\/plain/ : /^application\/json/);
-    expect(res.headers.get("cache-control")).toMatch(/^public, (max-age=\d+, )?s-maxage=\d+, stale-while-revalidate=\d+$/);
+    expect(res.headers.get("content-type")).toMatch(
+      path.startsWith("/preview/") ? /^text\/plain/ : /^application\/json/,
+    );
+    expect(res.headers.get("cache-control")).toMatch(
+      /^public, (max-age=\d+, )?s-maxage=\d+, stale-while-revalidate=\d+$/,
+    );
     expect(res.headers.get("vary")).toBe("x-transit-token");
     expect(res.headers.get("set-cookie")).toBeNull();
   });
@@ -147,7 +167,6 @@ describe("/subway/arrivals", () => {
     const body = ArrivalsResponse.parse(await res.json());
     expect(Math.max(...body.groups.map((g) => g.arrivals.length))).toBe(10);
   });
-
 });
 
 describe("/stops/search", () => {
@@ -221,7 +240,9 @@ describe("/preview/subway", () => {
   });
 
   it("uses a short cache when some feeds failed", async () => {
-    const res = await preview(fixtureFetcher(["gtfs-ace"])).GET(get(`/preview/subway?stop=${encodeURIComponent(TIMES_SQ)}`, auth));
+    const res = await preview(fixtureFetcher(["gtfs-ace"])).GET(
+      get(`/preview/subway?stop=${encodeURIComponent(TIMES_SQ)}`, auth),
+    );
     expect(res.status).toBe(200);
     expect(res.headers.get("cache-control")).toBe("public, max-age=5, s-maxage=5");
   });

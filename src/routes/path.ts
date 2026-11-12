@@ -1,4 +1,13 @@
-import { authenticated, errorResponse, intParam, json, LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE, text } from "#src/http.js";
+import {
+  authenticated,
+  errorResponse,
+  intParam,
+  json,
+  LIVE_CACHE,
+  PREVIEW_CACHE,
+  STATIC_CACHE,
+  text,
+} from "#src/http.js";
 import { computePathArrivals } from "#src/path/arrivals.js";
 import { fetchPathFeed, type PathFeed } from "#src/path/feed.js";
 import { pathPreviewLine } from "#src/path/preview.js";
@@ -64,6 +73,8 @@ export function pathPreviewHandler({ fetcher, now = () => Date.now() }: PathDeps
     const feed = await loadFeed(fetcher, nowMs);
     if (!feed) return errorResponse(502, "PATH feed unavailable");
     const nowS = Math.floor(nowMs / 1000);
-    return text(pathPreviewLine(computePathArrivals(station, feed, { now: nowS, limit: 1 }), nowS), { cache: PREVIEW_CACHE });
+    return text(pathPreviewLine(computePathArrivals(station, feed, { now: nowS, limit: 1 }), nowS), {
+      cache: PREVIEW_CACHE,
+    });
   });
 }

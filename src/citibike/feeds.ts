@@ -60,7 +60,9 @@ export function parseGbfs<T>(feed: string, body: unknown): GbfsFeed<T> {
   if (!b || typeof b.last_updated !== "number" || !Array.isArray(b.data?.stations)) {
     throw new Error(`feed ${feed}: not a GBFS station feed`);
   }
-  const stations = b.data.stations.filter((s) => typeof (s as { station_id?: unknown } | null)?.station_id === "string");
+  const stations = b.data.stations.filter(
+    (s) => typeof (s as { station_id?: unknown } | null)?.station_id === "string",
+  );
   if (stations.length === 0) throw new Error(`feed ${feed}: no stations`);
   return { ...b, last_updated: b.last_updated, data: { ...b.data, stations } };
 }
@@ -76,24 +78,33 @@ export const STALE_MAX_MS = 6 * 3_600_000;
 
 export async function fetchGbfs<K extends GbfsFeedName>(
   feed: K,
-  { fetcher = fetch, now = Date.now(), timeoutMs = 8_000 }: { fetcher?: Fetcher; now?: number; timeoutMs?: number } = {},
+  {
+    fetcher = fetch,
+    now = Date.now(),
+    timeoutMs = 8_000,
+  }: { fetcher?: Fetcher; now?: number; timeoutMs?: number } = {},
 ): Promise<GbfsStations[K]> {
   const { memoMs, staleOnError } = GBFS_FEEDS[feed];
-  const loaded = memoized(`gbfs:${feed}`, now, async () => {
-    try {
-      const res = await fetcher(gbfsUrl(feed), { signal: AbortSignal.timeout(timeoutMs) });
-      if (!res.ok) throw new Error(`feed ${feed}: HTTP ${res.status}`);
-      const parsed = parseGbfs<unknown>(feed, await res.json());
-      if (staleOnError) lastGood.set(feed, { at: now, feed: parsed });
-      return parsed;
-    } catch (err) {
-      const last = staleOnError ? lastGood.get(feed) : undefined;
-      if (!last || now - last.at > STALE_MAX_MS) throw err;
-      // Memoized like a fresh copy, so an outage costs one upstream attempt per memo window.
-      console.error(`feed ${feed} failed, using the copy from ${Math.round((now - last.at) / 60_000)} min ago:`, err);
-      return last.feed;
-    }
-  }, memoMs);
+  const loaded = memoized(
+    `gbfs:${feed}`,
+    now,
+    async () => {
+      try {
+        const res = await fetcher(gbfsUrl(feed), { signal: AbortSignal.timeout(timeoutMs) });
+        if (!res.ok) throw new Error(`feed ${feed}: HTTP ${res.status}`);
+        const parsed = parseGbfs<unknown>(feed, await res.json());
+        if (staleOnError) lastGood.set(feed, { at: now, feed: parsed });
+        return parsed;
+      } catch (err) {
+        const last = staleOnError ? lastGood.get(feed) : undefined;
+        if (!last || now - last.at > STALE_MAX_MS) throw err;
+        // Memoized like a fresh copy, so an outage costs one upstream attempt per memo window.
+        console.error(`feed ${feed} failed, using the copy from ${Math.round((now - last.at) / 60_000)} min ago:`, err);
+        return last.feed;
+      }
+    },
+    memoMs,
+  );
   return loaded as Promise<GbfsStations[K]>;
 }
 

@@ -26,13 +26,20 @@ export function buildAgencyData(files: GtfsFiles, { trips: withTrips = false }: 
       textColor: hex(r.route_text_color, "FFFFFF"),
     };
   }
-  const byRouteName = (a: string, b: string) => (routes[a]?.name ?? a).localeCompare(routes[b]?.name ?? b) || a.localeCompare(b);
+  const byRouteName = (a: string, b: string) =>
+    (routes[a]?.name ?? a).localeCompare(routes[b]?.name ?? b) || a.localeCompare(b);
 
   const stops: Record<string, AgencyStop> = {};
   for (const s of parseCsvObjects(files["stops.txt"]!)) {
     // Boarding places only: these agencies publish no parent stations or entrances worth keeping.
     if (!s.stop_id || (s.location_type && s.location_type !== "0")) continue;
-    stops[s.stop_id] = { id: s.stop_id, name: s.stop_name || s.stop_id, lat: round(Number(s.stop_lat)), lon: round(Number(s.stop_lon)), routes: [] };
+    stops[s.stop_id] = {
+      id: s.stop_id,
+      name: s.stop_name || s.stop_id,
+      lat: round(Number(s.stop_lat)),
+      lon: round(Number(s.stop_lon)),
+      routes: [],
+    };
   }
 
   const routeOfTrip = new Map<string, string>();
@@ -42,19 +49,23 @@ export function buildAgencyData(files: GtfsFiles, { trips: withTrips = false }: 
 
   const routeSets = new Map<string, Set<string>>();
   const calls = new Map<string, [seq: number, stop: string, time: number][]>();
-  forEachCsvRow(files["stop_times.txt"]!, ["trip_id", "stop_id", "stop_sequence", "arrival_time", "departure_time"], ([trip, stop, seq, arrival, departure]) => {
-    const route = routeOfTrip.get(trip!);
-    if (!route || !stops[stop!]) return;
-    let set = routeSets.get(stop!);
-    if (!set) routeSets.set(stop!, (set = new Set()));
-    set.add(route);
-    if (!withTrips) return;
-    const time = arrival || departure;
-    if (!time) return;
-    let list = calls.get(trip!);
-    if (!list) calls.set(trip!, (list = []));
-    list.push([Number(seq), stop!, seconds(time)]);
-  });
+  forEachCsvRow(
+    files["stop_times.txt"]!,
+    ["trip_id", "stop_id", "stop_sequence", "arrival_time", "departure_time"],
+    ([trip, stop, seq, arrival, departure]) => {
+      const route = routeOfTrip.get(trip!);
+      if (!route || !stops[stop!]) return;
+      let set = routeSets.get(stop!);
+      if (!set) routeSets.set(stop!, (set = new Set()));
+      set.add(route);
+      if (!withTrips) return;
+      const time = arrival || departure;
+      if (!time) return;
+      let list = calls.get(trip!);
+      if (!list) calls.set(trip!, (list = []));
+      list.push([Number(seq), stop!, seconds(time)]);
+    },
+  );
   for (const [id, set] of routeSets) stops[id]!.routes = [...set].sort(byRouteName);
 
   const sortedRoutes: Record<string, AgencyRoute> = {};

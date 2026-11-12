@@ -55,7 +55,10 @@ export interface FetchOptions {
   timeoutMs?: number;
 }
 
-export function fetchFeed(feed: string, { fetcher = fetch, now = Date.now(), timeoutMs = 8_000 }: FetchOptions = {}): Promise<FeedMessage> {
+export function fetchFeed(
+  feed: string,
+  { fetcher = fetch, now = Date.now(), timeoutMs = 8_000 }: FetchOptions = {},
+): Promise<FeedMessage> {
   return memoized(feed, now, async () => {
     const res = await fetcher(feedUrl(feed), { signal: AbortSignal.timeout(timeoutMs) });
     if (!res.ok) throw new Error(`feed ${feed}: HTTP ${res.status}`);
@@ -96,7 +99,10 @@ export function oldestTimestamp(feeds: FeedMessage[]): number | null {
  * The trip's last stop with a known name. Feeds sometimes end a trip at a yard or
  * non-revenue track id that isn't in the static stops, so walk back to the last real one.
  */
-export function terminalName(updates: { stopId?: string | null }[], stopName: (id: string) => string | undefined): string {
+export function terminalName(
+  updates: { stopId?: string | null }[],
+  stopName: (id: string) => string | undefined,
+): string {
   for (let i = updates.length - 1; i >= 0; i--) {
     const name = stopName(updates[i]!.stopId ?? "");
     if (name) return name;

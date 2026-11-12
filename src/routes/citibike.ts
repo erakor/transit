@@ -55,7 +55,8 @@ function coordinate(url: URL, name: string, max: number): number | { error: stri
   if (!raw) return { error: `${name} is required` };
   const value = Number(raw);
   // Decimal forms only (Number() alone would also take hex and binary literals).
-  if (!/^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i.test(raw) || Math.abs(value) > max) return { error: `${name} must be a number between -${max} and ${max}` };
+  if (!/^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i.test(raw) || Math.abs(value) > max)
+    return { error: `${name} must be a number between -${max} and ${max}` };
   return value;
 }
 

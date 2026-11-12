@@ -56,7 +56,15 @@ export function computePathArrivals(
     const key = `${route.id}|${t.direction}`;
     let g = groups.get(key);
     if (!g) {
-      g = { route: route.id, name: route.name, color: route.color, textColor: route.textColor, direction: t.direction, headsign: "", arrivals: [] };
+      g = {
+        route: route.id,
+        name: route.name,
+        color: route.color,
+        textColor: route.textColor,
+        direction: t.direction,
+        headsign: "",
+        arrivals: [],
+      };
       groups.set(key, g);
     }
     g.arrivals.push({ time: t.time, headsign: t.headsign });
@@ -68,7 +76,12 @@ export function computePathArrivals(
       return { ...g, headsign: arrivals[0]?.headsign ?? "", arrivals };
     })
     // PATH's route order, then toward New York ("NY") before New Jersey ("NJ").
-    .sort((a, b) => routeOrder(a.route) - routeOrder(b.route) || a.route.localeCompare(b.route) || b.direction.localeCompare(a.direction));
+    .sort(
+      (a, b) =>
+        routeOrder(a.route) - routeOrder(b.route) ||
+        a.route.localeCompare(b.route) ||
+        b.direction.localeCompare(a.direction),
+    );
 
   return {
     station: { id: station.id, name: station.name },

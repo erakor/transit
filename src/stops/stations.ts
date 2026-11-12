@@ -37,7 +37,13 @@ export class StationIndex {
     }
     const stop = this.data.stops[id];
     if (stop) {
-      return { id: stop.id, name: stop.name, stops: [stop.id], platforms: [stop.id + "N", stop.id + "S"], routes: stop.routes };
+      return {
+        id: stop.id,
+        name: stop.name,
+        stops: [stop.id],
+        platforms: [stop.id + "N", stop.id + "S"],
+        routes: stop.routes,
+      };
     }
     const platform = /^(.+)([NS])$/.exec(id);
     const parent = platform ? this.data.stops[platform[1]!] : undefined;

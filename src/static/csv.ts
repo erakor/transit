@@ -56,11 +56,7 @@ export function parseCsvObjects(text: string): Record<string, string>[] {
  * stop_times.txt: it avoids building one object per row and only does full quote handling
  * on lines that contain a quote.
  */
-export function forEachCsvRow(
-  text: string,
-  columns: string[],
-  fn: (values: string[]) => void,
-): void {
+export function forEachCsvRow(text: string, columns: string[], fn: (values: string[]) => void): void {
   let start = text.charCodeAt(0) === 0xfeff ? 1 : 0;
   let indexes: number[] | undefined;
   while (start < text.length) {

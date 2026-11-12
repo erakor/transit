@@ -6,7 +6,7 @@ import { SUBWAY_DATA } from "#src/data/subway.generated.js";
 const files = {
   "feed_info.txt": "feed_publisher_name,feed_version\nMTA,v1\n",
   "routes.txt":
-    'route_id,agency_id,route_short_name,route_long_name,route_desc,route_type,route_color,route_text_color,route_sort_order\n' +
+    "route_id,agency_id,route_short_name,route_long_name,route_desc,route_type,route_color,route_text_color,route_sort_order\n" +
     '1,MTA,1,Broadway - 7 Avenue Local,"Trains operate ""local"", at all times",1,EE352E,,1\n' +
     "A,MTA,A,8 Avenue Express,,1,0062cf,FFFFFF,5\n" +
     "GS,MTA,S,42 St Shuttle,,1,,,9\n",
@@ -20,17 +20,24 @@ const files = {
   "stop_times.txt":
     "trip_id,stop_id,arrival_time,departure_time,stop_sequence\n" +
     "t1,101S,00:00:00,00:00:00,1\nt1,127S,00:20:00,00:20:00,2\nt2,A27N,00:00:00,00:00:00,1\nt3,902N,00:00:00,00:00:00,1\n",
-  "transfers.txt": "from_stop_id,to_stop_id,transfer_type,min_transfer_time\n127,127,2,0\n127,A27,2,300\nA27,902,2,180\n101,101,2,0\n",
+  "transfers.txt":
+    "from_stop_id,to_stop_id,transfer_type,min_transfer_time\n127,127,2,0\n127,A27,2,300\nA27,902,2,180\n101,101,2,0\n",
 };
 
 describe("csv", () => {
   it("handles quotes, escaped quotes, CRLF and BOM", () => {
-    expect(parseCsv('﻿a,b\r\n"x, ""y""",z\n')).toEqual([["a", "b"], ['x, "y"', "z"]]);
+    expect(parseCsv('﻿a,b\r\n"x, ""y""",z\n')).toEqual([
+      ["a", "b"],
+      ['x, "y"', "z"],
+    ]);
   });
   it("extracts columns row by row", () => {
     const rows: string[][] = [];
     forEachCsvRow('b,a,c\n1,2,3\n"4,4",5,6\n', ["a", "b"], (v) => rows.push(v));
-    expect(rows).toEqual([["2", "1"], ["5", "4,4"]]);
+    expect(rows).toEqual([
+      ["2", "1"],
+      ["5", "4,4"],
+    ]);
   });
 });
 

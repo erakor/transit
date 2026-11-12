@@ -3,7 +3,17 @@ import { computeAgencyArrivals } from "#src/agency/arrivals.js";
 import { computeAgencyVehicles } from "#src/agency/vehicles.js";
 import { computeAlerts } from "#src/alerts.js";
 import { tryFetchFeed, type FeedMessage, type Fetcher } from "#src/gtfsrt.js";
-import { ALERTS_CACHE, authenticated, errorResponse, intParam, json, LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE, text } from "#src/http.js";
+import {
+  ALERTS_CACHE,
+  authenticated,
+  errorResponse,
+  intParam,
+  json,
+  LIVE_CACHE,
+  PREVIEW_CACHE,
+  STATIC_CACHE,
+  text,
+} from "#src/http.js";
 import { destinationsLine } from "#src/preview.js";
 
 export const BUS_ALERTS_FEED = "camsys/bus-alerts";
@@ -28,7 +38,8 @@ interface Context {
  */
 export function agencyRoute(url: URL): { agency: string; op: string } | undefined {
   const path = /^\/([a-z]+)\/([a-z]+)\/?$/.exec(url.pathname);
-  if (path && path[1] !== "api") return path[1] === "preview" ? { agency: path[2]!, op: "preview" } : { agency: path[1]!, op: path[2]! };
+  if (path && path[1] !== "api")
+    return path[1] === "preview" ? { agency: path[2]!, op: "preview" } : { agency: path[1]!, op: path[2]! };
   const agency = url.searchParams.get("agency");
   const op = url.searchParams.get("op");
   return agency && op ? { agency, op } : undefined;
@@ -106,18 +117,27 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
       route: (id) => agency.data.routes[id],
       stopName: (id) => agency.data.stops[id]?.name,
     });
-    return json(stop ? { [agency.stopParam]: { id: stop.id, name: stop.name }, ...result } : result, { cache: ALERTS_CACHE });
+    return json(stop ? { [agency.stopParam]: { id: stop.id, name: stop.name }, ...result } : result, {
+      cache: ALERTS_CACHE,
+    });
   },
 
   /** GET /<agency>/vehicles, optionally `?route=<id>`: where the trains or boats are. */
   async vehicles({ agency, url, now, load }) {
     const routeParam = url.searchParams.get("route")?.trim().toLowerCase();
-    const route = routeParam ? Object.keys(agency.data.routes).find((id) => id.toLowerCase() === routeParam) : undefined;
+    const route = routeParam
+      ? Object.keys(agency.data.routes).find((id) => id.toLowerCase() === routeParam)
+      : undefined;
     if (routeParam && !route) return errorResponse(404, `unknown route ${routeParam}`);
     // The feed with the positions is required; separate trip updates only add routes and headsigns.
-    const [positions, trips] = await Promise.all([load(agency.vehiclesFeed ?? agency.tripsFeed), agency.vehiclesFeed ? load(agency.tripsFeed) : undefined]);
+    const [positions, trips] = await Promise.all([
+      load(agency.vehiclesFeed ?? agency.tripsFeed),
+      agency.vehiclesFeed ? load(agency.tripsFeed) : undefined,
+    ]);
     if (!positions) return unavailable(agency);
-    return json(computeAgencyVehicles(trips ? [positions, trips] : [positions], agency.data, { now, route }), { cache: LIVE_CACHE });
+    return json(computeAgencyVehicles(trips ? [positions, trips] : [positions], agency.data, { now, route }), {
+      cache: LIVE_CACHE,
+    });
   },
 
   /** GET /preview/<agency>?q=<name> or ?station=<id>: one plain-text line, next departure per destination. */
@@ -127,13 +147,18 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
     if (!q && !param) return errorResponse(400, `q or ${agency.stopParam} is required`);
     if (q && q.length > 100) return errorResponse(400, "q is too long");
     const stop = param ? findStop(agency.data, param) : searchStops(agency.data, q!)[0];
-    if (!stop) return errorResponse(404, param ? `unknown ${agency.stopParam} ${param}` : `no matching ${agency.stopParam}`);
+    if (!stop)
+      return errorResponse(404, param ? `unknown ${agency.stopParam} ${param}` : `no matching ${agency.stopParam}`);
     const feed = await load(agency.tripsFeed);
     if (!feed) return unavailable(agency);
     const { arrivals } = computeAgencyArrivals(stop, feed, agency.data, { now, limit: Infinity });
     // A trip ending here is nobody's departure.
-    const departures = arrivals.filter((a) => a.headsign !== stop.name).map((a) => ({ label: a.headsign || a.name, time: a.time }));
-    return text(destinationsLine(stop.name, departures, now, `no ${agency.vehicleWord} soon`), { cache: PREVIEW_CACHE });
+    const departures = arrivals
+      .filter((a) => a.headsign !== stop.name)
+      .map((a) => ({ label: a.headsign || a.name, time: a.time }));
+    return text(destinationsLine(stop.name, departures, now, `no ${agency.vehicleWord} soon`), {
+      cache: PREVIEW_CACHE,
+    });
   },
 };
 
@@ -146,6 +171,12 @@ function list({ agency, url }: Context): Response {
   const stops = q
     ? searchStops(agency.data, q).slice(0, limit)
     : Object.values(agency.data.stops).sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
-  const body = stops.map((s) => ({ id: s.id, name: s.name, lat: s.lat, lon: s.lon, routes: s.routes.map((r) => routeInfo(agency.data, r)) }));
+  const body = stops.map((s) => ({
+    id: s.id,
+    name: s.name,
+    lat: s.lat,
+    lon: s.lon,
+    routes: s.routes.map((r) => routeInfo(agency.data, r)),
+  }));
   return json({ ...(q ? { query: q } : {}), [`${agency.stopParam}s`]: body }, { cache: STATIC_CACHE });
 }

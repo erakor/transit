@@ -43,7 +43,10 @@ const SOURCES: Record<string, Source> = {
     typeFrom: "#src/static/types.js",
     build(files) {
       const data = buildSubwayData(files);
-      return { data, summary: `${count(data.routes)} routes, ${count(data.stops)} stops, ${data.stations.length} stations` };
+      return {
+        data,
+        summary: `${count(data.routes)} routes, ${count(data.stops)} stops, ${data.stations.length} stations`,
+      };
     },
   },
   lirr: agency("LIRR static GTFS", "https://rrgtfsfeeds.s3.amazonaws.com/gtfslirr.zip"),
@@ -78,7 +81,9 @@ async function build(name: string, local?: string): Promise<void> {
     `import type { ${source.type} } from "${source.typeFrom}";\n\n` +
     `export const ${name.toUpperCase()}_DATA: ${source.type} = ${json};\n`;
   await writeFile(out, text);
-  console.log(`wrote ${out}: feed ${data.feedVersion || "(no version)"}, ${summary}, ${(text.length / 1024).toFixed(0)} KiB`);
+  console.log(
+    `wrote ${out}: feed ${data.feedVersion || "(no version)"}, ${summary}, ${(text.length / 1024).toFixed(0)} KiB`,
+  );
 }
 
 const [first, second] = process.argv.slice(2);

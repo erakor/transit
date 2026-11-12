@@ -15,7 +15,10 @@ export const NO_STORE = "no-store";
  */
 export const PREVIEW_CACHE = "public, max-age=20, s-maxage=20, stale-while-revalidate=40";
 
-export function json(body: unknown, { status = 200, cache = NO_STORE, vary }: { status?: number; cache?: string; vary?: string } = {}): Response {
+export function json(
+  body: unknown,
+  { status = 200, cache = NO_STORE, vary }: { status?: number; cache?: string; vary?: string } = {},
+): Response {
   const headers = new Headers({
     "content-type": "application/json; charset=utf-8",
     "cache-control": cache,
@@ -28,7 +31,10 @@ export function json(body: unknown, { status = 200, cache = NO_STORE, vary }: { 
  * One line of plain text, newline-terminated. Clients read the first non-empty line and ignore
  * answers that start with `<` (HTML), so the line is trimmed and must not be empty.
  */
-export function text(line: string, { status = 200, cache = NO_STORE }: { status?: number; cache?: string } = {}): Response {
+export function text(
+  line: string,
+  { status = 200, cache = NO_STORE }: { status?: number; cache?: string } = {},
+): Response {
   const body = line.replace(/\s+/g, " ").trim();
   if (!body || body.startsWith("<")) throw new Error("a preview line must be non-empty text");
   return new Response(body + "\n", {

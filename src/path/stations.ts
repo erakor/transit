@@ -13,7 +13,13 @@ const ROUTES: (PathRoute & { feedColors: string })[] = [
   { id: "HOB-WTC", name: "Hoboken - World Trade Center", color: "#65C100", textColor: "#FFFFFF", feedColors: "65C100" },
   { id: "JSQ-33", name: "Journal Square - 33rd Street", color: "#FF9900", textColor: "#FFFFFF", feedColors: "FF9900" },
   { id: "HOB-33", name: "Hoboken - 33rd Street", color: "#4D92FB", textColor: "#FFFFFF", feedColors: "4D92FB" },
-  { id: "JSQ-33-HOB", name: "Journal Square - 33rd Street (via Hoboken)", color: "#FF9900", textColor: "#FFFFFF", feedColors: "4D92FB,FF9900" },
+  {
+    id: "JSQ-33-HOB",
+    name: "Journal Square - 33rd Street (via Hoboken)",
+    color: "#FF9900",
+    textColor: "#FFFFFF",
+    feedColors: "4D92FB,FF9900",
+  },
 ];
 
 const ROUTE_BY_COLORS = new Map(ROUTES.map(({ feedColors, ...route }): [string, PathRoute] => [feedColors, route]));

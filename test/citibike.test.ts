@@ -1,9 +1,27 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { clearGbfsMemo, fetchGbfs, GBFS_FEEDS, parseGbfs, STALE_MAX_MS, type GbfsFeed, type GbfsStationInformation, type GbfsStationStatus } from "#src/citibike/feeds.js";
+import {
+  clearGbfsMemo,
+  fetchGbfs,
+  GBFS_FEEDS,
+  parseGbfs,
+  STALE_MAX_MS,
+  type GbfsFeed,
+  type GbfsStationInformation,
+  type GbfsStationStatus,
+} from "#src/citibike/feeds.js";
 import { distanceMeters, joinStations, nearestStations } from "#src/citibike/stations.js";
 import { citibikeHandler, citibikeNearbyHandler, citibikeOp, citibikeStationHandler } from "#src/routes/citibike.js";
 import { LIVE_CACHE } from "#src/http.js";
-import { auth, CITIBIKE_INFORMATION, CITIBIKE_STATUS, fixture, fixtureFetcher, get, TIMES_SQ, useRouteTestSetup } from "./helpers.js";
+import {
+  auth,
+  CITIBIKE_INFORMATION,
+  CITIBIKE_STATUS,
+  fixture,
+  fixtureFetcher,
+  get,
+  TIMES_SQ,
+  useRouteTestSetup,
+} from "./helpers.js";
 
 const NOW_MS = 1794322409_000;
 /** In the recorded feeds: a busy station, and one that is listed but not on the street. */
@@ -17,13 +35,30 @@ beforeEach(clearGbfsMemo);
 function information(stations: Partial<GbfsStationInformation>[]): GbfsFeed<GbfsStationInformation> {
   return {
     last_updated: 100,
-    data: { stations: stations.map((s, i) => ({ station_id: String(i), name: `Station ${i}`, lat: 40.7, lon: -74, capacity: 20, ...s })) },
+    data: {
+      stations: stations.map((s, i) => ({
+        station_id: String(i),
+        name: `Station ${i}`,
+        lat: 40.7,
+        lon: -74,
+        capacity: 20,
+        ...s,
+      })),
+    },
   };
 }
 function status(stations: Partial<GbfsStationStatus>[], last_updated = 200): GbfsFeed<GbfsStationStatus> {
   return {
     last_updated,
-    data: { stations: stations.map((s, i) => ({ station_id: String(i), is_installed: 1, is_renting: 1, is_returning: 1, ...s })) },
+    data: {
+      stations: stations.map((s, i) => ({
+        station_id: String(i),
+        is_installed: 1,
+        is_renting: 1,
+        is_returning: 1,
+        ...s,
+      })),
+    },
   };
 }
 
@@ -36,27 +71,45 @@ describe("joinStations", () => {
     expect(joined.updatedAt).toBe(200);
     expect([...joined.byId.values()]).toEqual([
       {
-        id: "0", name: "W 40 St & 7 Ave", lat: 40.75, lon: -73.99, capacity: 45,
-        bikes: 8, ebikes: 4, docks: 3, renting: true, returning: true, reportedAt: 1794322147,
+        id: "0",
+        name: "W 40 St & 7 Ave",
+        lat: 40.75,
+        lon: -73.99,
+        capacity: 45,
+        bikes: 8,
+        ebikes: 4,
+        docks: 3,
+        renting: true,
+        returning: true,
+        reportedAt: 1794322147,
       },
     ]);
   });
 
   it("never reports more e-bikes than bikes, and reads missing counts as zero", () => {
-    const { byId } = joinStations(information([{}, {}]), status([{ num_bikes_available: 2, num_ebikes_available: 5 }, {}]));
+    const { byId } = joinStations(
+      information([{}, {}]),
+      status([{ num_bikes_available: 2, num_ebikes_available: 5 }, {}]),
+    );
     expect(byId.get("0")).toMatchObject({ bikes: 0, ebikes: 2, docks: 0 });
     expect(byId.get("1")).toMatchObject({ bikes: 0, ebikes: 0, docks: 0 });
   });
 
   it("leaves out stations that aren't installed or have no status", () => {
-    const { byId } = joinStations(information([{}, {}, {}]), status([{ is_installed: 0 }, { station_id: "elsewhere" }, {}]));
+    const { byId } = joinStations(
+      information([{}, {}, {}]),
+      status([{ is_installed: 0 }, { station_id: "elsewhere" }, {}]),
+    );
     expect([...byId.keys()]).toEqual(["2"]);
   });
 
   it("keeps a closed station, flagged, and accepts spec booleans", () => {
     const { byId } = joinStations(
       information([{}, {}]),
-      status([{ is_renting: 0, is_returning: 0, last_reported: 86400 }, { is_installed: true, is_renting: true, is_returning: false }]),
+      status([
+        { is_renting: 0, is_returning: 0, last_reported: 86400 },
+        { is_installed: true, is_renting: true, is_returning: false },
+      ]),
     );
     expect(byId.get("0")).toMatchObject({ renting: false, returning: false });
     expect(byId.get("0")).not.toHaveProperty("reportedAt");
@@ -85,7 +138,8 @@ describe("nearestStations", () => {
   });
 
   it("matches a full sort on the recorded stations", () => {
-    const feed = <T>(name: string) => parseGbfs<T>(name, JSON.parse(new TextDecoder().decode(fixture(`citibike-${name}.json`))));
+    const feed = <T>(name: string) =>
+      parseGbfs<T>(name, JSON.parse(new TextDecoder().decode(fixture(`citibike-${name}.json`))));
     const all = [...joinStations(feed("station_information"), feed("station_status")).byId.values()];
     const sorted = all
       .map((s) => ({ ...s, distance: Math.round(distanceMeters(40.75, -73.99, s.lat, s.lon)) }))
@@ -95,7 +149,8 @@ describe("nearestStations", () => {
 });
 
 describe("recorded Citi Bike feeds", () => {
-  const feed = <T>(name: string) => parseGbfs<T>(name, JSON.parse(new TextDecoder().decode(fixture(`citibike-${name}.json`))));
+  const feed = <T>(name: string) =>
+    parseGbfs<T>(name, JSON.parse(new TextDecoder().decode(fixture(`citibike-${name}.json`))));
   const joined = joinStations(feed("station_information"), feed("station_status"));
 
   it("join into stations with sane counts", () => {
@@ -109,8 +164,17 @@ describe("recorded Citi Bike feeds", () => {
       expect(Math.abs(NOW_MS / 1000 - s.reportedAt!)).toBeLessThan(86400);
     }
     expect(joined.byId.get(W40_7AV)).toEqual({
-      id: W40_7AV, name: "W 40 St & 7 Ave", lat: 40.754818, lon: -73.988154, capacity: 45,
-      bikes: 9, ebikes: 28, docks: 2, renting: true, returning: true, reportedAt: 1794322384,
+      id: W40_7AV,
+      name: "W 40 St & 7 Ave",
+      lat: 40.754818,
+      lon: -73.988154,
+      capacity: 45,
+      bikes: 9,
+      ebikes: 28,
+      docks: 2,
+      renting: true,
+      returning: true,
+      reportedAt: 1794322384,
     });
   });
 
@@ -121,8 +185,16 @@ describe("recorded Citi Bike feeds", () => {
 });
 
 describe.each([
-  ["/citibike/station", `?id=${W40_7AV}`, () => citibikeStationHandler({ fetcher: fixtureFetcher(), now: () => NOW_MS })],
-  ["/citibike/nearby", `?${NEAR_TIMES_SQ}`, () => citibikeNearbyHandler({ fetcher: fixtureFetcher(), now: () => NOW_MS })],
+  [
+    "/citibike/station",
+    `?id=${W40_7AV}`,
+    () => citibikeStationHandler({ fetcher: fixtureFetcher(), now: () => NOW_MS }),
+  ],
+  [
+    "/citibike/nearby",
+    `?${NEAR_TIMES_SQ}`,
+    () => citibikeNearbyHandler({ fetcher: fixtureFetcher(), now: () => NOW_MS }),
+  ],
 ])("%s auth and caching", (path, query, handler) => {
   it("is 401 without a token or with a wrong one, uncached and varying on the token header", async () => {
     const res = await handler()(get(path + query));
@@ -162,8 +234,17 @@ describe("/citibike/station", () => {
     expect(await res.json()).toEqual({
       updatedAt: 1794322409,
       station: {
-        id: W40_7AV, name: "W 40 St & 7 Ave", lat: expect.any(Number), lon: expect.any(Number), capacity: 45,
-        bikes: 9, ebikes: 28, docks: 2, renting: true, returning: true, reportedAt: 1794322384,
+        id: W40_7AV,
+        name: "W 40 St & 7 Ave",
+        lat: expect.any(Number),
+        lon: expect.any(Number),
+        capacity: 45,
+        bikes: 9,
+        ebikes: 28,
+        docks: 2,
+        renting: true,
+        returning: true,
+        reportedAt: 1794322384,
       },
     });
   });
@@ -198,7 +279,11 @@ describe("/citibike/nearby", () => {
     const body = await (await handler()(get(`/citibike/nearby?${NEAR_TIMES_SQ}`, auth))).json();
     expect(body).toMatchObject({ lat: 40.7559, lon: -73.9871, updatedAt: 1794322409 });
     expect(body.stations.map((s: { name: string }) => s.name)).toEqual([
-      "W 40 St & 7 Ave", "W 42 St & 6 Ave", "W 41 St & 8 Ave", "Broadway & W 38 St", "W 43 St & 6 Ave",
+      "W 40 St & 7 Ave",
+      "W 42 St & 6 Ave",
+      "W 41 St & 8 Ave",
+      "Broadway & W 38 St",
+      "W 43 St & 6 Ave",
     ]);
     expect(body.stations[0]).toMatchObject({ id: W40_7AV, distance: 150, bikes: 9, ebikes: 28, docks: 2 });
     const distances = body.stations.map((s: { distance: number }) => s.distance);
@@ -254,7 +339,9 @@ describe("malformed feeds", () => {
     expect(res.status).toBe(502);
     // The next refresh fails too: with no good copy there is nothing to fall back to.
     const down = fixtureFetcher([CITIBIKE_INFORMATION]);
-    expect((await citibikeStationHandler({ fetcher: down, now: () => NOW_MS + 3_600_000 })(get(stationUrl, auth))).status).toBe(502);
+    expect(
+      (await citibikeStationHandler({ fetcher: down, now: () => NOW_MS + 3_600_000 })(get(stationUrl, auth))).status,
+    ).toBe(502);
   });
 
   it("takes a status without is_installed as installed, and unknown rental flags as closed", async () => {
@@ -304,7 +391,9 @@ describe("fetchGbfs", () => {
     const fetcher = fixtureFetcher();
     const GET = citibikeStationHandler({ fetcher, now: () => NOW_MS });
     await GET(get(`/citibike/station?id=${W40_7AV}`, auth));
-    await citibikeNearbyHandler({ fetcher, now: () => NOW_MS + 10_000 })(get(`/citibike/nearby?${NEAR_TIMES_SQ}`, auth));
+    await citibikeNearbyHandler({ fetcher, now: () => NOW_MS + 10_000 })(
+      get(`/citibike/nearby?${NEAR_TIMES_SQ}`, auth),
+    );
     expect(fetcher.calls.sort()).toEqual([CITIBIKE_INFORMATION, CITIBIKE_STATUS]);
     await citibikeStationHandler({ fetcher, now: () => NOW_MS + 60_000 })(get(`/citibike/station?id=${W40_7AV}`, auth));
     expect(fetcher.calls.sort()).toEqual([CITIBIKE_INFORMATION, CITIBIKE_STATUS, CITIBIKE_STATUS]);
@@ -321,7 +410,11 @@ describe("fetchGbfs", () => {
     await fetchGbfs("station_information", { fetcher, now: later + GBFS_FEEDS.station_information.memoMs });
     expect(fetcher.calls).toHaveLength(3);
     // Too old to stand in: the feed fails like any other.
-    await expect(fetchGbfs("station_information", { fetcher, now: NOW_MS + STALE_MAX_MS + 1 })).rejects.toThrow(/HTTP 503/);
-    await expect(fetchGbfs("station_status", { fetcher: fixtureFetcher([CITIBIKE_STATUS]), now: later })).rejects.toThrow(/HTTP 503/);
+    await expect(fetchGbfs("station_information", { fetcher, now: NOW_MS + STALE_MAX_MS + 1 })).rejects.toThrow(
+      /HTTP 503/,
+    );
+    await expect(
+      fetchGbfs("station_status", { fetcher: fixtureFetcher([CITIBIKE_STATUS]), now: later }),
+    ).rejects.toThrow(/HTTP 503/);
   });
 });

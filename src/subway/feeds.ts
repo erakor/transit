@@ -1,6 +1,6 @@
 /** MTA subway GTFS-realtime feeds (no API key needed) and the routes each one carries. */
 export const FEEDS: Record<string, readonly string[]> = {
-  "gtfs": ["1", "2", "3", "4", "5", "6", "6X", "7", "7X", "GS"],
+  gtfs: ["1", "2", "3", "4", "5", "6", "6X", "7", "7X", "GS"],
   "gtfs-ace": ["A", "C", "E", "H"],
   "gtfs-bdfm": ["B", "D", "F", "FX", "M", "FS"],
   "gtfs-g": ["G"],

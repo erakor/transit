@@ -51,7 +51,15 @@ export function computeArrivals(
         let g = groups.get(key);
         if (!g) {
           const r = data.routes[routeId] ?? FALLBACK_ROUTE(routeId);
-          g = { route: routeId, name: r.shortName, color: r.color, textColor: r.textColor, direction, headsign: "", arrivals: [] };
+          g = {
+            route: routeId,
+            name: r.shortName,
+            color: r.color,
+            textColor: r.textColor,
+            direction,
+            headsign: "",
+            arrivals: [],
+          };
           groups.set(key, g);
         }
         g.arrivals.push({ time, headsign, tripId });
@@ -65,7 +73,10 @@ export function computeArrivals(
       const arrivals = g.arrivals.sort((a, b) => a.time - b.time).slice(0, limit);
       return { ...g, headsign: arrivals[0]?.headsign ?? "", arrivals };
     })
-    .sort((a, b) => order(a.route) - order(b.route) || a.route.localeCompare(b.route) || a.direction.localeCompare(b.direction));
+    .sort(
+      (a, b) =>
+        order(a.route) - order(b.route) || a.route.localeCompare(b.route) || a.direction.localeCompare(b.direction),
+    );
 
   return {
     stop: { id: stop.id, name: stop.name, stops: stop.stops },

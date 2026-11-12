@@ -43,14 +43,18 @@ export function requiredParam(name: string, description: string) {
  */
 export function countParam(name: string, fallback: number, max: number, description: string) {
   const error = `${name} must be a positive integer`;
-  return z
-    .string()
-    .regex(/^\d+$/, { error })
-    // Clamp before the int check: z.int() rejects values past 2^53, which intParam lowers to max.
-    .transform((s) => Math.min(Number(s), max))
-    .pipe(z.int().min(1, { error }))
-    .prefault(String(fallback))
-    .meta({ description: `${description} Default ${fallback}, at most ${max} (larger values are lowered to ${max}).` });
+  return (
+    z
+      .string()
+      .regex(/^\d+$/, { error })
+      // Clamp before the int check: z.int() rejects values past 2^53, which intParam lowers to max.
+      .transform((s) => Math.min(Number(s), max))
+      .pipe(z.int().min(1, { error }))
+      .prefault(String(fallback))
+      .meta({
+        description: `${description} Default ${fallback}, at most ${max} (larger values are lowered to ${max}).`,
+      })
+  );
 }
 
 /**
