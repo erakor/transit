@@ -14,6 +14,7 @@ pnpm lint                            # eslint (eslint.config.js)
 pnpm format                          # prettier over the code, JSON and YAML (`format:check` only reports)
 pnpm knip                            # unused files, exports and dependencies
 pnpm check                           # all of the above and the tests, as CI runs them
+pnpm build:openapi                   # regenerate public/openapi.json from the route schemas (src/openapi.ts)
 pnpm build:static                    # regenerate every src/data/*.generated.ts (subway, lirr, mnr, ferry)
 pnpm build:static lirr               # one of them
 pnpm build:static ferry path/to.zip  # one of them, from a local zip (a bare zip path means the subway)
@@ -27,7 +28,8 @@ and ESLint (`eslint.config.js`) turns the import rules below into errors. A pre-
 (`.husky/pre-commit`, through lint-staged) runs both on staged files; CI runs `pnpm check`. A
 reformat that touches many lines goes in its own commit, listed in `.git-blame-ignore-revs`.
 
-There is no build step: Vercel compiles `api/**/*.ts` itself. To check what
+There is no build step: Vercel compiles `api/**/*.ts` itself and serves `public/` as static files
+(the docs page and `openapi.json`). Without a `public/` folder it would serve the whole repository. To check what
 Vercel will produce, `pnpm dlx vercel build` works offline with a stub `.vercel/project.json`
 (`{"projectId":"x","orgId":"y","settings":{"framework":null}}`); `.vercel/` is gitignored. Delete
 `.vercel/output` afterwards: vitest picks up the test files copied into it.
@@ -188,7 +190,10 @@ Ids, which clients store as favorites, so keep them stable:
   (`import type`), and code shared with other functions lives outside the route module (the
   preview imports `loadArrivals` from `src/subway/load.ts`), so they don't load zod. Build
   parameters with `requiredParam()` and `countParam()`, which match the rules and messages of
-  the routes without schemas. Descriptions go in `.meta()`: they become the API docs.
+  the routes without schemas. Descriptions go in `.meta()`: they become the API docs. A route with
+  schemas gets an entry in `ROUTES` (`src/openapi.ts`); `pnpm build:openapi` then rewrites
+  `public/openapi.json`, which `/docs` renders (Scalar, pinned on a CDN), and a test fails while
+  the committed file is out of date.
 - ESM with `NodeNext` resolution and `verbatimModuleSyntax`: imports end in `.js` even though the
   files are `.ts`, and type-only imports say so (`import type`, or `type` inline), since Vercel
   compiles each file on its own. Import anything in `src/` from another folder through the

@@ -7,6 +7,10 @@
       "destination": "/api/health"
     },
     {
+      "source": "/docs",
+      "destination": "/docs.html"
+    },
+    {
       "source": "/subway/arrivals",
       "destination": "/api/subway/arrivals"
     },
