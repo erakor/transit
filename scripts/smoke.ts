@@ -14,21 +14,21 @@
  * changed shape, stale status, no bikes, e-bikes or free docks anywhere, or no station within
  * 500 m of Times Sq.
  */
-import { AGENCIES } from "../src/agency/agencies.js";
-import { computeAgencyArrivals } from "../src/agency/arrivals.js";
-import { computeAgencyVehicles } from "../src/agency/vehicles.js";
-import { computeAlerts } from "../src/alerts.js";
-import { fetchGbfs } from "../src/citibike/feeds.js";
-import { joinStations, nearestStations } from "../src/citibike/stations.js";
-import { fetchFeed, type FeedMessage } from "../src/gtfsrt.js";
-import { computePathArrivals } from "../src/path/arrivals.js";
-import { fetchPathFeed } from "../src/path/feed.js";
-import { PATH_STATIONS, pathStation, routeForColors } from "../src/path/stations.js";
-import { BUS_ALERTS_FEED } from "../src/routes/agency.js";
-import { SUBWAY_ALERTS_FEED } from "../src/routes/alerts.js";
-import { stationIndex } from "../src/stops/stations.js";
-import { computeArrivals } from "../src/subway/arrivals.js";
-import { FEEDS } from "../src/subway/feeds.js";
+import { AGENCIES } from "#src/agency/agencies.js";
+import { computeAgencyArrivals } from "#src/agency/arrivals.js";
+import { computeAgencyVehicles } from "#src/agency/vehicles.js";
+import { computeAlerts } from "#src/alerts.js";
+import { fetchGbfs } from "#src/citibike/feeds.js";
+import { joinStations, nearestStations } from "#src/citibike/stations.js";
+import { fetchFeed, type FeedMessage } from "#src/gtfsrt.js";
+import { computePathArrivals } from "#src/path/arrivals.js";
+import { fetchPathFeed } from "#src/path/feed.js";
+import { PATH_STATIONS, pathStation, routeForColors } from "#src/path/stations.js";
+import { BUS_ALERTS_FEED } from "#src/routes/agency.js";
+import { SUBWAY_ALERTS_FEED } from "#src/routes/alerts.js";
+import { stationIndex } from "#src/stops/stations.js";
+import { computeArrivals } from "#src/subway/arrivals.js";
+import { FEEDS } from "#src/subway/feeds.js";
 import { TIMES_SQ } from "../test/helpers.js";
 
 const problems: string[] = [];

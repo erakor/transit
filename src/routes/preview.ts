@@ -1,7 +1,7 @@
-import { authenticated, errorResponse, PREVIEW_CACHE, text } from "../http.js";
-import { StopSearch } from "../stops/search.js";
-import { stationIndex } from "../stops/stations.js";
-import { previewLine } from "../subway/preview.js";
+import { authenticated, errorResponse, PREVIEW_CACHE, text } from "#src/http.js";
+import { StopSearch } from "#src/stops/search.js";
+import { stationIndex } from "#src/stops/stations.js";
+import { previewLine } from "#src/subway/preview.js";
 import { loadArrivals, type ArrivalsDeps } from "./arrivals.js";
 
 /** Shorter windows when some feeds failed, so a full answer comes back soon. */

@@ -1,7 +1,7 @@
-import { SUBWAY_DATA } from "../data/subway.generated.js";
-import { authenticated, errorResponse, intParam, json, STATIC_CACHE } from "../http.js";
-import { StopSearch } from "../stops/search.js";
-import type { SubwayData } from "../static/types.js";
+import { SUBWAY_DATA } from "#src/data/subway.generated.js";
+import { authenticated, errorResponse, intParam, json, STATIC_CACHE } from "#src/http.js";
+import { StopSearch } from "#src/stops/search.js";
+import type { SubwayData } from "#src/static/types.js";
 
 /** GET /stops/search?q=<name>&limit=<default 10, max 25> */
 export function searchHandler(data: SubwayData = SUBWAY_DATA) {

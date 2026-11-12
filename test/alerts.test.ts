@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { computeAlerts, type AlertsOptions } from "../src/alerts.js";
-import { SUBWAY_DATA } from "../src/data/subway.generated.js";
-import { ALERTS_CACHE, LIVE_CACHE } from "../src/http.js";
-import { subwayAlertsHandler } from "../src/routes/alerts.js";
-import { subwayVehiclesHandler } from "../src/routes/vehicles.js";
-import { StationIndex } from "../src/stops/stations.js";
-import { decodeFeed, VEHICLE_MAX_AGE_S } from "../src/gtfsrt.js";
-import { computeSubwayTrains } from "../src/subway/vehicles.js";
+import { computeAlerts, type AlertsOptions } from "#src/alerts.js";
+import { SUBWAY_DATA } from "#src/data/subway.generated.js";
+import { ALERTS_CACHE, LIVE_CACHE } from "#src/http.js";
+import { subwayAlertsHandler } from "#src/routes/alerts.js";
+import { subwayVehiclesHandler } from "#src/routes/vehicles.js";
+import { StationIndex } from "#src/stops/stations.js";
+import { decodeFeed, VEHICLE_MAX_AGE_S } from "#src/gtfsrt.js";
+import { computeSubwayTrains } from "#src/subway/vehicles.js";
 import { encodeFeed, feedFrom } from "./feed.js";
 import { auth, fixture, fixtureFetcher, FIXTURE_NOW_MS, get, useRouteTestSetup } from "./helpers.js";
 

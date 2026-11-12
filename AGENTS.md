@@ -165,7 +165,11 @@ Ids, which clients store as favorites, so keep them stable:
   HTML), with `PREVIEW_CACHE`, whose `max-age` is how long the client keeps the line. Their
   errors stay JSON and `no-store`. The line's format is built by a pure function with its own
   tests (`src/subway/preview.ts`, and `src/preview.ts` for PATH and the agencies).
-- ESM with `NodeNext` resolution: relative imports end in `.js` even though the files are `.ts`.
+- ESM with `NodeNext` resolution: imports end in `.js` even though the files are `.ts`. Import
+  anything in `src/` from another folder through the `#src/*` alias (`#src/http.js`), and use
+  `./` within a folder. The alias is Node's own `imports` field in `package.json`, not tsconfig
+  `paths`: Vercel compiles each file without rewriting its imports, so only an alias Node
+  resolves at runtime works once deployed. Imports of `test/` or `api/` stay relative.
 - TypeScript is pinned to 5.9: Vercel's build reported type errors with TypeScript 7.
 - Toolchain: Node 26 (`engines` in `package.json`, `node-version` in the workflows) and pnpm, pinned
   by `packageManager`. Vercel picks a pnpm version from the lockfile format rather than

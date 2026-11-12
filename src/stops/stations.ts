@@ -1,5 +1,5 @@
-import { SUBWAY_DATA } from "../data/subway.generated.js";
-import type { StationInfo, SubwayData } from "../static/types.js";
+import { SUBWAY_DATA } from "#src/data/subway.generated.js";
+import type { StationInfo, SubwayData } from "#src/static/types.js";
 
 /** What `/subway/arrivals?stop=` resolved to: a station, a single stop, or one platform. */
 export interface ResolvedStop {

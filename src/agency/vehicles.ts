@@ -1,4 +1,4 @@
-import { num, oldestTimestamp, terminalName, VEHICLE_MAX_AGE_S, VEHICLE_STATUS, type FeedMessage } from "../gtfsrt.js";
+import { num, oldestTimestamp, terminalName, VEHICLE_MAX_AGE_S, VEHICLE_STATUS, type FeedMessage } from "#src/gtfsrt.js";
 import { routeInfo } from "./agencies.js";
 import type { AgencyData, AgencyRoute } from "./types.js";
 

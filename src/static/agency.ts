@@ -1,4 +1,4 @@
-import type { AgencyData, AgencyRoute, AgencyStop, AgencyTrip } from "../agency/types.js";
+import type { AgencyData, AgencyRoute, AgencyStop, AgencyTrip } from "#src/agency/types.js";
 import { DEFAULT_COLOR, hex, requireFiles, round, type GtfsFiles } from "./build.js";
 import { forEachCsvRow, parseCsvObjects } from "./csv.js";
 

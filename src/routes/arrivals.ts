@@ -1,8 +1,8 @@
-import { authenticated, errorResponse, intParam, json, LIVE_CACHE } from "../http.js";
-import { stationIndex, type ResolvedStop, type StationIndex } from "../stops/stations.js";
-import { computeArrivals, type ArrivalsResult } from "../subway/arrivals.js";
-import { fetchFeed, type Fetcher } from "../gtfsrt.js";
-import { feedsForRoutes } from "../subway/feeds.js";
+import { authenticated, errorResponse, intParam, json, LIVE_CACHE } from "#src/http.js";
+import { stationIndex, type ResolvedStop, type StationIndex } from "#src/stops/stations.js";
+import { computeArrivals, type ArrivalsResult } from "#src/subway/arrivals.js";
+import { fetchFeed, type Fetcher } from "#src/gtfsrt.js";
+import { feedsForRoutes } from "#src/subway/feeds.js";
 
 /** Shorter CDN window when some feeds failed, so a full answer comes back soon. */
 const PARTIAL_CACHE = "public, s-maxage=5";

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { SUBWAY_DATA } from "../src/data/subway.generated.js";
-import { StationIndex } from "../src/stops/stations.js";
-import { computeArrivals } from "../src/subway/arrivals.js";
-import { decodeFeed } from "../src/gtfsrt.js";
-import { FEEDS, feedsForRoutes } from "../src/subway/feeds.js";
+import { SUBWAY_DATA } from "#src/data/subway.generated.js";
+import { StationIndex } from "#src/stops/stations.js";
+import { computeArrivals } from "#src/subway/arrivals.js";
+import { decodeFeed } from "#src/gtfsrt.js";
+import { FEEDS, feedsForRoutes } from "#src/subway/feeds.js";
 import { fixture, FIXTURE_NOW_MS } from "./helpers.js";
 import { makeFeed } from "./feed.js";
 

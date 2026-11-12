@@ -1,9 +1,9 @@
-import { authenticated, errorResponse, intParam, json, LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE, text } from "../http.js";
-import { computePathArrivals } from "../path/arrivals.js";
-import { fetchPathFeed, type PathFeed } from "../path/feed.js";
-import { pathPreviewLine } from "../path/preview.js";
-import { PATH_STATIONS, pathStation, routesOf, searchPathStations } from "../path/stations.js";
-import type { Fetcher } from "../gtfsrt.js";
+import { authenticated, errorResponse, intParam, json, LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE, text } from "#src/http.js";
+import { computePathArrivals } from "#src/path/arrivals.js";
+import { fetchPathFeed, type PathFeed } from "#src/path/feed.js";
+import { pathPreviewLine } from "#src/path/preview.js";
+import { PATH_STATIONS, pathStation, routesOf, searchPathStations } from "#src/path/stations.js";
+import type { Fetcher } from "#src/gtfsrt.js";
 
 export interface PathDeps {
   fetcher?: Fetcher;

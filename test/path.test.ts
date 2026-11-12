@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from "../src/http.js";
-import { BOARDING_GRACE_S, computePathArrivals, type PathArrivalsResult } from "../src/path/arrivals.js";
-import { parsePathFeed, PATH_FEED_URL } from "../src/path/feed.js";
-import { pathPreviewLine } from "../src/path/preview.js";
-import { PATH_ROUTES, PATH_STATIONS, pathStation, routeForColors, searchPathStations } from "../src/path/stations.js";
-import { pathArrivalsHandler, pathPreviewHandler, pathStationsHandler } from "../src/routes/path.js";
+import { LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from "#src/http.js";
+import { BOARDING_GRACE_S, computePathArrivals, type PathArrivalsResult } from "#src/path/arrivals.js";
+import { parsePathFeed, PATH_FEED_URL } from "#src/path/feed.js";
+import { pathPreviewLine } from "#src/path/preview.js";
+import { PATH_ROUTES, PATH_STATIONS, pathStation, routeForColors, searchPathStations } from "#src/path/stations.js";
+import { pathArrivalsHandler, pathPreviewHandler, pathStationsHandler } from "#src/routes/path.js";
 import { auth, fixture, fixtureFetcher, get, PATH_FIXTURE_NOW_MS, useRouteTestSetup } from "./helpers.js";
 
 const NOW = 1_000_000;

@@ -1,8 +1,8 @@
-import { FERRY_DATA } from "../data/ferry.generated.js";
-import { LIRR_DATA } from "../data/lirr.generated.js";
-import { MNR_DATA } from "../data/mnr.generated.js";
-import { fallbackRoute } from "../gtfsrt.js";
-import { rankByName, tokenize, type NameEntry } from "../stops/search.js";
+import { FERRY_DATA } from "#src/data/ferry.generated.js";
+import { LIRR_DATA } from "#src/data/lirr.generated.js";
+import { MNR_DATA } from "#src/data/mnr.generated.js";
+import { fallbackRoute } from "#src/gtfsrt.js";
+import { rankByName, tokenize, type NameEntry } from "#src/stops/search.js";
 import type { AgencyData, AgencyRoute, AgencyStop } from "./types.js";
 
 /**

@@ -1,7 +1,7 @@
-import { computeAlerts } from "../alerts.js";
-import { tryFetchFeed } from "../gtfsrt.js";
-import { ALERTS_CACHE, authenticated, errorResponse, json } from "../http.js";
-import { stationIndex } from "../stops/stations.js";
+import { computeAlerts } from "#src/alerts.js";
+import { tryFetchFeed } from "#src/gtfsrt.js";
+import { ALERTS_CACHE, authenticated, errorResponse, json } from "#src/http.js";
+import { stationIndex } from "#src/stops/stations.js";
 import type { ArrivalsDeps } from "./arrivals.js";
 
 export const SUBWAY_ALERTS_FEED = "camsys/subway-alerts";

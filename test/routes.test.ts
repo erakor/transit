@@ -1,14 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import { GET as healthGET } from "../api/health.js";
-import { arrivalsHandler } from "../src/routes/arrivals.js";
-import { searchHandler } from "../src/routes/search.js";
-import { subwayPreviewHandler } from "../src/routes/preview.js";
-import { agencyHandler } from "../src/routes/agency.js";
-import { subwayAlertsHandler } from "../src/routes/alerts.js";
-import { subwayVehiclesHandler } from "../src/routes/vehicles.js";
-import { pathArrivalsHandler, pathPreviewHandler, pathStationsHandler } from "../src/routes/path.js";
-import { LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from "../src/http.js";
-import { SUBWAY_DATA } from "../src/data/subway.generated.js";
+import { arrivalsHandler } from "#src/routes/arrivals.js";
+import { searchHandler } from "#src/routes/search.js";
+import { subwayPreviewHandler } from "#src/routes/preview.js";
+import { agencyHandler } from "#src/routes/agency.js";
+import { subwayAlertsHandler } from "#src/routes/alerts.js";
+import { subwayVehiclesHandler } from "#src/routes/vehicles.js";
+import { pathArrivalsHandler, pathPreviewHandler, pathStationsHandler } from "#src/routes/path.js";
+import { LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from "#src/http.js";
+import { SUBWAY_DATA } from "#src/data/subway.generated.js";
 import { auth, fixtureFetcher, FIXTURE_NOW_MS, get, PATH_FIXTURE_NOW_MS, TOKEN, useRouteTestSetup } from "./helpers.js";
 
 const TIMES_SQ = SUBWAY_DATA.stops["127"]!.station;

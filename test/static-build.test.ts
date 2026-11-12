@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { forEachCsvRow, parseCsv } from "../src/static/csv.js";
-import { buildSubwayData } from "../src/static/build.js";
-import { SUBWAY_DATA } from "../src/data/subway.generated.js";
+import { forEachCsvRow, parseCsv } from "#src/static/csv.js";
+import { buildSubwayData } from "#src/static/build.js";
+import { SUBWAY_DATA } from "#src/data/subway.generated.js";
 
 const files = {
   "feed_info.txt": "feed_publisher_name,feed_version\nMTA,v1\n",

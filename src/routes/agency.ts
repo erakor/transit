@@ -1,10 +1,10 @@
-import { AGENCIES, findStop, routeInfo, searchStops, type Agency } from "../agency/agencies.js";
-import { computeAgencyArrivals } from "../agency/arrivals.js";
-import { computeAgencyVehicles } from "../agency/vehicles.js";
-import { computeAlerts } from "../alerts.js";
-import { tryFetchFeed, type FeedMessage, type Fetcher } from "../gtfsrt.js";
-import { ALERTS_CACHE, authenticated, errorResponse, intParam, json, LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE, text } from "../http.js";
-import { destinationsLine } from "../preview.js";
+import { AGENCIES, findStop, routeInfo, searchStops, type Agency } from "#src/agency/agencies.js";
+import { computeAgencyArrivals } from "#src/agency/arrivals.js";
+import { computeAgencyVehicles } from "#src/agency/vehicles.js";
+import { computeAlerts } from "#src/alerts.js";
+import { tryFetchFeed, type FeedMessage, type Fetcher } from "#src/gtfsrt.js";
+import { ALERTS_CACHE, authenticated, errorResponse, intParam, json, LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE, text } from "#src/http.js";
+import { destinationsLine } from "#src/preview.js";
 
 export const BUS_ALERTS_FEED = "camsys/bus-alerts";
 

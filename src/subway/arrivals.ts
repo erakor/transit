@@ -1,6 +1,6 @@
-import type { RouteInfo, SubwayData } from "../static/types.js";
-import type { ResolvedStop, StationIndex } from "../stops/stations.js";
-import { num, oldestTimestamp, terminalName, type FeedMessage } from "../gtfsrt.js";
+import type { RouteInfo, SubwayData } from "#src/static/types.js";
+import type { ResolvedStop, StationIndex } from "#src/stops/stations.js";
+import { num, oldestTimestamp, terminalName, type FeedMessage } from "#src/gtfsrt.js";
 
 export interface Arrival {
   /** Epoch seconds. */

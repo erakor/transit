@@ -1,5 +1,5 @@
-import type { RouteDisplay } from "../gtfsrt.js";
-import { rankByName, tokenize } from "../stops/search.js";
+import type { RouteDisplay } from "#src/gtfsrt.js";
+import { rankByName, tokenize } from "#src/stops/search.js";
 
 export type PathRoute = RouteDisplay;
 

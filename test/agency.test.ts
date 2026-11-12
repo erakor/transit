@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { AGENCIES, findStop, searchStops } from "../src/agency/agencies.js";
-import { computeAgencyArrivals } from "../src/agency/arrivals.js";
-import type { AgencyData } from "../src/agency/types.js";
-import { computeAgencyVehicles } from "../src/agency/vehicles.js";
-import { ALERTS_CACHE, LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from "../src/http.js";
-import { agencyHandler, agencyRoute } from "../src/routes/agency.js";
-import { buildAgencyData } from "../src/static/agency.js";
-import { clearFeedMemo, decodeFeed, VEHICLE_MAX_AGE_S } from "../src/gtfsrt.js";
+import { AGENCIES, findStop, searchStops } from "#src/agency/agencies.js";
+import { computeAgencyArrivals } from "#src/agency/arrivals.js";
+import type { AgencyData } from "#src/agency/types.js";
+import { computeAgencyVehicles } from "#src/agency/vehicles.js";
+import { ALERTS_CACHE, LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from "#src/http.js";
+import { agencyHandler, agencyRoute } from "#src/routes/agency.js";
+import { buildAgencyData } from "#src/static/agency.js";
+import { clearFeedMemo, decodeFeed, VEHICLE_MAX_AGE_S } from "#src/gtfsrt.js";
 import { feedFrom } from "./feed.js";
 import { auth, fixture, fixtureFetcher, FIXTURE_NOW_MS, get, useRouteTestSetup } from "./helpers.js";
 

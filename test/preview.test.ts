@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { ArrivalsResult, RouteDirectionArrivals } from "../src/subway/arrivals.js";
-import { PREVIEW_MAX_ROUTES, previewLine } from "../src/subway/preview.js";
+import type { ArrivalsResult, RouteDirectionArrivals } from "#src/subway/arrivals.js";
+import { PREVIEW_MAX_ROUTES, previewLine } from "#src/subway/preview.js";
 
 const NOW = 1_000_000;
 

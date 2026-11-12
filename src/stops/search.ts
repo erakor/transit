@@ -1,4 +1,4 @@
-import type { StationInfo, SubwayData } from "../static/types.js";
+import type { StationInfo, SubwayData } from "#src/static/types.js";
 
 /** Words riders type that the MTA abbreviates in stop names. */
 const SYNONYMS: Record<string, string> = {

@@ -1,4 +1,4 @@
-import { num, terminalName, type FeedMessage } from "../gtfsrt.js";
+import { num, terminalName, type FeedMessage } from "#src/gtfsrt.js";
 import { routeInfo } from "./agencies.js";
 import type { AgencyData, AgencyStop } from "./types.js";
 

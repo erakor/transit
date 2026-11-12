@@ -1,5 +1,5 @@
 import GtfsRealtimeBindings from "gtfs-realtime-bindings";
-import type { FeedMessage } from "../src/gtfsrt.js";
+import type { FeedMessage } from "#src/gtfsrt.js";
 
 const { transit_realtime } = GtfsRealtimeBindings;
 

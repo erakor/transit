@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, vi } from "vitest";
-import { AGENCIES } from "../src/agency/agencies.js";
-import { clearFeedMemo, type Fetcher } from "../src/gtfsrt.js";
+import { AGENCIES } from "#src/agency/agencies.js";
+import { clearFeedMemo, type Fetcher } from "#src/gtfsrt.js";
 
 export const TOKEN = "test-token";
 export const auth = { "x-transit-token": TOKEN };

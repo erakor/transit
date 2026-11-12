@@ -16,15 +16,15 @@
 import { writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import GtfsRealtimeBindings from "gtfs-realtime-bindings";
-import { AGENCIES } from "../src/agency/agencies.js";
-import { inEffect } from "../src/alerts.js";
-import { gbfsUrl } from "../src/citibike/feeds.js";
-import { distanceMeters } from "../src/citibike/stations.js";
-import { decodeFeed, feedUrl } from "../src/gtfsrt.js";
-import { parsePathFeed, PATH_FEED_URL } from "../src/path/feed.js";
-import { BUS_ALERTS_FEED } from "../src/routes/agency.js";
-import { SUBWAY_ALERTS_FEED } from "../src/routes/alerts.js";
-import { FEEDS } from "../src/subway/feeds.js";
+import { AGENCIES } from "#src/agency/agencies.js";
+import { inEffect } from "#src/alerts.js";
+import { gbfsUrl } from "#src/citibike/feeds.js";
+import { distanceMeters } from "#src/citibike/stations.js";
+import { decodeFeed, feedUrl } from "#src/gtfsrt.js";
+import { parsePathFeed, PATH_FEED_URL } from "#src/path/feed.js";
+import { BUS_ALERTS_FEED } from "#src/routes/agency.js";
+import { SUBWAY_ALERTS_FEED } from "#src/routes/alerts.js";
+import { FEEDS } from "#src/subway/feeds.js";
 import { fixtureName, TIMES_SQ } from "../test/helpers.js";
 
 const { FeedMessage } = GtfsRealtimeBindings.transit_realtime;

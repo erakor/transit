@@ -1,6 +1,6 @@
-import type { RouteInfo } from "../static/types.js";
-import type { StationIndex } from "../stops/stations.js";
-import { num, terminalName, VEHICLE_MAX_AGE_S, VEHICLE_STATUS, type FeedMessage } from "../gtfsrt.js";
+import type { RouteInfo } from "#src/static/types.js";
+import type { StationIndex } from "#src/stops/stations.js";
+import { num, terminalName, VEHICLE_MAX_AGE_S, VEHICLE_STATUS, type FeedMessage } from "#src/gtfsrt.js";
 
 export interface SubwayTrain {
   tripId: string;

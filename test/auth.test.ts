@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkToken, configuredTokens, presentedToken } from "../src/auth.js";
+import { checkToken, configuredTokens, presentedToken } from "#src/auth.js";
 
 const env = { TRANSIT_TOKEN: "alpha, beta" };
 const h = (o: Record<string, string>) => new Headers(o);
