@@ -1,7 +1,7 @@
-import { fetchGbfs } from "../citibike/feeds.js";
-import { joinStations, nearestStations, type BikeStations } from "../citibike/stations.js";
-import { authenticated, errorResponse, intParam, json, LIVE_CACHE } from "../http.js";
-import { tryLoad, type Fetcher } from "../gtfsrt.js";
+import { fetchGbfs } from "#src/citibike/feeds.js";
+import { joinStations, nearestStations, type BikeStations } from "#src/citibike/stations.js";
+import { authenticated, errorResponse, intParam, json, LIVE_CACHE } from "#src/http.js";
+import { tryLoad, type Fetcher } from "#src/gtfsrt.js";
 
 export interface CitibikeDeps {
   fetcher?: Fetcher;

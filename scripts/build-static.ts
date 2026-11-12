@@ -9,8 +9,8 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { strFromU8, unzipSync } from "fflate";
-import { buildAgencyData } from "../src/static/agency.js";
-import { buildSubwayData, type GtfsFiles } from "../src/static/build.js";
+import { buildAgencyData } from "#src/static/agency.js";
+import { buildSubwayData, type GtfsFiles } from "#src/static/build.js";
 
 interface Source {
   url: string;
@@ -27,7 +27,7 @@ const agency = (title: string, url: string, trips = false): Source => ({
   url,
   title,
   type: "AgencyData",
-  typeFrom: "../agency/types.js",
+  typeFrom: "#src/agency/types.js",
   build(files) {
     const data = buildAgencyData(files, { trips });
     return { data, summary: `${count(data.routes)} routes, ${count(data.stops)} stops, ${count(data.trips)} trips` };
@@ -40,7 +40,7 @@ const SOURCES: Record<string, Source> = {
     url: "https://rrgtfsfeeds.s3.amazonaws.com/gtfs_subway.zip",
     title: "MTA static subway GTFS",
     type: "SubwayData",
-    typeFrom: "../static/types.js",
+    typeFrom: "#src/static/types.js",
     build(files) {
       const data = buildSubwayData(files);
       return { data, summary: `${count(data.routes)} routes, ${count(data.stops)} stops, ${data.stations.length} stations` };

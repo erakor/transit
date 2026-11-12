@@ -1,3 +1,3 @@
-import { arrivalsHandler } from "../../src/routes/arrivals.js";
+import { arrivalsHandler } from "#src/routes/arrivals.js";
 
 export const GET = arrivalsHandler();

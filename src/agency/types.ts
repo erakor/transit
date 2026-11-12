@@ -1,4 +1,4 @@
-import type { RouteDisplay } from "../gtfsrt.js";
+import type { RouteDisplay } from "#src/gtfsrt.js";
 
 /** Compact static data for an agency served by the generic handlers (LIRR, Metro-North, NYC Ferry). */
 

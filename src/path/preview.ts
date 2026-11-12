@@ -1,4 +1,4 @@
-import { destinationsLine } from "../preview.js";
+import { destinationsLine } from "#src/preview.js";
 import type { PathArrivalsResult } from "./arrivals.js";
 
 /**

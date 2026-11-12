@@ -1,4 +1,4 @@
-import { memoized, type Fetcher } from "../gtfsrt.js";
+import { memoized, type Fetcher } from "#src/gtfsrt.js";
 
 const BASE = "https://gbfs.lyft.com/gbfs/2.3/bkn/en/";
 

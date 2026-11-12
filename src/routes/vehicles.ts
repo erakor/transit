@@ -1,8 +1,8 @@
-import { authenticated, errorResponse, json, LIVE_CACHE } from "../http.js";
-import { stationIndex } from "../stops/stations.js";
-import { tryFetchFeed } from "../gtfsrt.js";
-import { feedsForRoutes } from "../subway/feeds.js";
-import { computeSubwayTrains } from "../subway/vehicles.js";
+import { authenticated, errorResponse, json, LIVE_CACHE } from "#src/http.js";
+import { stationIndex } from "#src/stops/stations.js";
+import { tryFetchFeed } from "#src/gtfsrt.js";
+import { feedsForRoutes } from "#src/subway/feeds.js";
+import { computeSubwayTrains } from "#src/subway/vehicles.js";
 import type { ArrivalsDeps } from "./arrivals.js";
 
 /** GET /subway/vehicles?route=<id>: the stop each of the route's trains is at or heading to. */

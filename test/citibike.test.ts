@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { clearGbfsMemo, fetchGbfs, GBFS_FEEDS, parseGbfs, STALE_MAX_MS, type GbfsFeed, type GbfsStationInformation, type GbfsStationStatus } from "../src/citibike/feeds.js";
-import { distanceMeters, joinStations, nearestStations } from "../src/citibike/stations.js";
-import { citibikeHandler, citibikeNearbyHandler, citibikeOp, citibikeStationHandler } from "../src/routes/citibike.js";
-import { LIVE_CACHE } from "../src/http.js";
+import { clearGbfsMemo, fetchGbfs, GBFS_FEEDS, parseGbfs, STALE_MAX_MS, type GbfsFeed, type GbfsStationInformation, type GbfsStationStatus } from "#src/citibike/feeds.js";
+import { distanceMeters, joinStations, nearestStations } from "#src/citibike/stations.js";
+import { citibikeHandler, citibikeNearbyHandler, citibikeOp, citibikeStationHandler } from "#src/routes/citibike.js";
+import { LIVE_CACHE } from "#src/http.js";
 import { auth, CITIBIKE_INFORMATION, CITIBIKE_STATUS, fixture, fixtureFetcher, get, TIMES_SQ, useRouteTestSetup } from "./helpers.js";
 
 const NOW_MS = 1794322409_000;

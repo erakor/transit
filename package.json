@@ -4,6 +4,9 @@
   "private": true,
   "description": "Small NYC transit data service: normalized JSON over the MTA, PATH, NYC Ferry and Citi Bike feeds.",
   "type": "module",
+  "imports": {
+    "#src/*": "./src/*"
+  },
   "engines": {
     "node": "26.x"
   },
