@@ -3,7 +3,7 @@
   "info": {
     "title": "transit",
     "version": "0.1.0",
-    "description": "Normalized JSON over the NYC transit feeds. Times are epoch seconds. This lists the routes that have schemas so far."
+    "description": "Normalized JSON over the NYC transit feeds: the MTA subway, LIRR, Metro-North and buses, PATH, NYC Ferry and Citi Bike. Times are epoch seconds. Every route but `/health` needs the token."
   },
   "servers": [
     {
@@ -19,6 +19,9 @@
     "/subway/arrivals": {
       "get": {
         "operationId": "subwayArrivals",
+        "tags": [
+          "Subway"
+        ],
         "summary": "Next trains at a subway station",
         "description": "Next trains per route and direction. If some upstream feeds failed, the answer is still 200 with what was available, `unavailableFeeds`, and a shorter cache.",
         "parameters": [
@@ -101,6 +104,2094 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stops/search": {
+      "get": {
+        "operationId": "stopsSearch",
+        "tags": [
+          "Subway"
+        ],
+        "summary": "Find subway stations by name",
+        "description": "Station complexes matching a name, best first. Changes only with a deploy.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "description": "Station name, or part of one (`times sq`, `bedford`).",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Stations to return. Default 10, at most 25 (larger values are lowered to 25).",
+            "schema": {
+              "default": 10,
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StopSearchResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or too long `q`, or bad `limit`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subway/alerts": {
+      "get": {
+        "operationId": "subwayAlerts",
+        "tags": [
+          "Subway"
+        ],
+        "summary": "Subway service alerts",
+        "description": "The alerts in effect now, optionally for one route or station.",
+        "parameters": [
+          {
+            "name": "route",
+            "in": "query",
+            "required": false,
+            "description": "Only alerts about this route id (`A`, `6X`). Case insensitive.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stop",
+            "in": "query",
+            "required": false,
+            "description": "Only alerts naming one of this station's stops, or a whole route that stops there. A station id from /stops/search (stop ids joined with `+`, such as `127+725+902+A27+R16`), a GTFS stop id (`127`) or one platform (`127N`). Case insensitive.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubwayAlertsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown route or stop.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The alerts feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/subway/vehicles": {
+      "get": {
+        "operationId": "subwayVehicles",
+        "tags": [
+          "Subway"
+        ],
+        "summary": "Where a subway route's trains are",
+        "description": "The stop each train of the route is at or heading to. The subway feeds carry no coordinates.",
+        "parameters": [
+          {
+            "name": "route",
+            "in": "query",
+            "required": true,
+            "description": "A route id (`A`, `6X`). Case insensitive.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubwayVehiclesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing `route`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown route.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The route's feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/preview/subway": {
+      "get": {
+        "operationId": "previewSubway",
+        "tags": [
+          "Subway"
+        ],
+        "summary": "Subway arrivals as one line of text",
+        "description": "One line of `text/plain` for a launcher hint: the station, then the next trains. Errors are JSON. `max-age` in `Cache-Control` says how long a client may keep the line. The next train per route and direction.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "A station name: the best /stops/search match is used.",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "stop",
+            "in": "query",
+            "required": false,
+            "description": "Instead of `q`. A station id from /stops/search (stop ids joined with `+`, such as `127+725+902+A27+R16`), a GTFS stop id (`127`) or one platform (`127N`). Case insensitive.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neither `q` nor `stop`, or `q` too long.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown stop or no match.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Every MTA feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/path/arrivals": {
+      "get": {
+        "operationId": "pathArrivals",
+        "tags": [
+          "PATH"
+        ],
+        "summary": "Next trains at a PATH station",
+        "description": "Next trains per route and direction.",
+        "parameters": [
+          {
+            "name": "station",
+            "in": "query",
+            "required": true,
+            "description": "A station id from /path/stations (`WTC`, `HOB`, `09S`). Case insensitive.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Trains per route and direction. Default 3, at most 10 (larger values are lowered to 10).",
+            "schema": {
+              "default": 3,
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PathArrivalsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing `station` or bad `limit`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown station.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The PATH feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/path/stations": {
+      "get": {
+        "operationId": "pathStations",
+        "tags": [
+          "PATH"
+        ],
+        "summary": "PATH stations",
+        "description": "The 13 stations with the routes serving them.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PathStationsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/preview/path": {
+      "get": {
+        "operationId": "previewPath",
+        "tags": [
+          "PATH"
+        ],
+        "summary": "PATH arrivals as one line of text",
+        "description": "One line of `text/plain` for a launcher hint: the station, then the next trains. Errors are JSON. `max-age` in `Cache-Control` says how long a client may keep the line. The next train to each destination.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "A station name (`hoboken`, `wtc`, `journal sq`): the best match is used.",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "station",
+            "in": "query",
+            "required": false,
+            "description": "Instead of `q`. A station id from /path/stations (`WTC`, `HOB`, `09S`). Case insensitive.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neither `q` nor `station`, or `q` too long.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown station or no match.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The PATH feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lirr/arrivals": {
+      "get": {
+        "operationId": "lirrArrivals",
+        "tags": [
+          "LIRR"
+        ],
+        "summary": "Next departures at a LIRR station",
+        "description": "Every route and direction in one list, soonest first, like a departure board.",
+        "parameters": [
+          {
+            "name": "station",
+            "in": "query",
+            "required": true,
+            "description": "A station id from /<agency>/stations. Case insensitive.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Departures to return. Default 10, at most 30 (larger values are lowered to 30).",
+            "schema": {
+              "default": 10,
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailArrivalsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing `station` or bad `limit`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown `station`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The LIRR feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lirr/stations": {
+      "get": {
+        "operationId": "lirrStations",
+        "tags": [
+          "LIRR"
+        ],
+        "summary": "LIRR stations",
+        "description": "All stations by name, or those matching `q`, best first. Changes only with a deploy.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "Only stations matching this name, best first. Without it, all of them by name.",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "stations to return with `q`. Default 10, at most 25 (larger values are lowered to 25).",
+            "schema": {
+              "default": 10,
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailStationsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`q` too long or bad `limit`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lirr/alerts": {
+      "get": {
+        "operationId": "lirrAlerts",
+        "tags": [
+          "LIRR"
+        ],
+        "summary": "LIRR service alerts",
+        "description": "The alerts in effect now, optionally for one route or station.",
+        "parameters": [
+          {
+            "name": "route",
+            "in": "query",
+            "required": false,
+            "description": "Only this route id (from `routes` in the station list). Case insensitive.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "station",
+            "in": "query",
+            "required": false,
+            "description": "Only alerts naming this station, or a whole route that stops there. A station id from /<agency>/stations. Case insensitive.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailAlertsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown `station`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The LIRR alerts feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lirr/vehicles": {
+      "get": {
+        "operationId": "lirrVehicles",
+        "tags": [
+          "LIRR"
+        ],
+        "summary": "Where the LIRR trains are",
+        "description": "Positions from the realtime feed, with the trip each vehicle runs when known.",
+        "parameters": [
+          {
+            "name": "route",
+            "in": "query",
+            "required": false,
+            "description": "Only this route id (from `routes` in the station list). Case insensitive.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgencyVehiclesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown `route`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The LIRR feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/preview/lirr": {
+      "get": {
+        "operationId": "previewLirr",
+        "tags": [
+          "LIRR"
+        ],
+        "summary": "LIRR departures as one line of text",
+        "description": "One line of `text/plain` for a launcher hint: the station, then the next trains. Errors are JSON. `max-age` in `Cache-Control` says how long a client may keep the line. The next departure to each destination.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "A station name: the best match is used.",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "station",
+            "in": "query",
+            "required": false,
+            "description": "Instead of `q`. A station id from /<agency>/stations. Case insensitive.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neither `q` nor `station`, or `q` too long.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown `station` or no match.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The LIRR feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mnr/arrivals": {
+      "get": {
+        "operationId": "mnrArrivals",
+        "tags": [
+          "Metro-North"
+        ],
+        "summary": "Next departures at a Metro-North station",
+        "description": "Every route and direction in one list, soonest first, like a departure board.",
+        "parameters": [
+          {
+            "name": "station",
+            "in": "query",
+            "required": true,
+            "description": "A station id from /<agency>/stations. Case insensitive.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Departures to return. Default 10, at most 30 (larger values are lowered to 30).",
+            "schema": {
+              "default": 10,
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailArrivalsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing `station` or bad `limit`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown `station`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The Metro-North feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mnr/stations": {
+      "get": {
+        "operationId": "mnrStations",
+        "tags": [
+          "Metro-North"
+        ],
+        "summary": "Metro-North stations",
+        "description": "All stations by name, or those matching `q`, best first. Changes only with a deploy.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "Only stations matching this name, best first. Without it, all of them by name.",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "stations to return with `q`. Default 10, at most 25 (larger values are lowered to 25).",
+            "schema": {
+              "default": 10,
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailStationsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`q` too long or bad `limit`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mnr/alerts": {
+      "get": {
+        "operationId": "mnrAlerts",
+        "tags": [
+          "Metro-North"
+        ],
+        "summary": "Metro-North service alerts",
+        "description": "The alerts in effect now, optionally for one route or station.",
+        "parameters": [
+          {
+            "name": "route",
+            "in": "query",
+            "required": false,
+            "description": "Only this route id (from `routes` in the station list). Case insensitive.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "station",
+            "in": "query",
+            "required": false,
+            "description": "Only alerts naming this station, or a whole route that stops there. A station id from /<agency>/stations. Case insensitive.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RailAlertsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown `station`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The Metro-North alerts feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/mnr/vehicles": {
+      "get": {
+        "operationId": "mnrVehicles",
+        "tags": [
+          "Metro-North"
+        ],
+        "summary": "Where the Metro-North trains are",
+        "description": "Positions from the realtime feed, with the trip each vehicle runs when known.",
+        "parameters": [
+          {
+            "name": "route",
+            "in": "query",
+            "required": false,
+            "description": "Only this route id (from `routes` in the station list). Case insensitive.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgencyVehiclesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown `route`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The Metro-North feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/preview/mnr": {
+      "get": {
+        "operationId": "previewMnr",
+        "tags": [
+          "Metro-North"
+        ],
+        "summary": "Metro-North departures as one line of text",
+        "description": "One line of `text/plain` for a launcher hint: the station, then the next trains. Errors are JSON. `max-age` in `Cache-Control` says how long a client may keep the line. The next departure to each destination.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "A station name: the best match is used.",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "station",
+            "in": "query",
+            "required": false,
+            "description": "Instead of `q`. A station id from /<agency>/stations. Case insensitive.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neither `q` nor `station`, or `q` too long.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown `station` or no match.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The Metro-North feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ferry/arrivals": {
+      "get": {
+        "operationId": "ferryArrivals",
+        "tags": [
+          "NYC Ferry"
+        ],
+        "summary": "Next departures at a NYC Ferry stop",
+        "description": "Every route and direction in one list, soonest first, like a departure board. Stops the feed does not predict are timed from the last predicted stop with the schedule.",
+        "parameters": [
+          {
+            "name": "stop",
+            "in": "query",
+            "required": true,
+            "description": "A stop id from /<agency>/stops. Case insensitive.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Departures to return. Default 10, at most 30 (larger values are lowered to 30).",
+            "schema": {
+              "default": 10,
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FerryArrivalsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing `stop` or bad `limit`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown `stop`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The NYC Ferry feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ferry/stops": {
+      "get": {
+        "operationId": "ferryStops",
+        "tags": [
+          "NYC Ferry"
+        ],
+        "summary": "NYC Ferry stops",
+        "description": "All stops by name, or those matching `q`, best first. Changes only with a deploy.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "Only stops matching this name, best first. Without it, all of them by name.",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "stops to return with `q`. Default 10, at most 25 (larger values are lowered to 25).",
+            "schema": {
+              "default": 10,
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FerryStopsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`q` too long or bad `limit`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ferry/alerts": {
+      "get": {
+        "operationId": "ferryAlerts",
+        "tags": [
+          "NYC Ferry"
+        ],
+        "summary": "NYC Ferry service alerts",
+        "description": "The alerts in effect now, optionally for one route or stop.",
+        "parameters": [
+          {
+            "name": "route",
+            "in": "query",
+            "required": false,
+            "description": "Only this route id (from `routes` in the station list). Case insensitive.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "stop",
+            "in": "query",
+            "required": false,
+            "description": "Only alerts naming this stop, or a whole route that stops there. A stop id from /<agency>/stops. Case insensitive.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FerryAlertsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown `stop`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The NYC Ferry alerts feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ferry/vehicles": {
+      "get": {
+        "operationId": "ferryVehicles",
+        "tags": [
+          "NYC Ferry"
+        ],
+        "summary": "Where the NYC Ferry ferries are",
+        "description": "Positions from the realtime feed, with the trip each vehicle runs when known.",
+        "parameters": [
+          {
+            "name": "route",
+            "in": "query",
+            "required": false,
+            "description": "Only this route id (from `routes` in the station list). Case insensitive.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgencyVehiclesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown `route`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The NYC Ferry feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/preview/ferry": {
+      "get": {
+        "operationId": "previewFerry",
+        "tags": [
+          "NYC Ferry"
+        ],
+        "summary": "NYC Ferry departures as one line of text",
+        "description": "One line of `text/plain` for a launcher hint: the station, then the next trains. Errors are JSON. `max-age` in `Cache-Control` says how long a client may keep the line. The next departure to each destination.",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "description": "A stop name: the best match is used.",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "stop",
+            "in": "query",
+            "required": false,
+            "description": "Instead of `q`. A stop id from /<agency>/stops. Case insensitive.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neither `q` nor `stop`, or `q` too long.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown `stop` or no match.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The NYC Ferry feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bus/alerts": {
+      "get": {
+        "operationId": "busAlerts",
+        "tags": [
+          "Bus"
+        ],
+        "summary": "Bus service alerts",
+        "description": "The alerts in effect now, optionally for one route. Routes show under their id.",
+        "parameters": [
+          {
+            "name": "route",
+            "in": "query",
+            "required": false,
+            "description": "Only alerts about this bus route id (`M15`, `B44+`). Case insensitive.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The alerts feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/citibike/station": {
+      "get": {
+        "operationId": "citibikeStation",
+        "tags": [
+          "Citi Bike"
+        ],
+        "summary": "Bikes and docks at a Citi Bike station",
+        "description": "Classic bikes, e-bikes and free docks at one station.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "description": "A station id from /citibike/nearby. Exact: ids are opaque strings.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CitibikeStationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing `id`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown station.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The Citi Bike feeds failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/citibike/nearby": {
+      "get": {
+        "operationId": "citibikeNearby",
+        "tags": [
+          "Citi Bike"
+        ],
+        "summary": "Citi Bike stations near a point",
+        "description": "The closest stations on the street, nearest first, with their bikes and docks.",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "description": "Latitude of the point, in decimal degrees.",
+            "schema": {
+              "minimum": -90,
+              "maximum": 90,
+              "type": "number"
+            }
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "required": true,
+            "description": "Longitude of the point, in decimal degrees.",
+            "schema": {
+              "minimum": -180,
+              "maximum": 180,
+              "type": "number"
+            }
+          },
+          {
+            "name": "n",
+            "in": "query",
+            "required": false,
+            "description": "Stations to return. Default 5, at most 25 (larger values are lowered to 25).",
+            "schema": {
+              "default": 5,
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CitibikeNearbyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or bad `lat` or `lon`, or bad `n`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The Citi Bike feeds failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health",
+        "tags": [
+          "Service"
+        ],
+        "summary": "Service health",
+        "description": "Which static subway schedule is deployed. No token, never cached.",
+        "security": [],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
                 }
               }
             }
@@ -251,6 +2342,1268 @@
           "time",
           "headsign",
           "tripId"
+        ],
+        "additionalProperties": false
+      },
+      "StopSearchResponse": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The search text, trimmed."
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Station id, for `stop` in the other routes. Stable: store it as a favorite."
+                },
+                "name": {
+                  "type": "string"
+                },
+                "lat": {
+                  "type": "number",
+                  "minimum": -90,
+                  "maximum": 90
+                },
+                "lon": {
+                  "type": "number",
+                  "minimum": -180,
+                  "maximum": 180
+                },
+                "stops": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "description": "The GTFS stops (parent stations) it is made of."
+                },
+                "routes": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Route"
+                  },
+                  "description": "Routes scheduled here, in MTA order. Diamond express variants are left out."
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "lat",
+                "lon",
+                "stops",
+                "routes"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Best match first."
+          }
+        },
+        "required": [
+          "query",
+          "results"
+        ],
+        "additionalProperties": false
+      },
+      "SubwayAlertsResponse": {
+        "type": "object",
+        "properties": {
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Epoch seconds."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The feed's header timestamp."
+          },
+          "alerts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Alert"
+            },
+            "description": "In effect now: current events first, then planned work; newest first."
+          },
+          "stop": {
+            "description": "The station `stop` resolved to, when given.",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "stops": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "GTFS stop ids the station is made of."
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "stops"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "updatedAt",
+          "alerts"
+        ],
+        "additionalProperties": false
+      },
+      "SubwayVehiclesResponse": {
+        "type": "object",
+        "properties": {
+          "route": {
+            "$ref": "#/components/schemas/Route"
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Epoch seconds."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The feed's header timestamp."
+          },
+          "vehicles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubwayTrain"
+            },
+            "description": "Northbound first, each direction in stop id order. The feeds carry no coordinates."
+          }
+        },
+        "required": [
+          "route",
+          "updatedAt",
+          "vehicles"
+        ],
+        "additionalProperties": false
+      },
+      "SubwayTrain": {
+        "type": "object",
+        "properties": {
+          "tripId": {
+            "type": "string"
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "N",
+                  "S"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "From the platform the train is at or heading to; null when unknown."
+          },
+          "headsign": {
+            "type": "string",
+            "description": "Name of the trip's last passenger stop in the feed, empty when unknown."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "INCOMING_AT",
+              "STOPPED_AT",
+              "IN_TRANSIT_TO"
+            ],
+            "description": "GTFS-realtime `current_status`, relative to `stop`."
+          },
+          "stop": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The stop the train is at or heading to; null when unknown."
+          },
+          "time": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Epoch seconds."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the train last reported."
+          }
+        },
+        "required": [
+          "tripId",
+          "direction",
+          "headsign",
+          "status",
+          "stop",
+          "time"
+        ],
+        "additionalProperties": false
+      },
+      "PathArrivalsResponse": {
+        "type": "object",
+        "properties": {
+          "station": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Epoch seconds."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Oldest update time among the station's trains in the feed; null when it lists none."
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PathRouteDirectionArrivals"
+            },
+            "description": "In PATH's route order, then toward New York before New Jersey."
+          }
+        },
+        "required": [
+          "station",
+          "updatedAt",
+          "groups"
+        ],
+        "additionalProperties": false
+      },
+      "PathRouteDirectionArrivals": {
+        "type": "object",
+        "properties": {
+          "route": {
+            "type": "string",
+            "description": "PATH route id (`HOB-WTC`, `JSQ-33-HOB`). A line color PATH hasn't used before shows under its color."
+          },
+          "name": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-F]{6}$"
+          },
+          "textColor": {
+            "type": "string",
+            "pattern": "^#[0-9A-F]{6}$"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "NY",
+              "NJ"
+            ],
+            "description": "`NY` toward Manhattan or `NJ`, as the feed labels the train at this station."
+          },
+          "headsign": {
+            "type": "string",
+            "description": "Headsign of the next train."
+          },
+          "arrivals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PathArrival"
+            }
+          }
+        },
+        "required": [
+          "route",
+          "name",
+          "color",
+          "textColor",
+          "direction",
+          "headsign",
+          "arrivals"
+        ],
+        "additionalProperties": false
+      },
+      "PathArrival": {
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "When the train reaches the station. A train at the platform stays listed for 2 minutes after it."
+          },
+          "headsign": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "time",
+          "headsign"
+        ],
+        "additionalProperties": false
+      },
+      "PathStationsResponse": {
+        "type": "object",
+        "properties": {
+          "stations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The feed's station code. Stable: store it as a favorite."
+                },
+                "name": {
+                  "type": "string"
+                },
+                "routes": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Route"
+                  },
+                  "description": "Routes with scheduled service, in PATH's order."
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "routes"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "stations"
+        ],
+        "additionalProperties": false
+      },
+      "RailArrivalsResponse": {
+        "type": "object",
+        "properties": {
+          "station": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Epoch seconds."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The feed's header timestamp."
+          },
+          "arrivals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgencyArrival"
+            },
+            "description": "Every route and direction in one list, soonest first, like a departure board."
+          }
+        },
+        "required": [
+          "station",
+          "updatedAt",
+          "arrivals"
+        ],
+        "additionalProperties": false
+      },
+      "FerryArrivalsResponse": {
+        "type": "object",
+        "properties": {
+          "stop": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Epoch seconds."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The feed's header timestamp."
+          },
+          "arrivals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgencyArrival"
+            },
+            "description": "Every route and direction in one list, soonest first, like a departure board."
+          }
+        },
+        "required": [
+          "stop",
+          "updatedAt",
+          "arrivals"
+        ],
+        "additionalProperties": false
+      },
+      "AgencyArrival": {
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "When it leaves this stop, or arrives where its trip ends."
+          },
+          "delay": {
+            "description": "Seconds behind schedule (negative: ahead), when the feed says.",
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "route": {
+            "type": "string",
+            "description": "Route id."
+          },
+          "name": {
+            "type": "string",
+            "description": "Route name."
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-F]{6}$"
+          },
+          "textColor": {
+            "type": "string",
+            "pattern": "^#[0-9A-F]{6}$"
+          },
+          "headsign": {
+            "type": "string",
+            "description": "Where the trip ends."
+          },
+          "tripId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "time",
+          "route",
+          "name",
+          "color",
+          "textColor",
+          "headsign",
+          "tripId"
+        ],
+        "additionalProperties": false
+      },
+      "RailStationsResponse": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "description": "The search text, trimmed, when there was one.",
+            "type": "string"
+          },
+          "stations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "GTFS stop id. Stable: store it as a favorite."
+                },
+                "name": {
+                  "type": "string"
+                },
+                "lat": {
+                  "type": "number",
+                  "minimum": -90,
+                  "maximum": 90
+                },
+                "lon": {
+                  "type": "number",
+                  "minimum": -180,
+                  "maximum": 180
+                },
+                "routes": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Route"
+                  },
+                  "description": "Routes with scheduled service here."
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "lat",
+                "lon",
+                "routes"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "stations"
+        ],
+        "additionalProperties": false
+      },
+      "FerryStopsResponse": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "description": "The search text, trimmed, when there was one.",
+            "type": "string"
+          },
+          "stops": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "GTFS stop id. Stable: store it as a favorite."
+                },
+                "name": {
+                  "type": "string"
+                },
+                "lat": {
+                  "type": "number",
+                  "minimum": -90,
+                  "maximum": 90
+                },
+                "lon": {
+                  "type": "number",
+                  "minimum": -180,
+                  "maximum": 180
+                },
+                "routes": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Route"
+                  },
+                  "description": "Routes with scheduled service here."
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "lat",
+                "lon",
+                "routes"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "stops"
+        ],
+        "additionalProperties": false
+      },
+      "RailAlertsResponse": {
+        "type": "object",
+        "properties": {
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Epoch seconds."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The feed's header timestamp."
+          },
+          "alerts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Alert"
+            },
+            "description": "In effect now: current events first, then planned work; newest first."
+          },
+          "station": {
+            "description": "The station, when `station` was given.",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "updatedAt",
+          "alerts"
+        ],
+        "additionalProperties": false
+      },
+      "FerryAlertsResponse": {
+        "type": "object",
+        "properties": {
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Epoch seconds."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The feed's header timestamp."
+          },
+          "alerts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Alert"
+            },
+            "description": "In effect now: current events first, then planned work; newest first."
+          },
+          "stop": {
+            "description": "The stop, when `stop` was given.",
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "updatedAt",
+          "alerts"
+        ],
+        "additionalProperties": false
+      },
+      "AgencyVehiclesResponse": {
+        "type": "object",
+        "properties": {
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Epoch seconds."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Oldest header timestamp among the feeds used."
+          },
+          "vehicles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgencyVehicle"
+            },
+            "description": "By route name. Positions older than 15 minutes are left out."
+          }
+        },
+        "required": [
+          "updatedAt",
+          "vehicles"
+        ],
+        "additionalProperties": false
+      },
+      "AgencyVehicle": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string",
+            "description": "The number riders and crews know it by (train number, boat name); empty when the feed has none."
+          },
+          "tripId": {
+            "type": "string"
+          },
+          "route": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Route"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "headsign": {
+            "type": "string",
+            "description": "Where its trip ends, empty when unknown."
+          },
+          "lat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "lon": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "INCOMING_AT",
+                  "STOPPED_AT",
+                  "IN_TRANSIT_TO"
+                ],
+                "description": "GTFS-realtime `current_status`, relative to `stop`."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Relative to `stop`; null when the feed doesn't say."
+          },
+          "stop": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "time": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Epoch seconds."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the position was measured."
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "tripId",
+          "route",
+          "headsign",
+          "lat",
+          "lon",
+          "status",
+          "stop",
+          "time"
+        ],
+        "additionalProperties": false
+      },
+      "AlertsResponse": {
+        "type": "object",
+        "properties": {
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Epoch seconds."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The feed's header timestamp."
+          },
+          "alerts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Alert"
+            },
+            "description": "In effect now: current events first, then planned work; newest first."
+          }
+        },
+        "required": [
+          "updatedAt",
+          "alerts"
+        ],
+        "additionalProperties": false
+      },
+      "Alert": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "planned": {
+            "type": "boolean",
+            "description": "Scheduled work rather than something that just happened."
+          },
+          "header": {
+            "type": "string",
+            "description": "One or two plain-text sentences. Subway texts name routes in brackets: `[A][C] trains`."
+          },
+          "description": {
+            "type": "string",
+            "description": "Longer plain text, empty when there is none."
+          },
+          "routes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Route"
+            }
+          },
+          "stops": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name"
+              ],
+              "additionalProperties": false
+            },
+            "description": "Stops the alert names, when the static data knows them."
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Epoch seconds."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Start of the period in effect now; null when open."
+          },
+          "end": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Epoch seconds."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "End of the period in effect now; null when open."
+          }
+        },
+        "required": [
+          "id",
+          "planned",
+          "header",
+          "description",
+          "routes",
+          "stops",
+          "start",
+          "end"
+        ],
+        "additionalProperties": false
+      },
+      "CitibikeStationResponse": {
+        "type": "object",
+        "properties": {
+          "updatedAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "`station_status`'s timestamp."
+          },
+          "station": {
+            "$ref": "#/components/schemas/BikeStation"
+          }
+        },
+        "required": [
+          "updatedAt",
+          "station"
+        ],
+        "additionalProperties": false
+      },
+      "CitibikeNearbyResponse": {
+        "type": "object",
+        "properties": {
+          "lat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "lon": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "updatedAt": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "`station_status`'s timestamp."
+          },
+          "stations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NearbyStation"
+            },
+            "description": "Nearest first. Only stations on the street."
+          }
+        },
+        "required": [
+          "lat",
+          "lon",
+          "updatedAt",
+          "stations"
+        ],
+        "additionalProperties": false
+      },
+      "BikeStation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Opaque (a UUID or a long digit string). Stable: store it as a favorite."
+          },
+          "name": {
+            "type": "string"
+          },
+          "lat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "lon": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Docks at the station, in any state."
+          },
+          "bikes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Classic (pedal) bikes ready to rent."
+          },
+          "ebikes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "E-bikes ready to rent."
+          },
+          "docks": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Free docks."
+          },
+          "renting": {
+            "type": "boolean",
+            "description": "False when the station isn't renting bikes."
+          },
+          "returning": {
+            "type": "boolean",
+            "description": "False when the station isn't accepting returns."
+          },
+          "reportedAt": {
+            "description": "When the station last reported. Absent if it never did.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "lat",
+          "lon",
+          "capacity",
+          "bikes",
+          "ebikes",
+          "docks",
+          "renting",
+          "returning"
+        ],
+        "additionalProperties": false
+      },
+      "NearbyStation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Opaque (a UUID or a long digit string). Stable: store it as a favorite."
+          },
+          "name": {
+            "type": "string"
+          },
+          "lat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "lon": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Docks at the station, in any state."
+          },
+          "bikes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Classic (pedal) bikes ready to rent."
+          },
+          "ebikes": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "E-bikes ready to rent."
+          },
+          "docks": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Free docks."
+          },
+          "renting": {
+            "type": "boolean",
+            "description": "False when the station isn't renting bikes."
+          },
+          "returning": {
+            "type": "boolean",
+            "description": "False when the station isn't accepting returns."
+          },
+          "reportedAt": {
+            "description": "When the station last reported. Absent if it never did.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "distance": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Meters from the requested point, as the crow flies."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "lat",
+          "lon",
+          "capacity",
+          "bikes",
+          "ebikes",
+          "docks",
+          "renting",
+          "returning",
+          "distance"
+        ],
+        "additionalProperties": false
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "staticFeedVersion": {
+            "type": "string",
+            "description": "feed_version of the deployed subway schedule."
+          },
+          "time": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "The server's clock."
+          }
+        },
+        "required": [
+          "ok",
+          "staticFeedVersion",
+          "time"
+        ],
+        "additionalProperties": false
+      },
+      "Route": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "description": "Rider-facing route name."
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-F]{6}$"
+          },
+          "textColor": {
+            "type": "string",
+            "pattern": "^#[0-9A-F]{6}$"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "color",
+          "textColor"
         ],
         "additionalProperties": false
       },

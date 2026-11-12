@@ -1,23 +1,7 @@
 import { num, oldestTimestamp, terminalName, VEHICLE_MAX_AGE_S, VEHICLE_STATUS, type FeedMessage } from '#src/gtfsrt.js'
 import { routeInfo } from './agencies.js'
-import type { AgencyData, AgencyRoute } from './types.js'
-
-export interface AgencyVehicle {
-  id: string
-  /** The number riders and crews know it by (train number, boat name), when the feed has one. */
-  label: string
-  tripId: string
-  route: AgencyRoute | null
-  /** Where its trip ends, "" when unknown. */
-  headsign: string
-  lat: number
-  lon: number
-  /** Relative to `stop`; null when the feed doesn't say. */
-  status: (typeof VEHICLE_STATUS)[number] | null
-  stop: { id: string; name: string } | null
-  /** When the position was measured (epoch seconds). */
-  time: number | null
-}
+import type { AgencyVehicle, AgencyVehiclesResponse } from './schemas.js'
+import type { AgencyData } from './types.js'
 
 /**
  * Where the agency's vehicles are. `feeds` are the trip updates and, when separate, the vehicle
@@ -28,7 +12,7 @@ export function computeAgencyVehicles(
   feeds: FeedMessage[],
   data: AgencyData,
   { now, route: onlyRoute }: { now: number; route?: string }
-): { updatedAt: number | null; vehicles: AgencyVehicle[] } {
+): AgencyVehiclesResponse {
   const trips = new Map<string, { route: string; headsign: string }>()
   for (const feed of feeds) {
     for (const entity of feed.entity) {

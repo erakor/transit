@@ -1,30 +1,6 @@
 import type { PathFeed } from './feed.js'
+import type { PathArrivalsResponse, PathRouteDirectionArrivals } from './schemas.js'
 import { routeForColors, routeOrder, type PathStation } from './stations.js'
-
-export interface PathArrival {
-  /** Epoch seconds. */
-  time: number
-  headsign: string
-}
-
-export interface PathRouteDirectionArrivals {
-  route: string
-  name: string
-  color: string
-  textColor: string
-  /** "NY" (toward Manhattan) or "NJ", as the feed labels the train at this station. */
-  direction: 'NY' | 'NJ'
-  /** Headsign of the next train. */
-  headsign: string
-  arrivals: PathArrival[]
-}
-
-export interface PathArrivalsResult {
-  station: { id: string; name: string }
-  /** Oldest update time among this station's trains in the feed (epoch seconds). */
-  updatedAt: number | null
-  groups: PathRouteDirectionArrivals[]
-}
 
 /**
  * How long a train stays listed after its time. The feed refreshes about once a minute and shows
@@ -41,7 +17,7 @@ export function computePathArrivals(
   station: PathStation,
   feed: PathFeed,
   { now, limit }: { now: number; limit: number }
-): PathArrivalsResult {
+): PathArrivalsResponse {
   const trains = feed.stations[station.id] ?? []
   const groups = new Map<string, PathRouteDirectionArrivals>()
   for (const t of trains) {

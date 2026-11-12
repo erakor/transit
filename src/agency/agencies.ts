@@ -3,6 +3,7 @@ import { LIRR_DATA } from '#src/data/lirr.generated.js'
 import { MNR_DATA } from '#src/data/mnr.generated.js'
 import { fallbackRoute } from '#src/gtfsrt.js'
 import { rankByName, tokenize, type NameEntry } from '#src/stops/search.js'
+import type { StopParam } from './schemas.js'
 import type { AgencyData, AgencyRoute, AgencyStop } from './types.js'
 
 /**
@@ -12,8 +13,7 @@ import type { AgencyData, AgencyRoute, AgencyStop } from './types.js'
 export interface Agency {
   id: string
   name: string
-  /** What a stop is called in the API: `/lirr/arrivals?station=`, `/ferry/arrivals?stop=`. */
-  stopParam: 'station' | 'stop'
+  stopParam: StopParam
   /** What runs here, for the preview's "no trains soon". */
   vehicleWord: string
   /** Feed names or URLs, see `feedUrl`. */

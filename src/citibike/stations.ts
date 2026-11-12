@@ -1,25 +1,5 @@
 import type { GbfsFeed, GbfsStationInformation, GbfsStationStatus } from './feeds.js'
-
-export interface BikeStation {
-  id: string
-  name: string
-  lat: number
-  lon: number
-  /** Docks at the station, in any state. */
-  capacity: number
-  /** Classic (pedal) bikes ready to rent. */
-  bikes: number
-  /** E-bikes ready to rent. */
-  ebikes: number
-  /** Free docks. */
-  docks: number
-  /** False when the station isn't renting bikes (or isn't on the street at all). */
-  renting: boolean
-  /** False when the station isn't accepting returns. */
-  returning: boolean
-  /** When the station last reported, epoch seconds. Absent if it never did. */
-  reportedAt?: number
-}
+import type { BikeStation, NearbyStation } from './schemas.js'
 
 export interface BikeStations {
   /** `station_status`'s timestamp, epoch seconds. */
@@ -80,10 +60,6 @@ export function distanceMeters(lat1: number, lon1: number, lat2: number, lon2: n
     Math.sin(rad(lat2 - lat1) / 2) ** 2 +
     Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(rad(lon2 - lon1) / 2) ** 2
   return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a))
-}
-
-export type NearbyStation = BikeStation & {
-  /** Meters from the requested point, as the crow flies. */ distance: number
 }
 
 /** The `n` stations closest to a point, nearest first (ties by id, so the order is stable). */

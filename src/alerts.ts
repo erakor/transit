@@ -1,25 +1,5 @@
-import { fallbackRoute, num, type FeedMessage, type RouteDisplay } from './gtfsrt.js'
-
-export interface Alert {
-  id: string
-  /** Scheduled work rather than something that just happened. */
-  planned: boolean
-  /** One or two plain-text sentences. Subway texts name routes in brackets: "[A][C] trains". */
-  header: string
-  /** Longer plain text, "" when there is none. */
-  description: string
-  routes: RouteDisplay[]
-  stops: { id: string; name: string }[]
-  /** Start of the period in effect now (epoch seconds), null when open. */
-  start: number | null
-  end: number | null
-}
-
-export interface AlertsResult {
-  /** The feed's header timestamp (epoch seconds). */
-  updatedAt: number | null
-  alerts: Alert[]
-}
+import { fallbackRoute, num, type FeedMessage } from './gtfsrt.js'
+import type { Alert, AlertsResult, RouteDisplay } from './schema.js'
 
 type Entity = { routeId?: string | null; stopId?: string | null; trip?: { routeId?: string | null } | null }
 
