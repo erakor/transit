@@ -1,3 +1,3 @@
-import { healthHandler } from "#src/routes/health.js";
+import { healthHandler } from '#src/routes/health.js'
 
-export const GET = healthHandler();
+export const GET = healthHandler()

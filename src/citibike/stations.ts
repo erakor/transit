@@ -1,37 +1,37 @@
-import type { GbfsFeed, GbfsStationInformation, GbfsStationStatus } from "./feeds.js";
+import type { GbfsFeed, GbfsStationInformation, GbfsStationStatus } from './feeds.js'
 
 export interface BikeStation {
-  id: string;
-  name: string;
-  lat: number;
-  lon: number;
+  id: string
+  name: string
+  lat: number
+  lon: number
   /** Docks at the station, in any state. */
-  capacity: number;
+  capacity: number
   /** Classic (pedal) bikes ready to rent. */
-  bikes: number;
+  bikes: number
   /** E-bikes ready to rent. */
-  ebikes: number;
+  ebikes: number
   /** Free docks. */
-  docks: number;
+  docks: number
   /** False when the station isn't renting bikes (or isn't on the street at all). */
-  renting: boolean;
+  renting: boolean
   /** False when the station isn't accepting returns. */
-  returning: boolean;
+  returning: boolean
   /** When the station last reported, epoch seconds. Absent if it never did. */
-  reportedAt?: number;
+  reportedAt?: number
 }
 
 export interface BikeStations {
   /** `station_status`'s timestamp, epoch seconds. */
-  updatedAt: number;
+  updatedAt: number
   /** Stations on the street, by id (exact: ids are opaque). */
-  byId: Map<string, BikeStation>;
+  byId: Map<string, BikeStation>
 }
 
-const count = (n: unknown): number => (typeof n === "number" && Number.isFinite(n) && n > 0 ? Math.floor(n) : 0);
+const count = (n: unknown): number => (typeof n === 'number' && Number.isFinite(n) && n > 0 ? Math.floor(n) : 0)
 /** GBFS 2.x booleans are 0/1 in Citi Bike's feed and true/false in the spec; anything else is `unknown`. */
 const flag = (v: unknown, unknown: boolean): boolean =>
-  v === 1 || v === true ? true : v === 0 || v === false ? false : unknown;
+  v === 1 || v === true ? true : v === 0 || v === false ? false : unknown
 
 /**
  * Joins the two GBFS station feeds. Stations that aren't installed (planned, or removed for the
@@ -39,19 +39,19 @@ const flag = (v: unknown, unknown: boolean): boolean =>
  */
 export function joinStations(
   information: GbfsFeed<GbfsStationInformation>,
-  status: GbfsFeed<GbfsStationStatus>,
+  status: GbfsFeed<GbfsStationStatus>
 ): BikeStations {
-  const statusById = new Map(status.data.stations.map((s) => [s.station_id, s]));
-  const byId = new Map<string, BikeStation>();
+  const statusById = new Map(status.data.stations.map(s => [s.station_id, s]))
+  const byId = new Map<string, BikeStation>()
   for (const info of information.data.stations) {
-    const st = statusById.get(info.station_id);
+    const st = statusById.get(info.station_id)
     // A status without the flag is taken as installed: dropping every station would be worse.
-    if (!st || !flag(st.is_installed, true)) continue;
-    if (typeof info.name !== "string" || typeof info.lat !== "number" || typeof info.lon !== "number") continue;
+    if (!st || !flag(st.is_installed, true)) continue
+    if (typeof info.name !== 'string' || typeof info.lat !== 'number' || typeof info.lon !== 'number') continue
     // num_bikes_available counts e-bikes too. (vehicle_types_available doesn't always add up
     // to it, so the split comes from num_ebikes_available.)
-    const total = count(st.num_bikes_available);
-    const ebikes = Math.min(count(st.num_ebikes_available), total);
+    const total = count(st.num_bikes_available)
+    const ebikes = Math.min(count(st.num_ebikes_available), total)
     const station: BikeStation = {
       id: info.station_id,
       name: info.name,
@@ -63,42 +63,42 @@ export function joinStations(
       docks: count(st.num_docks_available),
       renting: flag(st.is_renting, false),
       returning: flag(st.is_returning, false),
-    };
+    }
     // Stations that never reported carry a placeholder near zero.
-    if (count(st.last_reported) > 1_000_000_000) station.reportedAt = count(st.last_reported);
-    byId.set(station.id, station);
+    if (count(st.last_reported) > 1_000_000_000) station.reportedAt = count(st.last_reported)
+    byId.set(station.id, station)
   }
-  return { updatedAt: status.last_updated, byId };
+  return { updatedAt: status.last_updated, byId }
 }
 
-const EARTH_RADIUS_M = 6_371_000;
-const rad = (deg: number): number => (deg * Math.PI) / 180;
+const EARTH_RADIUS_M = 6_371_000
+const rad = (deg: number): number => (deg * Math.PI) / 180
 
 /** Great-circle distance in meters. */
 export function distanceMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const a =
     Math.sin(rad(lat2 - lat1) / 2) ** 2 +
-    Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(rad(lon2 - lon1) / 2) ** 2;
-  return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a));
+    Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(rad(lon2 - lon1) / 2) ** 2
+  return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a))
 }
 
 export type NearbyStation = BikeStation & {
-  /** Meters from the requested point, as the crow flies. */ distance: number;
-};
+  /** Meters from the requested point, as the crow flies. */ distance: number
+}
 
 /** The `n` stations closest to a point, nearest first (ties by id, so the order is stable). */
 export function nearestStations(stations: Iterable<BikeStation>, lat: number, lon: number, n: number): NearbyStation[] {
-  if (n < 1) return [];
+  if (n < 1) return []
   // Keeps the best n seen so far, sorted, instead of sorting every station.
-  const best: [number, BikeStation][] = [];
-  const before = (d: number, s: BikeStation, [bd, b]: [number, BikeStation]) => d < bd || (d === bd && s.id < b.id);
+  const best: [number, BikeStation][] = []
+  const before = (d: number, s: BikeStation, [bd, b]: [number, BikeStation]) => d < bd || (d === bd && s.id < b.id)
   for (const s of stations) {
-    const d = Math.round(distanceMeters(lat, lon, s.lat, s.lon));
-    if (best.length === n && !before(d, s, best[n - 1]!)) continue;
-    let i = best.length;
-    while (i > 0 && before(d, s, best[i - 1]!)) i--;
-    best.splice(i, 0, [d, s]);
-    if (best.length > n) best.pop();
+    const d = Math.round(distanceMeters(lat, lon, s.lat, s.lon))
+    if (best.length === n && !before(d, s, best[n - 1]!)) continue
+    let i = best.length
+    while (i > 0 && before(d, s, best[i - 1]!)) i--
+    best.splice(i, 0, [d, s])
+    if (best.length > n) best.pop()
   }
-  return best.map(([distance, s]) => ({ ...s, distance }));
+  return best.map(([distance, s]) => ({ ...s, distance }))
 }

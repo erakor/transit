@@ -51,11 +51,11 @@ export default defineConfig([
   },
   restrict(['**/*.ts'], ALIAS),
   restrict(['src/**/*.ts'], ALIAS, WITHIN_SRC),
-  ...PROVIDERS.map((provider) =>
+  ...PROVIDERS.map(provider =>
     restrict([`src/${provider}/**/*.ts`], ALIAS, WITHIN_SRC, {
-      regex: `^#src/(${PROVIDERS.filter((p) => p !== provider).join('|')})/`,
+      regex: `^#src/(${PROVIDERS.filter(p => p !== provider).join('|')})/`,
       message: 'Provider folders import from shared modules (#src/gtfsrt.js), not from each other.',
-    }),
+    })
   ),
   restrict(['src/routes/{agency,citibike,path}.ts'], ALIAS, WITHIN_SRC, NO_SUBWAY_INDEX),
   restrict(['src/routes/{arrivals,alerts,vehicles,search,preview}.ts'], ALIAS, WITHIN_SRC, NO_AGENCIES),

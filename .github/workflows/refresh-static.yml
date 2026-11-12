@@ -4,7 +4,7 @@ name: Refresh static GTFS
 # NYC Ferry, and commits them when one changed. The push to main makes Vercel deploy the new data (and purge the CDN cache).
 on:
   schedule:
-    - cron: "23 9 * * *"
+    - cron: '23 9 * * *'
   workflow_dispatch:
 
 permissions:

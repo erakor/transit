@@ -1,3 +1,3 @@
-import { pathArrivalsHandler } from "#src/routes/path.js";
+import { pathArrivalsHandler } from '#src/routes/path.js'
 
-export const GET = pathArrivalsHandler();
+export const GET = pathArrivalsHandler()

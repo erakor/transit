@@ -5,8 +5,8 @@ name: Live smoke test
 # it also calls the deployment: 401 without the token, 200 with it, CDN hit on a repeat.
 on:
   schedule:
-    - cron: "17 13 * * *" # morning rush in New York
-    - cron: "47 22 * * *" # evening
+    - cron: '17 13 * * *' # morning rush in New York
+    - cron: '47 22 * * *' # evening
   workflow_dispatch:
 
 jobs:
