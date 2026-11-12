@@ -1,4 +1,6 @@
-import { authenticated, errorResponse, intParam, json, LIVE_CACHE } from "#src/http.js";
+import { authenticated, errorResponse, json, LIVE_CACHE } from "#src/http.js";
+import { parseQuery } from "#src/schema.js";
+import { ArrivalsQuery, type ArrivalsResponse } from "#src/subway/schemas.js";
 import { stationIndex, type ResolvedStop, type StationIndex } from "#src/stops/stations.js";
 import { computeArrivals, type ArrivalsResult } from "#src/subway/arrivals.js";
 import { fetchFeed, type Fetcher } from "#src/gtfsrt.js";
@@ -16,10 +18,9 @@ export interface ArrivalsDeps {
 /** GET /subway/arrivals?stop=<station, stop or platform id>&limit=<per route and direction, default 3, max 10> */
 export function arrivalsHandler({ fetcher, now = () => Date.now(), index = stationIndex }: ArrivalsDeps = {}) {
   return authenticated(async (_request, url) => {
-    const stopParam = url.searchParams.get("stop")?.trim();
-    if (!stopParam) return errorResponse(400, "stop is required");
-    const limit = intParam(url, "limit", 3, 10);
-    if (typeof limit !== "number") return errorResponse(400, limit.error);
+    const parsed = parseQuery(ArrivalsQuery, url);
+    if (!parsed.ok) return parsed.response;
+    const { stop: stopParam, limit } = parsed.query;
 
     const idx = index();
     const stop = idx.resolve(stopParam);
@@ -29,10 +30,8 @@ export function arrivalsHandler({ fetcher, now = () => Date.now(), index = stati
     const loaded = await loadArrivals(stop, idx, { fetcher, nowMs, limit });
     if (!loaded) return errorResponse(502, "MTA feeds unavailable");
     const { result, failed } = loaded;
-    return json(
-      failed.length ? { ...result, unavailableFeeds: failed } : result,
-      { cache: failed.length ? PARTIAL_CACHE : LIVE_CACHE },
-    );
+    const body: ArrivalsResponse = failed.length ? { ...result, unavailableFeeds: failed } : result;
+    return json(body, { cache: failed.length ? PARTIAL_CACHE : LIVE_CACHE });
   });
 }
 

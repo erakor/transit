@@ -9,6 +9,8 @@ import { subwayVehiclesHandler } from "#src/routes/vehicles.js";
 import { pathArrivalsHandler, pathPreviewHandler, pathStationsHandler } from "#src/routes/path.js";
 import { LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from "#src/http.js";
 import { SUBWAY_DATA } from "#src/data/subway.generated.js";
+import { ErrorBody } from "#src/schema.js";
+import { ArrivalsResponse } from "#src/subway/schemas.js";
 import { auth, fixtureFetcher, FIXTURE_NOW_MS, get, PATH_FIXTURE_NOW_MS, TOKEN, useRouteTestSetup } from "./helpers.js";
 
 const TIMES_SQ = SUBWAY_DATA.stops["127"]!.station;
@@ -81,14 +83,11 @@ describe("/subway/arrivals", () => {
     expect(res.headers.get("cache-control")).toBe(LIVE_CACHE);
     expect(res.headers.get("cache-control")).toBe("public, s-maxage=20, stale-while-revalidate=40");
     expect(fetcher.calls.sort()).toEqual(["gtfs", "gtfs-ace", "gtfs-nqrw"]);
-    const body = await res.json();
+    const body = ArrivalsResponse.parse(await res.json());
     expect(body.stop).toMatchObject({ id: TIMES_SQ, name: "Times Sq-42 St" });
     expect(body.updatedAt).toBeTypeOf("number");
     expect(body.groups.length).toBeGreaterThan(4);
-    for (const g of body.groups) {
-      expect(Object.keys(g).sort()).toEqual(["arrivals", "color", "direction", "headsign", "name", "route", "textColor"]);
-      expect(g.arrivals.length).toBeLessThanOrEqual(2);
-    }
+    for (const g of body.groups) expect(g.arrivals.length).toBeLessThanOrEqual(2);
     expect(body.unavailableFeeds).toBeUndefined();
   });
 
@@ -114,10 +113,10 @@ describe("/subway/arrivals", () => {
     const res = await GET(get(`/subway/arrivals?stop=${encodeURIComponent(TIMES_SQ)}`, auth));
     expect(res.status).toBe(200);
     expect(res.headers.get("cache-control")).toBe("public, s-maxage=5");
-    const body = await res.json();
+    const body = ArrivalsResponse.parse(await res.json());
     expect(body.unavailableFeeds).toEqual(["gtfs-ace"]);
-    expect(body.groups.some((g: { route: string }) => g.route === "A")).toBe(false);
-    expect(body.groups.some((g: { route: string }) => g.route === "1")).toBe(true);
+    expect(body.groups.some((g) => g.route === "A")).toBe(false);
+    expect(body.groups.some((g) => g.route === "1")).toBe(true);
   });
 
   it("is 502 when every feed fails", async () => {
@@ -125,25 +124,34 @@ describe("/subway/arrivals", () => {
     const res = await GET(get("/subway/arrivals?stop=L08", auth));
     expect(res.status).toBe(502);
     expect(res.headers.get("cache-control")).toBe("no-store");
+    ErrorBody.parse(await res.json());
   });
 
   it.each([
     ["", 400, "stop is required"],
     ["?stop=", 400, "stop is required"],
+    ["?stop=%20", 400, "stop is required"],
     ["?stop=ZZZ", 404, "unknown stop ZZZ"],
     ["?stop=L08&limit=0", 400, "limit must be a positive integer"],
     ["?stop=L08&limit=abc", 400, "limit must be a positive integer"],
+    ["?stop=L08&limit=1.5", 400, "limit must be a positive integer"],
   ])("rejects %s with %i", async (query, status, error) => {
     const res = await arrivals().GET(get(`/subway/arrivals${query}`, auth));
     expect(res.status).toBe(status);
     expect(res.headers.get("cache-control")).toBe("no-store");
-    expect(await res.json()).toEqual({ error });
+    expect(ErrorBody.parse(await res.json())).toEqual({ error });
   });
 
   it("caps limit at 10", async () => {
     const res = await arrivals().GET(get(`/subway/arrivals?stop=${encodeURIComponent(TIMES_SQ)}&limit=99`, auth));
-    const body = await res.json();
-    expect(Math.max(...body.groups.map((g: { arrivals: unknown[] }) => g.arrivals.length))).toBeLessThanOrEqual(10);
+    const body = ArrivalsResponse.parse(await res.json());
+    expect(Math.max(...body.groups.map((g) => g.arrivals.length))).toBe(10);
+  });
+
+  it("treats an empty limit as absent", async () => {
+    const res = await arrivals().GET(get(`/subway/arrivals?stop=${encodeURIComponent(TIMES_SQ)}&limit=`, auth));
+    const body = ArrivalsResponse.parse(await res.json());
+    expect(Math.max(...body.groups.map((g) => g.arrivals.length))).toBe(3);
   });
 });
 

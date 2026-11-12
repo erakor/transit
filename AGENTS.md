@@ -20,7 +20,8 @@ pnpm smoke                           # live feed checks, Citi Bike included (+ d
 
 There is no lint step and no build step: Vercel compiles `api/**/*.ts` itself. To check what
 Vercel will produce, `pnpm dlx vercel build` works offline with a stub `.vercel/project.json`
-(`{"projectId":"x","orgId":"y","settings":{"framework":null}}`); `.vercel/` is gitignored.
+(`{"projectId":"x","orgId":"y","settings":{"framework":null}}`); `.vercel/` is gitignored. Delete
+`.vercel/output` afterwards: vitest picks up the test files copied into it.
 
 Node's built-in `fetch` ignores `HTTPS_PROXY`. Behind a proxy (such as a cloud sandbox), run the
 scripts that hit the network with `NODE_USE_ENV_PROXY=1` (Node 22.21 or later, including Node 26).
@@ -165,6 +166,13 @@ Ids, which clients store as favorites, so keep them stable:
   HTML), with `PREVIEW_CACHE`, whose `max-age` is how long the client keeps the line. Their
   errors stay JSON and `no-store`. The line's format is built by a pure function with its own
   tests (`src/subway/preview.ts`, and `src/preview.ts` for PATH and the agencies).
+- Request and response schemas (zod) are being added route by route; `/subway/arrivals` has them
+  (`src/subway/schemas.ts`, shared pieces in `src/schema.ts`). For such a route the schema is the
+  definition: its types are `z.infer`red from it, it reads the query (`parseQuery()`, which keeps
+  the error messages clients see), and the tests check real responses against it. Response
+  objects are `z.strictObject`, so a field added in code but not in the schema fails the tests.
+  Response schemas run in tests only, never per request. Pure modules import only their types
+  (`import type`), so they don't load zod. Descriptions go in `.meta()`: they become the API docs.
 - ESM with `NodeNext` resolution: imports end in `.js` even though the files are `.ts`. Import
   anything in `src/` from another folder through the `#src/*` alias (`#src/http.js`), and use
   `./` within a folder. The alias is Node's own `imports` field in `package.json`, not tsconfig

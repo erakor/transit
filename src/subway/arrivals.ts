@@ -2,33 +2,11 @@ import type { RouteInfo, SubwayData } from "#src/static/types.js";
 import type { ResolvedStop, StationIndex } from "#src/stops/stations.js";
 import { num, oldestTimestamp, terminalName, type FeedMessage } from "#src/gtfsrt.js";
 
-export interface Arrival {
-  /** Epoch seconds. */
-  time: number;
-  /** Name of the trip's last passenger stop in the feed. */
-  headsign: string;
-  tripId: string;
-}
+import type { ArrivalsResult, RouteDirectionArrivals } from "./schemas.js";
 
-export interface RouteDirectionArrivals {
-  route: string;
-  /** Rider-facing route name ("S" for shuttles). */
-  name: string;
-  color: string;
-  textColor: string;
-  /** "N" or "S": the MTA's northbound/southbound platform. */
-  direction: "N" | "S";
-  /** Headsign of the next train. */
-  headsign: string;
-  arrivals: Arrival[];
-}
-
-export interface ArrivalsResult {
-  stop: { id: string; name: string; stops: string[] };
-  /** Oldest header timestamp among the feeds used (epoch seconds). */
-  updatedAt: number | null;
-  groups: RouteDirectionArrivals[];
-}
+// The result types are inferred from the schemas (the fields are documented there). A type-only
+// import, so this pure module, the preview and the smoke test don't load zod.
+export type { Arrival, ArrivalsResult, RouteDirectionArrivals } from "./schemas.js";
 
 const FALLBACK_ROUTE = (id: string): RouteInfo => ({
   id,
