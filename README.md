@@ -5,10 +5,10 @@ small, pre-joined JSON to apps and servers (the alfresco launcher and other pers
 so clients never touch protobuf or GTFS.
 
 It covers the MTA subway (arrivals, alerts, train positions), PATH, the LIRR, Metro-North and
-NYC Ferry, plus MTA bus alerts and Citi Bike stations. Bus arrivals and NJ Transit will be added later as
-their own route groups with the same conventions.
+NYC Ferry, MTA buses (arrivals by stop code, alerts) and Citi Bike stations. NJ Transit will be
+added later as its own route group with the same conventions.
 
-Runs on Vercel, one serverless function per route, TypeScript.
+Runs on Vercel, TypeScript: ten serverless functions, most serving a provider's routes together.
 
 ## Endpoints
 
@@ -193,8 +193,8 @@ The service alerts in effect right now: incidents first, then planned work, newe
 
 `/lirr/alerts`, `/mnr/alerts` and `/ferry/alerts` answer the same shape, filtered with `route`
 and `station` (`stop` for the ferry). `/bus/alerts?route=<id>` (`Q29`, `S79+`, `SIM10`) does too,
-but there is no static bus data yet: routes carry their id as `name` and a gray color, and no
-stops are named.
+with route names and colors from the static bus data, but names no stops: there is no bus stop
+data.
 
 ### `GET /subway/vehicles?route=<id>`
 
@@ -294,6 +294,51 @@ Trips ending at the station are left out.
 Penn Station · Ronkonkoma 1 · Huntington 9 · Port Washington 16 · Babylon 32 · Long Beach 42 min
 ```
 
+### `GET /bus/arrivals?stop=<code>&limit=<n>`
+
+The buses on their way to one stop, from MTA Bus Time, every route in one list. `stop` is the
+six-digit code on the bus stop sign (`401687`; `MTA_401687`, as Bus Time writes it, works too).
+There is no bus stop search yet. `limit` defaults to 10, max 30.
+
+```json
+{
+  "stop": { "id": "401687", "name": "1 AV/E 14 ST" },
+  "updatedAt": 1794334736,
+  "arrivals": [
+    {
+      "time": 1794334870,
+      "route": "M15+",
+      "name": "M15-SBS",
+      "color": "#B933AD",
+      "textColor": "#FFFFFF",
+      "headsign": "SBS EAST HARLEM 126 ST via 1 AV",
+      "distance": "approaching",
+      "stopsAway": 1,
+      "meters": 412,
+      "atTerminal": false,
+      "vehicle": "5791",
+      "tripId": "MTA NYCT_MQ_D6-Weekday-SDon-077800_M15+_731"
+    }
+  ]
+}
+```
+
+- Predicted buses come first, soonest first. `time` is null when Bus Time has no prediction,
+  usually for a bus still at its terminal (`atTerminal`); those follow, nearest first.
+- `distance` is Bus Time's text for riders; `stopsAway` and `meters` are null when unknown.
+- `route` is the GTFS route id, as in `/bus/alerts`; `name` is what the bus shows.
+- `stop.name` comes from Bus Time and is null when no bus is on its way.
+- Errors: 400 (missing or malformed `stop`), 404 (Bus Time knows no such stop), 401, 502 (Bus
+  Time failed), 500 (`BUSTIME_KEY` not set on the server).
+
+### `GET /preview/bus?stop=<code>`
+
+One line like the other previews: the next bus of each route, soonest first.
+
+```
+1 AV/E 14 ST · M15-SBS 2 · M15 5 min
+```
+
 ### `GET /citibike/nearby?lat=<lat>&lon=<lon>&n=<n>`
 
 The Citi Bike stations closest to a point, nearest first. `n` defaults to 5, max 25.
@@ -369,7 +414,8 @@ update clients, remove the old one. If it's unset, authenticated routes answer 5
 | `/path/arrivals` | `public, s-maxage=20, stale-while-revalidate=40` |
 | `/preview/path` | `public, max-age=20, s-maxage=20, stale-while-revalidate=40` |
 | `/subway/vehicles`, `/<agency>/arrivals`, `/<agency>/vehicles` | `public, s-maxage=20, stale-while-revalidate=40` |
-| `/preview/lirr`, `/preview/mnr`, `/preview/ferry` | `public, max-age=20, s-maxage=20, stale-while-revalidate=40` |
+| `/preview/lirr`, `/preview/mnr`, `/preview/ferry`, `/preview/bus` | `public, max-age=20, s-maxage=20, stale-while-revalidate=40` |
+| `/bus/arrivals` | `public, s-maxage=20, stale-while-revalidate=40` |
 | `/subway/alerts`, `/<agency>/alerts`, `/bus/alerts` | `public, s-maxage=60, stale-while-revalidate=120` |
 | `/citibike/station`, `/citibike/nearby` | `public, s-maxage=20, stale-while-revalidate=40` |
 | `/stops/search`, `/path/stations`, `/<agency>/stations` | `public, s-maxage=3600, stale-while-revalidate=86400` (static data only changes with a deploy, and Vercel purges the CDN cache on each production deploy) |
@@ -413,6 +459,11 @@ tells whether the CDN served it (`HIT`, `STALE`) or not (`MISS`).
   its next stop.
 - The LIRR, Metro-North and ferry data files (`src/data/<agency>.generated.ts`) are built and
   refreshed like the subway's, by the same script and workflow.
+- **Buses**: MTA Bus Time's SIRI StopMonitoring API (`bustime.mta.info`), one request per stop,
+  which needs a free API key (`BUSTIME_KEY`, see Deploying). Its answer names the stop and each
+  bus's destination, so the only static bus data is `src/data/bus.generated.ts`: route names and
+  colors from the six static bus GTFS feeds (one per borough and MTA Bus Company), built and
+  refreshed like the others. Each function instance keeps a stop's answer for 15 s.
 
 ## Development
 
@@ -421,9 +472,9 @@ pnpm install
 pnpm test             # unit tests (recorded feeds in test/fixtures)
 pnpm check            # every check CI runs: format, lint, types, unused code (knip), tests
 pnpm format           # Prettier; a pre-commit hook also formats and lints staged files
-pnpm build:static     # regenerate src/data/*.generated.ts (subway, lirr, mnr, ferry)
+pnpm build:static     # regenerate src/data/*.generated.ts (subway, lirr, mnr, ferry, bus)
 pnpm build:openapi    # regenerate public/openapi.json after changing a route's schemas
-pnpm record-fixtures  # re-record test/fixtures from the live feeds (or just `transit` / `citibike`)
+pnpm record-fixtures  # re-record test/fixtures from the live feeds (or just `transit` / `citibike` / `bus`)
 pnpm smoke            # check the live feeds (see below)
 ```
 
@@ -431,13 +482,14 @@ Layout:
 
 ```
 api/                 Vercel functions (thin: they export GET from src/routes); api/agency.ts
-                     serves every LIRR, Metro-North, ferry and bus route, api/citibike.ts both
-                     Citi Bike routes
-src/routes/          handlers: arrivals, search, preview, alerts, vehicles, path, agency, health
+                     serves every LIRR, Metro-North and ferry route, api/bus.ts, api/path.ts and
+                     api/citibike.ts each their provider's routes
+src/routes/          handlers: arrivals, search, preview, alerts, vehicles, path, agency, bus, health
 src/subway/          feed list, arrivals computation, train positions, preview line
 src/citibike/        Citi Bike: GBFS fetching, station join and nearest-station search
 src/path/            PATH stations and routes, feed fetching and parsing, arrivals, preview line
 src/agency/          LIRR, Metro-North and NYC Ferry: registry, departures, vehicle positions
+src/bus/             buses: Bus Time (SIRI) fetching and parsing, arrivals
 src/gtfsrt.ts        GTFS-realtime plumbing shared by every provider: fetch, decode, memo, helpers
 src/alerts.ts        alerts in effect, from any GTFS-realtime alerts feed
 src/preview.ts       the "next departure per destination" line shared by PATH and the agencies
@@ -459,9 +511,12 @@ To run locally against Vercel's runtime, use `vercel dev` with `TRANSIT_TOKEN` i
 1. Import the repo in Vercel (framework preset "Other", no build command needed).
 2. Set `TRANSIT_TOKEN` in Project Settings, Environment Variables (Production and Preview).
    Generate one with `openssl rand -base64 32`.
-3. Deploy. Optionally add the repository secrets `TRANSIT_BASE_URL` (such as
+3. Set `BUSTIME_KEY` the same way, to an MTA Bus Time API key (free, requested at
+   `https://register.developer.obanyc.com/`). Without it `/bus/arrivals` and `/preview/bus` answer
+   500; everything else works.
+4. Deploy. Optionally add the repository secrets `TRANSIT_BASE_URL` (such as
    `https://transit-xyz.vercel.app`) and `TRANSIT_TOKEN` so the scheduled smoke test also checks
-   the deployment.
+   the deployment, and `BUSTIME_KEY` so it checks Bus Time too.
 
 ### Verifying a deployment
 
@@ -487,6 +542,7 @@ curl -i -H "X-Transit-Token: $TOKEN" "$BASE/lirr/arrivals?station=102"  # 200, J
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/mnr/stations?q=rye"         # 200
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/preview/ferry?q=wall"       # 200, one line of text
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/bus/alerts?route=Q29"       # 200
+curl -i -H "X-Transit-Token: $TOKEN" "$BASE/bus/arrivals?stop=401687"  # 200 (500 without BUSTIME_KEY)
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/citibike/nearby?lat=40.7559&lon=-73.9871"  # 200
 ```
 
@@ -508,6 +564,8 @@ Or run `TRANSIT_BASE_URL=$BASE TRANSIT_TOKEN=$TOKEN pnpm smoke`, which does the 
   recorded feeds.
 - `test/alerts.test.ts`: alerts in effect on hand-built and recorded feeds, `/subway/alerts`
   and `/subway/vehicles`.
+- `test/bus.test.ts`: the static bus build, Bus Time parsing (a fixture answer and hand-built
+  ones), arrivals ordering, and the bus routes, key handling included.
 - `test/citibike.test.ts`: the station join and nearest-station search on hand-built feeds and
   on recorded GBFS feeds (trimmed to the stations around Times Sq), and both routes.
 - `.github/workflows/smoke.yml`: twice a day against the live feeds. It fails on stale feeds,
@@ -515,19 +573,23 @@ Or run `TRANSIT_BASE_URL=$BASE TRANSIT_TOKEN=$TOKEN pnpm smoke`, which does the 
   no arrivals; for PATH, on entries the parser can't read, unknown stations or line colors,
   stale data, or Journal Square with no trains; for the LIRR, Metro-North and the ferry, on
   stale feeds, ids missing from the static data, a main stop with no departures or no vehicle
-  positions; for Citi Bike, on feeds that are stale or no longer join; and on alert feeds that stop decoding.
+  positions; for Citi Bike, on feeds that are stale or no longer join; for buses (with
+  `BUSTIME_KEY`), on a changed or stale Bus Time answer, unknown routes or no buses at 1 Av/E 14
+  St; and on alert feeds that stop decoding.
 
 ## Roadmap
 
 Not built yet. Each new source follows the subway's conventions: token in a header,
 `Cache-Control: s-maxage` for the CDN, times as epoch seconds, names joined in,
 fixture-based parsing tests and a scheduled smoke test against the live feed.
-In code, that means one function per route under `api/<provider>/`, a handler in `src/routes/`
+In code, that means one function for the provider, `api/<provider>.ts` (Vercel's Hobby plan
+allows 12 and there are 10), with its routes dispatched by `byOp()`, handlers in `src/routes/`
 wrapped in `authenticated(...)`, and the `LIVE_CACHE` or `STATIC_CACHE` headers from `src/http.ts`.
 
-- **MTA bus**: next buses per stop (alerts are already served). Source: MTA Bus Time's
-  GTFS-realtime feeds, which need a free API key (stored as a Vercel environment variable, never
-  committed), plus the static bus GTFS for stop and route names.
+- **Bus stops**: search by name and nearby stops for `/bus/arrivals`, which today takes the code
+  on the stop's sign. Needs the static bus stops (about 13,500) in the bus function, or Bus
+  Time's stops API.
+- **Bus positions**: `/bus/vehicles?route=`, from Bus Time's vehicle monitoring.
 - **NJ Transit**: rail and bus arrivals. Source: NJ Transit's GTFS-realtime feeds, which need a
   developer account.
 - **Alert categories and track numbers**: both sit in MTA extensions to GTFS-realtime that

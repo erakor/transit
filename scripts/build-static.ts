@@ -4,6 +4,7 @@
  *   pnpm build:static                    # every source below, downloaded
  *   pnpm build:static lirr               # one source
  *   pnpm build:static ferry path/to.zip  # one source, from a local zip
+ *   pnpm build:static bus a.zip b.zip    # a source of several zips, from local ones (as many as its urls)
  *   pnpm build:static path/to.zip        # the subway, from a local zip
  */
 import { readFile, writeFile } from 'node:fs/promises'
@@ -11,25 +12,29 @@ import { fileURLToPath } from 'node:url'
 import { strFromU8, unzipSync } from 'fflate'
 import { buildAgencyData } from '#src/static/agency.js'
 import { buildSubwayData, type GtfsFiles } from '#src/static/build.js'
+import { buildBusData } from '#src/static/bus.js'
 
 interface Source {
-  url: string
+  /** One zip, or several read together (the buses, one feed per borough). */
+  urls: string[]
   title: string
   /** The data's type and the module that declares it. */
   type: string
   typeFrom: string
-  /** The data to write, and a line about it for the log. */
-  build(files: GtfsFiles): { data: { feedVersion: string }; summary: string }
+  /** The files to read from each zip, when not `WANTED`. */
+  wanted?: Set<string>
+  /** The data to write, and a line about it for the log. Gets one entry per url. */
+  build(files: GtfsFiles[]): { data: { feedVersion: string }; summary: string }
 }
 
 const count = (o: object | undefined) => Object.keys(o ?? {}).length
 const agency = (title: string, url: string, trips = false): Source => ({
-  url,
+  urls: [url],
   title,
   type: 'AgencyData',
   typeFrom: '#src/agency/types.js',
-  build(files) {
-    const data = buildAgencyData(files, { trips })
+  build([files]) {
+    const data = buildAgencyData(files!, { trips })
     return { data, summary: `${count(data.routes)} routes, ${count(data.stops)} stops, ${count(data.trips)} trips` }
   },
 })
@@ -37,12 +42,12 @@ const agency = (title: string, url: string, trips = false): Source => ({
 /** By name: the name of the data file (`<name>.generated.ts`) and of its constant (`<NAME>_DATA`). */
 const SOURCES: Record<string, Source> = {
   subway: {
-    url: 'https://rrgtfsfeeds.s3.amazonaws.com/gtfs_subway.zip',
+    urls: ['https://rrgtfsfeeds.s3.amazonaws.com/gtfs_subway.zip'],
     title: 'MTA static subway GTFS',
     type: 'SubwayData',
     typeFrom: '#src/static/types.js',
-    build(files) {
-      const data = buildSubwayData(files)
+    build([files]) {
+      const data = buildSubwayData(files!)
       return {
         data,
         summary: `${count(data.routes)} routes, ${count(data.stops)} stops, ${data.stations.length} stations`,
@@ -53,6 +58,18 @@ const SOURCES: Record<string, Source> = {
   mnr: agency('Metro-North static GTFS', 'https://rrgtfsfeeds.s3.amazonaws.com/gtfsmnr.zip'),
   // The ferry's realtime feed needs the scheduled trips, see src/agency/arrivals.ts.
   ferry: agency('NYC Ferry static GTFS', 'https://nycferry.connexionz.net/rtt/public/resource/gtfs.zip', true),
+  // Route names and colors only (see src/bus/types.ts): the feeds' stop_times run to hundreds of MB.
+  bus: {
+    urls: ['b', 'bx', 'm', 'q', 'si', 'busco'].map(f => `https://rrgtfsfeeds.s3.amazonaws.com/gtfs_${f}.zip`),
+    title: 'MTA static bus GTFS',
+    type: 'BusData',
+    typeFrom: '#src/bus/types.js',
+    wanted: new Set(['routes.txt', 'feed_info.txt']),
+    build(files) {
+      const data = buildBusData(files)
+      return { data, summary: `${count(data.routes)} routes` }
+    },
+  },
 }
 
 const WANTED = new Set(['routes.txt', 'stops.txt', 'trips.txt', 'stop_times.txt', 'transfers.txt', 'feed_info.txt'])
@@ -64,12 +81,19 @@ async function loadZip(url: string, local: string | undefined): Promise<Uint8Arr
   return new Uint8Array(await res.arrayBuffer())
 }
 
-async function build(name: string, local?: string): Promise<void> {
-  const source = SOURCES[name]
-  if (!source) throw new Error(`unknown source ${name}: expected one of ${Object.keys(SOURCES).join(', ')}`)
-  const entries = unzipSync(await loadZip(source.url, local), { filter: f => WANTED.has(f.name.split('/').pop()!) })
+async function readZip(url: string, local: string | undefined, wanted: Set<string>): Promise<GtfsFiles> {
+  const entries = unzipSync(await loadZip(url, local), { filter: f => wanted.has(f.name.split('/').pop()!) })
   const files: GtfsFiles = {}
   for (const [file, bytes] of Object.entries(entries)) files[file.split('/').pop()!] = strFromU8(bytes)
+  return files
+}
+
+async function build(name: string, locals: string[] = []): Promise<void> {
+  const source = SOURCES[name]
+  if (!source) throw new Error(`unknown source ${name}: expected one of ${Object.keys(SOURCES).join(', ')}`)
+  if (locals.length && locals.length !== source.urls.length)
+    throw new Error(`${name} reads ${source.urls.length} zips: give that many local ones, or none`)
+  const files = await Promise.all(source.urls.map((url, i) => readZip(url, locals[i], source.wanted ?? WANTED)))
 
   const { data, summary } = source.build(files)
   // One line per [stop, offset] pair keeps a file with trips readable.
@@ -95,7 +119,7 @@ async function build(name: string, local?: string): Promise<void> {
   )
 }
 
-const [first, second] = process.argv.slice(2)
-if (first?.endsWith('.zip')) await build('subway', first)
-else if (first) await build(first, second)
+const [first, ...rest] = process.argv.slice(2)
+if (first?.endsWith('.zip')) await build('subway', [first])
+else if (first) await build(first, rest)
 else for (const name of Object.keys(SOURCES)) await build(name)

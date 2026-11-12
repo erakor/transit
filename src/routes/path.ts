@@ -1,4 +1,4 @@
-import { authenticated, errorResponse, json, LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE, text } from '#src/http.js'
+import { authenticated, byOp, errorResponse, json, LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE, text } from '#src/http.js'
 import { computePathArrivals } from '#src/path/arrivals.js'
 import { fetchPathFeed, type PathFeed } from '#src/path/feed.js'
 import { pathPreviewLine } from '#src/path/preview.js'
@@ -69,5 +69,18 @@ export function pathPreviewHandler({ fetcher, now = () => Date.now() }: PathDeps
     return text(pathPreviewLine(computePathArrivals(station, feed, { now: nowS, limit: 1 }), nowS), {
       cache: PREVIEW_CACHE,
     })
+  })
+}
+
+/**
+ * One function for the three PATH routes (`api/path.ts`), behind rewrites like the agencies'
+ * (`/path/arrivals` to `/api/path?op=arrivals`), sharing one feed memo. A deployment has a limited
+ * number of functions, and these bundle the same code anyway.
+ */
+export function pathHandler(deps: PathDeps = {}) {
+  return byOp('path', {
+    arrivals: pathArrivalsHandler(deps),
+    stations: pathStationsHandler(),
+    preview: pathPreviewHandler(deps),
   })
 }

@@ -15,7 +15,7 @@ const WITHIN_SRC = {
 }
 
 /** Provider folders import shared code (#src/gtfsrt.js and others), not each other. */
-const PROVIDERS = ['subway', 'agency', 'path', 'citibike']
+const PROVIDERS = ['subway', 'agency', 'bus', 'path', 'citibike']
 
 const restrict = (files, ...patterns) => ({ files, rules: { 'no-restricted-imports': ['error', { patterns }] } })
 

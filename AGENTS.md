@@ -15,11 +15,11 @@ pnpm format                          # prettier over the code, JSON and YAML (`f
 pnpm knip                            # unused files, exports and dependencies
 pnpm check                           # all of the above and the tests, as CI runs them
 pnpm build:openapi                   # regenerate public/openapi.json from the route schemas (src/openapi.ts)
-pnpm build:static                    # regenerate every src/data/*.generated.ts (subway, lirr, mnr, ferry)
+pnpm build:static                    # regenerate every src/data/*.generated.ts (subway, lirr, mnr, ferry, bus)
 pnpm build:static lirr               # one of them
 pnpm build:static ferry path/to.zip  # one of them, from a local zip (a bare zip path means the subway)
 pnpm record-fixtures                 # re-record test/fixtures from the live feeds
-pnpm record-fixtures citibike        # only the Citi Bike feeds (`transit`: only everything else)
+pnpm record-fixtures citibike        # only the Citi Bike feeds (`bus`: Bus Time, needs BUSTIME_KEY; `transit`: the rest)
 pnpm smoke                           # live feed checks, Citi Bike included (+ deployment checks if TRANSIT_BASE_URL is set)
 ```
 
@@ -56,21 +56,25 @@ Request flow for `/subway/arrivals`:
 Route factories take their dependencies (`fetcher`, `now`, `index`) as arguments; tests inject a
 fixture fetcher and a fixed clock (`test/helpers.ts`) instead of mocking modules.
 
-PATH (`/path/arrivals`, `/path/stations`, `/preview/path`) has the same shape with less machinery:
-`src/routes/path.ts` resolves the station (`src/path/stations.ts`, a hand-written table: 13
-stations and 5 routes, no generated data), `fetchPathFeed()` (`src/path/feed.ts`) fetches the one
+PATH (`/path/arrivals`, `/path/stations`, `/preview/path`) has the same shape with less machinery,
+in one function (`api/path.ts`, behind rewrites like the agencies'): `src/routes/path.ts`
+resolves the station (`src/path/stations.ts`, a hand-written table: 13 stations and 5 routes, no
+generated data), `fetchPathFeed()` (`src/path/feed.ts`) fetches the one
 JSON document through the same 15 s memo (`memoized()`) and normalizes it with `parsePathFeed()`, and
 `computePathArrivals()` (`src/path/arrivals.ts`, pure) groups trains by route and direction.
 
 The LIRR, Metro-North and NYC Ferry share one implementation, driven by the `AGENCIES` table in
 `src/agency/agencies.ts` (feeds, static data, whether a stop is a `station` or a `stop`):
 
-- `api/agency.ts` is a single function for all of their routes and `/bus/alerts`. `vercel.json`
+- `api/agency.ts` is a single function for all of their routes. `vercel.json`
   rewrites `/lirr/arrivals` to `/api/agency?agency=lirr&op=arrivals`, and `agencyRoute()` in
   `src/routes/agency.ts` reads the agency and operation from the public path or, failing that,
-  from those query parameters, so it does not depend on which URL the platform passes. One
-  function because Vercel has capped functions per deployment on the Hobby plan (12 when last
-  checked; there are 11 now): add operations to `OPS` rather than new files under `api/`.
+  from those query parameters, so it does not depend on which URL the platform passes.
+- Vercel's Hobby plan caps a deployment at 12 functions when they are plain files under `api/`;
+  there are 10 now, and `test/bundles.test.ts` fails past 12. Group a provider's routes in one
+  function: `byOp()` in `src/http.ts` dispatches on the operation (`/path/stations` or the
+  rewrite's `/api/path?op=stations`, `/preview/path` as `preview`), as `api/path.ts`,
+  `api/bus.ts` and `api/citibike.ts` do. Add an operation rather than a file under `api/`.
 - `computeAgencyArrivals()` (`src/agency/arrivals.ts`, pure) returns one flat list of departures.
   When the static data has `trips` (the ferry), stops the feed doesn't predict are scheduled
   from the last predicted stop.
@@ -89,13 +93,23 @@ The LIRR, Metro-North and NYC Ferry share one implementation, driven by the `AGE
   in `AGENCIES`, a source in `scripts/build-static.ts`, entries in `vercel.json`, and a
   `MAIN_STOP` in `scripts/smoke.ts`; the fixture recorder and the tests' fetcher follow `AGENCIES`.
 
+Buses (`/bus/arrivals`, `/preview/bus`, `/bus/alerts`) are not an agency: they are their own
+function, `api/bus.ts` (`busHandler()` in `src/routes/bus.ts`). Arrivals come from MTA Bus Time's SIRI
+StopMonitoring API, one JSON request per stop (`fetchStopMonitoring()` in `src/bus/siri.ts`, through
+`memoized()`), read by `parseStopMonitoring()` and ordered by `computeBusArrivals()` (both pure). The
+answer names the stop and destinations, so the only static data is route names and colors
+(`src/data/bus.generated.ts`, from six zips, built by `src/static/bus.ts`). The key is
+`BUSTIME_KEY` (a Vercel environment variable); without it those two routes answer 500. It goes in
+the query string, so no error, log or fixture may carry the request URL. Bus stop data (about
+13,500 stops) would be the bus function's to bundle: keep it out of the others.
+
 Citi Bike (`/citibike/station`, `/citibike/nearby`, both in `src/routes/citibike.ts`) has no
 static data and no GTFS: `fetchGbfs()` (`src/citibike/feeds.ts`) fetches the GBFS `station_information`
 and `station_status` JSON through `memoized()` with a per-feed TTL (10 min and 15 s), and
 `joinStations()` (`src/citibike/stations.ts`, pure) joins them. Both feeds are required: a failing
 `station_status` is a 502. A failing `station_information` falls back to the last copy that loaded
 (`staleOnError`), for up to `STALE_MAX_MS`, then is a 502 too. Both routes are one function,
-`api/citibike.ts`, behind a rewrite like the agencies' (`citibikeHandler()` reads the `op`).
+`api/citibike.ts`, behind a rewrite like the agencies' (`citibikeHandler()`, through `byOp()`).
 
 ### Static data
 
@@ -148,6 +162,21 @@ Ids, which clients store as favorites, so keep them stable:
 - The parser counts entries it can't read (`skipped`) instead of throwing, so one odd message
   doesn't take a station down. The smoke test fails when the count isn't 0.
 - Station ids are the feed's codes (`09S`, not `9S`). Clients store them: keep them stable.
+
+### Bus Time quirks handled in code
+
+- Line refs carry the operator (`MTA NYCT_M15+`, `MTABC_Q06`); without it they are the static
+  GTFS route ids, which the alerts feed uses too. Select Bus Service routes end in `+` and show as
+  `M15-SBS`. Stop refs are `MTA_` and the six-digit code on the stop's sign; the route accepts both.
+- An unknown stop is a 200 with an `ErrorCondition` (`No such stop: MTA_999999.`), answered as
+  404. The smoke test checks that text still comes back.
+- A bus at its terminal (`ProgressStatus` `layover` or `prevTrip`) often has no expected time;
+  it is listed after the timed ones with `time: null`.
+- Names and statuses can be a string or a list of strings. Distances are `MonitoredCall` fields in
+  SIRI 2 (requested with `version=2`) and `Extensions.Distances` in SIRI 1; the parser reads both.
+- test/fixtures/bustime-*.json were written by hand from Bus Time's documented format until a key
+  was available; `pnpm record-fixtures bus` replaces them with real answers (then update
+  `BUS_FIXTURE_NOW_MS` in `test/helpers.ts`, and the counts and names `test/bus.test.ts` expects).
 
 ### Other feed quirks handled in code
 
@@ -221,6 +250,6 @@ Ids, which clients store as favorites, so keep them stable:
   changed, regenerate it before recording so stop ids match. The Citi Bike fixtures
   (`pnpm record-fixtures citibike`) are the live feeds trimmed to the stations around Times Sq;
   after re-recording them, update the counts and names that `test/citibike.test.ts` expects.
-- New providers (see the README roadmap) that don't fit `AGENCIES` go under `api/<provider>/`
-  with a handler in `src/routes/` (mind the function count above), fixture-based parsing tests, and a check in `scripts/smoke.ts`. Upstream keys
+- New providers (see the README roadmap) that don't fit `AGENCIES` get one function,
+  `api/<provider>.ts`, with its routes dispatched by `byOp()` from a handler in `src/routes/` (mind the function count above), fixture-based parsing tests, and a check in `scripts/smoke.ts`. Upstream keys
   belong in Vercel environment variables.

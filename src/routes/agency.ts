@@ -1,7 +1,7 @@
 import { AGENCIES, findStop, routeInfo, searchStops, type Agency } from '#src/agency/agencies.js'
 import { computeAgencyArrivals } from '#src/agency/arrivals.js'
 import { computeAgencyVehicles } from '#src/agency/vehicles.js'
-import { AgencyVehiclesQuery, BusAlertsQuery, STOP_SCHEMAS } from '#src/agency/schemas.js'
+import { AgencyVehiclesQuery, STOP_SCHEMAS } from '#src/agency/schemas.js'
 import { computeAlerts } from '#src/alerts.js'
 import { tryFetchFeed, type FeedMessage, type Fetcher } from '#src/gtfsrt.js'
 import {
@@ -16,8 +16,6 @@ import {
 } from '#src/http.js'
 import { destinationsLine } from '#src/preview.js'
 import { parseQuery } from '#src/schema.js'
-
-export const BUS_ALERTS_FEED = 'camsys/bus-alerts'
 
 export interface AgencyDeps {
   fetcher?: Fetcher
@@ -47,10 +45,10 @@ export function agencyRoute(url: URL): { agency: string; op: string } | undefine
 }
 
 /**
- * One function for every agency without code of its own: `/lirr/...`, `/mnr/...`, `/ferry/...`,
- * `/preview/<agency>` and `/bus/alerts`. A single function because a deployment has a limited
- * number of them, and these routes share everything but their data. It must not import the
- * subway's station index, which would bundle the subway data into it.
+ * One function for every agency: `/lirr/...`, `/mnr/...`, `/ferry/...` and `/preview/<agency>`.
+ * A single function because a deployment has a limited number of them, and these routes share
+ * everything but their data. It must not import the subway's station index, which would bundle
+ * the subway data into it.
  */
 export function agencyHandler({ fetcher, now = () => Date.now() }: AgencyDeps = {}) {
   return authenticated(async (_request, url) => {
@@ -58,7 +56,6 @@ export function agencyHandler({ fetcher, now = () => Date.now() }: AgencyDeps = 
     const nowMs = now()
     const load = (feed: string) => tryFetchFeed(feed, { fetcher, now: nowMs })
     const nowS = Math.floor(nowMs / 1000)
-    if (route?.agency === 'bus' && route.op === 'alerts') return busAlerts(url, nowS, load)
     const agency = route ? AGENCIES[route.agency] : undefined
     if (!route || !agency) return errorResponse(404, 'not found')
     // The list is `/lirr/stations` but `/ferry/stops`, after what the agency calls a stop.
@@ -70,20 +67,6 @@ export function agencyHandler({ fetcher, now = () => Date.now() }: AgencyDeps = 
 
 function unavailable(agency: Agency): Response {
   return errorResponse(502, `${agency.name} feed unavailable`)
-}
-
-/**
- * `/bus/alerts?route=<id>` (all of them without `route`). Not an agency: there is no static bus
- * data yet, so routes carry their id as name and no stop is named.
- */
-async function busAlerts(url: URL, now: number, load: Context['load']): Promise<Response> {
-  const parsed = parseQuery(BusAlertsQuery, url)
-  if (!parsed.ok) return parsed.response
-  const routeParam = parsed.query.route?.toUpperCase()
-  const feed = await load(BUS_ALERTS_FEED)
-  if (!feed) return errorResponse(502, 'MTA alerts unavailable')
-  const result = computeAlerts(feed, { now, match: routeParam ? r => r.toUpperCase() === routeParam : undefined })
-  return json(result, { cache: ALERTS_CACHE })
 }
 
 const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {

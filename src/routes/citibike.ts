@@ -1,7 +1,7 @@
 import { fetchGbfs } from '#src/citibike/feeds.js'
 import { joinStations, nearestStations, type BikeStations } from '#src/citibike/stations.js'
 import { NearbyQuery, StationQuery, type NearbyResponse, type StationResponse } from '#src/citibike/schemas.js'
-import { authenticated, errorResponse, json, LIVE_CACHE } from '#src/http.js'
+import { authenticated, byOp, errorResponse, json, LIVE_CACHE } from '#src/http.js'
 import { parseQuery } from '#src/schema.js'
 import { tryLoad, type Fetcher } from '#src/gtfsrt.js'
 
@@ -74,28 +74,10 @@ function nearbyHandler(loadStations: Loader) {
 }
 
 /**
- * The operation of a request: `/citibike/nearby` in the public path or, failing that, the `op`
- * query parameter that `vercel.json` adds (`/api/citibike?op=nearby`), so the handler works
- * whichever of the two URLs the platform hands it (and in tests, the public one).
- */
-export function citibikeOp(url: URL): string | undefined {
-  const path = /^\/citibike\/([a-z]+)\/?$/.exec(url.pathname)
-  return path?.[1] ?? url.searchParams.get('op') ?? undefined
-}
-
-/**
  * One function for both Citi Bike routes (a deployment has a limited number of them), sharing one
  * station loader, so a request for either reuses the other's join.
  */
 export function citibikeHandler(deps: CitibikeDeps = {}) {
   const loadStations = stationLoader(deps)
-  const ops: Record<string, ReturnType<typeof authenticated>> = {
-    station: stationHandler(loadStations),
-    nearby: nearbyHandler(loadStations),
-  }
-  const notFound = authenticated(() => errorResponse(404, 'not found'))
-  return (request: Request): Promise<Response> => {
-    const op = citibikeOp(new URL(request.url))
-    return (op && Object.hasOwn(ops, op) ? ops[op]! : notFound)(request)
-  }
+  return byOp('citibike', { station: stationHandler(loadStations), nearby: nearbyHandler(loadStations) })
 }

@@ -376,7 +376,6 @@ describe('agency routes', () => {
     ['/ferry/stations', 404, 'not found'],
     ['/lirr/toString', 404, 'not found'],
     ['/njt/arrivals', 404, 'not found'],
-    ['/bus/arrivals', 404, 'not found'],
     ['/api/agency', 404, 'not found'],
   ])('rejects %s with %i', async (path, status, error) => {
     const r = await call(path).res
@@ -390,7 +389,6 @@ describe('agency routes', () => {
     ['/preview/mnr?q=rye', 'gtfs-mnr', 'Metro-North feed unavailable'],
     ['/ferry/vehicles', 'ferry-vehicleposition', 'NYC Ferry feed unavailable'],
     ['/mnr/alerts', 'mnr-alerts', 'Metro-North alerts unavailable'],
-    ['/bus/alerts', 'bus-alerts', 'MTA alerts unavailable'],
   ])('%s is 502 when its feed fails', async (path, feed, error) => {
     const r = await call(path, [feed]).res
     expect(r.status).toBe(502)
@@ -501,14 +499,5 @@ describe('agency routes', () => {
     const byStation = await (await call('/lirr/alerts?station=102').res).json()
     expect(byStation.station).toEqual({ id: '102', name: 'Jamaica' })
     expect((await (await call('/ferry/alerts').res).json()).alerts).toEqual([])
-  })
-
-  it('returns bus alerts by route, whatever the case', async () => {
-    const all = await (await call('/bus/alerts').res).json()
-    const routeId: string = all.alerts[0].routes[0].id
-    const one = await (await call(`/bus/alerts?route=${routeId.toLowerCase()}`).res).json()
-    expect(one.alerts.length).toBeGreaterThan(0)
-    expect(one.alerts.length).toBeLessThan(all.alerts.length)
-    expect(one.alerts[0].routes).toContainEqual({ id: routeId, name: routeId, color: '#808183', textColor: '#FFFFFF' })
   })
 })

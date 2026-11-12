@@ -68,6 +68,19 @@ function bundle(entry: string): Set<string> {
   return seen
 }
 
+/**
+ * Vercel's Hobby plan caps a deployment at 12 functions when they are plain files under api/ (vercel.com/docs/functions/runtimes,
+ * "Functions created per deployment"); one more and the deploy fails. Add an operation to an existing function instead
+ * (`byOp()` in src/http.ts), or merge two.
+ */
+const MAX_FUNCTIONS = 12
+
+describe('function count', () => {
+  it(`stays within Vercel's ${MAX_FUNCTIONS} per deployment`, () => {
+    expect(FUNCTIONS.length, FUNCTIONS.join(', ')).toBeLessThanOrEqual(MAX_FUNCTIONS)
+  })
+})
+
 describe('function bundles', () => {
   it.each(FUNCTIONS)('%s bundles only the large modules it uses', fn => {
     const modules = bundle(fn)

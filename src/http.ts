@@ -70,3 +70,30 @@ export function authenticated(handler: (request: Request, url: URL) => Promise<R
     return res
   }
 }
+
+/**
+ * The operation of a request to a function that serves several routes: `/<provider>/<op>` or
+ * `/preview/<provider>` (`preview`) in the public path or, failing that, the `op` query parameter
+ * that `vercel.json` adds (`/api/<provider>?op=<op>`), so it works whichever of the two URLs the
+ * platform hands it (and in tests, the public one).
+ */
+export function providerOp(url: URL, provider: string): string | undefined {
+  if (url.pathname.replace(/\/$/, '') === `/preview/${provider}`) return 'preview'
+  const path = new RegExp(`^/${provider}/([a-z]+)/?$`).exec(url.pathname)
+  return path?.[1] ?? url.searchParams.get('op') ?? undefined
+}
+
+type Handler = (request: Request) => Promise<Response>
+
+/**
+ * One function for several routes of a provider (a deployment has a limited number of functions,
+ * see AGENTS.md), by operation. Each handler checks the token itself; an unknown operation is a
+ * 404 behind the token check too.
+ */
+export function byOp(provider: string, ops: Record<string, Handler>): Handler {
+  const notFound = authenticated(() => errorResponse(404, 'not found'))
+  return request => {
+    const op = providerOp(new URL(request.url), provider)
+    return (op && Object.hasOwn(ops, op) ? ops[op]! : notFound)(request)
+  }
+}

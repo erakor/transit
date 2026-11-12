@@ -1,6 +1,6 @@
 /**
  * Request and response schemas for the routes of `src/routes/agency.ts` (`/lirr/...`, `/mnr/...`,
- * `/ferry/...`, their previews and `/bus/alerts`), and the types inferred from them.
+ * `/ferry/...` and their previews), and the types inferred from them.
  *
  * A stop is a `station` on the railroads and a `stop` on the ferry, in the query and in the
  * answer, so the schemas that name one come in both forms (`STOP_SCHEMAS`). Their queries all
@@ -68,10 +68,6 @@ export const AgencyVehiclesResponse = z.strictObject({
   vehicles: z
     .array(AgencyVehicle)
     .meta({ description: 'By route name. Positions older than 15 minutes are left out.' }),
-})
-
-export const BusAlertsQuery = z.object({
-  route: optionalParam('route', 'Only alerts about this bus route id (`M15`, `B44+`). Case insensitive.'),
 })
 
 /**

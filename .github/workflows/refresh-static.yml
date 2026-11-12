@@ -1,7 +1,7 @@
 name: Refresh static GTFS
 
-# Regenerates src/data/*.generated.ts from the static GTFS of the subway, LIRR, Metro-North and
-# NYC Ferry, and commits them when one changed. The push to main makes Vercel deploy the new data (and purge the CDN cache).
+# Regenerates src/data/*.generated.ts from the static GTFS of the subway, LIRR, Metro-North,
+# NYC Ferry and buses, and commits them when one changed. The push to main makes Vercel deploy the new data (and purge the CDN cache).
 on:
   schedule:
     - cron: '23 9 * * *'

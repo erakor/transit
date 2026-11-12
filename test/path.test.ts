@@ -5,7 +5,7 @@ import type { PathArrivalsResponse } from '#src/path/schemas.js'
 import { parsePathFeed, PATH_FEED_URL } from '#src/path/feed.js'
 import { pathPreviewLine } from '#src/path/preview.js'
 import { PATH_ROUTES, PATH_STATIONS, pathStation, routeForColors, searchPathStations } from '#src/path/stations.js'
-import { pathArrivalsHandler, pathPreviewHandler, pathStationsHandler } from '#src/routes/path.js'
+import { pathArrivalsHandler, pathHandler, pathPreviewHandler, pathStationsHandler } from '#src/routes/path.js'
 import { auth, fixture, fixtureFetcher, get, PATH_FIXTURE_NOW_MS, useRouteTestSetup } from './helpers.js'
 
 const NOW = 1_000_000
@@ -322,6 +322,19 @@ describe('PATH routes', () => {
     ).toBe(502)
     fail = false
     expect((await GET(get('/path/arrivals?station=WTC', auth))).status).toBe(200)
+  })
+
+  it.each([
+    ['/path/stations', 200],
+    ['/api/path?op=stations', 200],
+    ['/api/path?op=arrivals&station=WTC', 200],
+    ['/api/path?op=preview&q=wtc', 200],
+    ['/path/nope', 404],
+    ['/api/path', 404],
+  ])('one function serves %s (%i)', async (path, status) => {
+    const res = await pathHandler(deps())(get(path, auth))
+    expect(res.status).toBe(status)
+    expect(res.headers.get('vary')).toBe('x-transit-token')
   })
 
   it('/path/stations lists the stations with their routes joined in', async () => {
