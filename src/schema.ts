@@ -46,9 +46,9 @@ export function countParam(name: string, fallback: number, max: number, descript
   return z
     .string()
     .regex(/^\d+$/, { error })
-    .transform(Number)
+    // Clamp before the int check: z.int() rejects values past 2^53, which intParam lowers to max.
+    .transform((s) => Math.min(Number(s), max))
     .pipe(z.int().min(1, { error }))
-    .transform((n) => Math.min(n, max))
     .prefault(String(fallback))
     .meta({ description: `${description} Default ${fallback}, at most ${max} (larger values are lowered to ${max}).` });
 }
@@ -57,18 +57,18 @@ export function countParam(name: string, fallback: number, max: number, descript
  * Validates a request's query string against `schema`. Returns the parsed, typed values, or a
  * ready 400 response carrying the first problem's message.
  *
- * Empty parameters (`?limit=`) count as absent, so they get the default or the "is required"
- * error. A repeated parameter keeps its first value, like `URLSearchParams.get()`. Parameters the
- * schema doesn't name are ignored (`z.object` strips unknown keys).
+ * A repeated parameter keeps its first value, like `URLSearchParams.get()`. Empty values
+ * (`?limit=`) then count as absent, so they get the default or the "is required" error.
+ * Parameters the schema doesn't name are ignored (`z.object` strips unknown keys).
  */
 export function parseQuery<S extends z.ZodType>(
   schema: S,
   url: URL,
 ): { ok: true; query: z.output<S> } | { ok: false; response: Response } {
-  const raw: Record<string, string> = {};
-  for (const [key, value] of url.searchParams) {
-    if (value !== "" && !(key in raw)) raw[key] = value;
-  }
+  // No prototype, so names like `constructor` are ordinary keys.
+  const raw: Record<string, string> = Object.create(null);
+  for (const [key, value] of url.searchParams) if (!(key in raw)) raw[key] = value;
+  for (const key in raw) if (raw[key] === "") delete raw[key];
   const parsed = schema.safeParse(raw);
   if (parsed.success) return { ok: true, query: parsed.data };
   return { ok: false, response: errorResponse(400, parsed.error.issues[0]?.message ?? "invalid query") };
