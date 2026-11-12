@@ -1,15 +1,7 @@
 import { num, terminalName, type FeedMessage } from '#src/gtfsrt.js'
 import { routeInfo } from './agencies.js'
-import type { StopRef } from '#src/schema.js'
-import type { AgencyArrival } from './schemas.js'
+import type { AgencyArrival, AgencyArrivalsResult } from './schemas.js'
 import type { AgencyData, AgencyStop } from './types.js'
-
-/** What the route answers, before it renames `stop` to the agency's word for it (`station` on the railroads). */
-interface AgencyArrivalsResult {
-  stop: StopRef
-  updatedAt: number | null
-  arrivals: AgencyArrival[]
-}
 
 const SKIPPED = 1
 const CANCELED = 3

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import * as z from 'zod'
 import { GET as healthGET } from '../api/health.js'
 import { SUBWAY_DATA } from '#src/data/subway.generated.js'
 import { ROUTES } from '#src/openapi.js'
@@ -93,12 +94,14 @@ describe('documented routes', () => {
     expect(parsed.error?.issues ?? []).toEqual([])
   })
 
-  it.each(ROUTES.filter(r => Object.hasOwn(r.errors, 404)).map(r => r.path))(
-    '%s answers errors in the error schema',
-    async path => {
-      const query = path.includes('preview') ? 'q=zzzzzz' : 'route=nope&stop=nope&station=nope'
-      const res = await handlerFor(path)(get(`${path}?${query}`, auth))
-      expect(res.status).toBeGreaterThanOrEqual(400)
+  it.each(ROUTES.filter(r => Object.hasOwn(r.errors, 404)))(
+    '$path answers its 404 in the error schema',
+    async route => {
+      // The route's id parameter, the one an unknown value of is a 404.
+      const params = Object.keys(z.toJSONSchema(route.query, { io: 'input' }).properties ?? {})
+      const param = ['stop', 'station', 'id', 'route'].find(p => params.includes(p))
+      const res = await handlerFor(route.path)(get(`${route.path}?${param}=nope`, auth))
+      expect(res.status).toBe(404)
       expect(ErrorBody.safeParse(await res.json()).success).toBe(true)
     }
   )

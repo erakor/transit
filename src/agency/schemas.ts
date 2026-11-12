@@ -37,6 +37,15 @@ export const AgencyArrival = z.strictObject({
   tripId: z.string(),
 })
 
+/** What `computeAgencyArrivals()` returns: the response before the route names `stop` after the agency. */
+export const AgencyArrivalsResult = z.strictObject({
+  stop: StopRef,
+  updatedAt: FeedUpdatedAt,
+  arrivals: z.array(AgencyArrival).meta({
+    description: 'Every route and direction in one list, soonest first, like a departure board.',
+  }),
+})
+
 export const AgencyVehiclesQuery = z.object({ route: optionalParam('route', ROUTE_DESCRIPTION) })
 
 export const AgencyVehicle = z.strictObject({
@@ -85,13 +94,8 @@ function stopSchemas(p: StopParam) {
     })
     .transform(query => ({ stop: query[p], limit: query.limit }))
 
-  const ArrivalsResponse = z.strictObject({
-    ...keyed(p, StopRef),
-    updatedAt: FeedUpdatedAt,
-    arrivals: z.array(AgencyArrival).meta({
-      description: 'Every route and direction in one list, soonest first, like a departure board.',
-    }),
-  })
+  const { stop, ...result } = AgencyArrivalsResult.shape
+  const ArrivalsResponse = z.strictObject({ ...keyed(p, stop), ...result })
 
   const StopsQuery = z.object({
     q: optionalParam(
@@ -133,5 +137,6 @@ function stopSchemas(p: StopParam) {
 export const STOP_SCHEMAS = { station: stopSchemas('station'), stop: stopSchemas('stop') }
 
 export type AgencyArrival = z.infer<typeof AgencyArrival>
+export type AgencyArrivalsResult = z.infer<typeof AgencyArrivalsResult>
 export type AgencyVehicle = z.infer<typeof AgencyVehicle>
 export type AgencyVehiclesResponse = z.infer<typeof AgencyVehiclesResponse>

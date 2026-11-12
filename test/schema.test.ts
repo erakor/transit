@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, expectTypeOf, it } from 'vitest'
 import * as z from 'zod'
-import { coordinateParam, countParam, optionalParam, parseQuery, requiredParam } from '#src/schema.js'
+import { VEHICLE_STATUS } from '#src/gtfsrt.js'
+import { coordinateParam, countParam, optionalParam, parseQuery, requiredParam, VehicleStatus } from '#src/schema.js'
 import { ArrivalsQuery, ArrivalsResponse } from '#src/subway/schemas.js'
 
 const Query = z.object({ name: requiredParam('name', 'A name.'), n: countParam('n', 3, 10, 'How many.') })
@@ -80,7 +81,10 @@ describe('parameter helpers', () => {
 
   it.each([
     ['%20', 'lat is required'],
-    ...['90.1', '-91', '0x10', 'abc', '1,5', 'Infinity'].map(v => [v, 'lat must be a number between -90 and 90']),
+    ...['90.1', '-91', '0x10', 'abc', '1,5', 'Infinity', '1e999', '-1e400'].map(v => [
+      v,
+      'lat must be a number between -90 and 90',
+    ]),
   ])('rejects the coordinate %s', async (lat, message) => {
     expect(await error(`?lat=${lat}`)).toBe(message)
   })
@@ -98,5 +102,13 @@ describe('arrivals schemas', () => {
       description: expect.stringMatching(/^Trains per route and direction\. Default 3, at most 10/),
     })
     expect(z.toJSONSchema(ArrivalsResponse).additionalProperties).toBe(false)
+  })
+})
+
+describe('VehicleStatus', () => {
+  it('lists the statuses the decoder produces, no more and no fewer', () => {
+    // Checked by `pnpm typecheck`: VEHICLE_STATUS in gtfsrt.ts and the schema's enum are separate lists.
+    expectTypeOf<(typeof VEHICLE_STATUS)[number]>().toEqualTypeOf<VehicleStatus>()
+    expect([...VehicleStatus.options].sort()).toEqual([...VEHICLE_STATUS].sort())
   })
 })

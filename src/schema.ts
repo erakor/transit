@@ -163,14 +163,17 @@ const DECIMAL = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/
 export function coordinateParam(name: string, max: number, description: string) {
   const required = { error: `${name} is required` }
   const range = { error: `${name} must be a number between -${max} and ${max}` }
-  return z
-    .string(required)
-    .trim()
-    .min(1, required)
-    .regex(DECIMAL, range)
-    .transform(Number)
-    .pipe(z.number().min(-max, range).max(max, range))
-    .meta({ description, asNumber: { type: 'number', minimum: -max, maximum: max } })
+  return (
+    z
+      .string(required)
+      .trim()
+      .min(1, required)
+      .regex(DECIMAL, range)
+      .transform(Number)
+      // `range` on the type too: an exponent that overflows (`1e999`) is Infinity, which z.number() rejects.
+      .pipe(z.number(range).min(-max, range).max(max, range))
+      .meta({ description, asNumber: { type: 'number', minimum: -max, maximum: max } })
+  )
 }
 
 /**
