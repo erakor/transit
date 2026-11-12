@@ -11,7 +11,7 @@ import { LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from "#src/http.js";
 import { SUBWAY_DATA } from "#src/data/subway.generated.js";
 import { ErrorBody } from "#src/schema.js";
 import { ArrivalsResponse } from "#src/subway/schemas.js";
-import { auth, fixtureFetcher, FIXTURE_NOW_MS, get, PATH_FIXTURE_NOW_MS, TOKEN, useRouteTestSetup } from "./helpers.js";
+import { auth, fixtureFetcher, FIXTURE_NOW_MS, get, PATH_FIXTURE_NOW_MS, useRouteTestSetup } from "./helpers.js";
 
 const TIMES_SQ = SUBWAY_DATA.stops["127"]!.station;
 

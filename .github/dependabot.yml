@@ -1,0 +1,39 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    # Let releases age before a PR, so x.0.0 bugs surface upstream first. Security updates still come at once.
+    cooldown:
+      default-days: 3
+      semver-minor-days: 7
+      semver-major-days: 30
+    ignore:
+      # Pinned to 5.9: Vercel's build reported type errors with TypeScript 7 (AGENTS.md).
+      - dependency-name: typescript
+      # Tracks the Node major in engines and .nvmrc; bump it by hand with the runtime.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+    # A dependency goes to the first group it matches: specific groups above the catch-alls.
+    groups:
+      lint:
+        patterns: ['eslint', '@eslint/*', 'typescript-eslint', 'eslint-config-prettier', 'prettier', 'knip']
+      # Majors fall out of the catch-alls as their own PRs, to be reviewed one at a time.
+      dependencies:
+        dependency-type: production
+        update-types: [minor, patch]
+      dev-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
+      security:
+        applies-to: security-updates
+        patterns: ['*']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ['*']

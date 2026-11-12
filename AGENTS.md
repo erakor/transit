@@ -10,7 +10,10 @@ pnpm test                            # vitest, all tests (offline: uses test/fix
 pnpm vitest run test/routes.test.ts  # one file
 pnpm vitest run -t "caps limit"      # tests whose name matches
 pnpm typecheck                       # tsc --noEmit over api, src, scripts, test
-pnpm format                          # prettier over the code, JSON and YAML (CI runs format:check)
+pnpm lint                            # eslint (eslint.config.js)
+pnpm format                          # prettier over the code, JSON and YAML (`format:check` only reports)
+pnpm knip                            # unused files, exports and dependencies
+pnpm check                           # all of the above and the tests, as CI runs them
 pnpm build:static                    # regenerate every src/data/*.generated.ts (subway, lirr, mnr, ferry)
 pnpm build:static lirr               # one of them
 pnpm build:static ferry path/to.zip  # one of them, from a local zip (a bare zip path means the subway)
@@ -19,11 +22,14 @@ pnpm record-fixtures citibike        # only the Citi Bike feeds (`transit`: only
 pnpm smoke                           # live feed checks, Citi Bike included (+ deployment checks if TRANSIT_BASE_URL is set)
 ```
 
-Prettier formats the code, JSON and YAML (`.prettierrc.json`; `.prettierignore` skips the generated
-data, the fixtures and Markdown, whose prose is wrapped by hand). Format before committing: CI fails
-on unformatted files.
+Style is Prettier's (`.prettierrc.json`: no semicolons, single quotes, 120 columns); `.prettierignore`
+skips the generated data, the fixtures and Markdown, whose prose is wrapped by hand. ESLint
+(`eslint.config.js`) adds the TypeScript recommended rules and turns the import rules below into
+errors. A pre-commit hook (husky, `.husky/pre-commit`) runs both on the staged files through
+lint-staged, and CI runs `format:check`, `lint`, `typecheck`, `knip` and the tests. A reformat that
+touches many lines goes in its own commit, listed in `.git-blame-ignore-revs`.
 
-There is no lint step and no build step: Vercel compiles `api/**/*.ts` itself. To check what
+There is no build step: Vercel compiles `api/**/*.ts` itself. To check what
 Vercel will produce, `pnpm dlx vercel build` works offline with a stub `.vercel/project.json`
 (`{"projectId":"x","orgId":"y","settings":{"framework":null}}`); `.vercel/` is gitignored. Delete
 `.vercel/output` afterwards: vitest picks up the test files copied into it.
@@ -76,6 +82,8 @@ The LIRR, Metro-North and NYC Ferry share one implementation, driven by the `AGE
   it, not from each other.
 - Each function bundles what it imports: `src/routes/agency.ts` must not import the subway's
   station index (155 KiB of data), and subway routes must not import `src/agency/agencies.ts`.
+  ESLint checks direct imports for these, for the provider folders and for the `#src/*` alias
+  (`no-restricted-imports` in `eslint.config.js`); a new rule of this kind belongs there too.
 - Adding an agency whose realtime feed is plain GTFS-realtime with its own static GTFS is a row
   in `AGENCIES`, a source in `scripts/build-static.ts`, entries in `vercel.json`, and a
   `MAIN_STOP` in `scripts/smoke.ts`; the fixture recorder and the tests' fetcher follow `AGENCIES`.
@@ -181,13 +189,15 @@ Ids, which clients store as favorites, so keep them stable:
   preview imports `loadArrivals` from `src/subway/load.ts`), so they don't load zod. Build
   parameters with `requiredParam()` and `countParam()`, which match the rules and messages of
   the routes without schemas. Descriptions go in `.meta()`: they become the API docs.
-- ESM with `NodeNext` resolution: imports end in `.js` even though the files are `.ts`. Import
-  anything in `src/` from another folder through the `#src/*` alias (`#src/http.js`), and use
-  `./` within a folder. The alias is Node's own `imports` field in `package.json`, not tsconfig
-  `paths`: Vercel compiles each file without rewriting its imports, so only an alias Node
-  resolves at runtime works once deployed. Imports of `test/` or `api/` stay relative.
+- ESM with `NodeNext` resolution and `verbatimModuleSyntax`: imports end in `.js` even though the
+  files are `.ts`, and type-only imports say so (`import type`, or `type` inline), since Vercel
+  compiles each file on its own. Import anything in `src/` from another folder through the
+  `#src/*` alias (`#src/http.js`), and use `./` within a folder. The alias is Node's own `imports`
+  field in `package.json`, not tsconfig `paths`: Vercel compiles each file without rewriting its
+  imports, so only an alias Node resolves at runtime works once deployed. Imports of `test/` or
+  `api/` stay relative.
 - TypeScript is pinned to 5.9: Vercel's build reported type errors with TypeScript 7.
-- Toolchain: Node 26 (`engines` in `package.json`, `node-version` in the workflows) and pnpm, pinned
+- Toolchain: Node 26 (`engines` in `package.json`, `.nvmrc`, which the workflows read) and pnpm, pinned
   by `packageManager`. Vercel picks a pnpm version from the lockfile format rather than
   `packageManager`, so `installCommand` in `vercel.json` pins the same version: bump both together.
   Node 26 ships without Corepack; CI installs pnpm with `pnpm/action-setup`, which reads `packageManager`.

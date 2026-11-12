@@ -13,12 +13,14 @@ permissions:
 jobs:
   refresh:
     runs-on: ubuntu-latest
+    env:
+      HUSKY: 0 # the bot's commit skips the pre-commit hook
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6 # version from packageManager in package.json
       - uses: actions/setup-node@v7
         with:
-          node-version: 26
+          node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build:static
