@@ -28,6 +28,9 @@ export function requiredParam(name: string, description: string) {
   return z.string({ error }).trim().min(1, { error }).meta({ description })
 }
 
+/** Digits only: the text a count parameter accepts. */
+export const DIGITS = /^\d+$/
+
 /**
  * An optional positive integer query parameter: `fallback` when absent, clamped to `max` when
  * larger (a too-large value is not an error, so clients can ask for "as many as you allow").
@@ -46,7 +49,7 @@ export function countParam(name: string, fallback: number, max: number, descript
   return (
     z
       .string()
-      .regex(/^\d+$/, { error })
+      .regex(DIGITS, { error })
       // Clamp before the int check: z.int() rejects values past 2^53, which intParam lowers to max.
       .transform(s => Math.min(Number(s), max))
       .pipe(z.int().min(1, { error }))

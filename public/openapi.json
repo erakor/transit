@@ -1,0 +1,271 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "transit",
+    "version": "0.1.0",
+    "description": "Normalized JSON over the NYC transit feeds. Times are epoch seconds. This lists the routes that have schemas so far."
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "security": [
+    {
+      "token": []
+    }
+  ],
+  "paths": {
+    "/subway/arrivals": {
+      "get": {
+        "operationId": "subwayArrivals",
+        "summary": "Next trains at a subway station",
+        "description": "Next trains per route and direction. If some upstream feeds failed, the answer is still 200 with what was available, `unavailableFeeds`, and a shorter cache.",
+        "parameters": [
+          {
+            "name": "stop",
+            "in": "query",
+            "required": true,
+            "description": "A station id from /stops/search (stop ids joined with `+`, such as `127+725+902+A27+R16`), a GTFS stop id (`127`) or one platform (`127N`). Case insensitive.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Trains per route and direction. Default 3, at most 10 (larger values are lowered to 10).",
+            "schema": {
+              "default": 3,
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArrivalsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing `stop` or bad `limit`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown stop.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Every MTA feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "token": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-transit-token"
+      }
+    },
+    "schemas": {
+      "ArrivalsResponse": {
+        "type": "object",
+        "properties": {
+          "stop": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "stops": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "GTFS stop ids the station is made of."
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "stops"
+            ],
+            "additionalProperties": false
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Epoch seconds."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Oldest header timestamp among the feeds used; null when no feed serves the stop."
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RouteDirectionArrivals"
+            },
+            "description": "In MTA route order, then `N` before `S`."
+          },
+          "unavailableFeeds": {
+            "description": "Present when some upstream feeds failed; their groups are missing.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "stop",
+          "updatedAt",
+          "groups"
+        ],
+        "additionalProperties": false
+      },
+      "RouteDirectionArrivals": {
+        "type": "object",
+        "properties": {
+          "route": {
+            "type": "string",
+            "description": "GTFS route id. Diamond express trips keep their own (`6X`, `7X`, `FX`)."
+          },
+          "name": {
+            "type": "string",
+            "description": "Rider-facing route name (`S` for the shuttles)."
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9A-F]{6}$"
+          },
+          "textColor": {
+            "type": "string",
+            "pattern": "^#[0-9A-F]{6}$"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "N",
+              "S"
+            ],
+            "description": "The MTA's northbound or southbound platform."
+          },
+          "headsign": {
+            "type": "string",
+            "description": "Headsign of the next train."
+          },
+          "arrivals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Arrival"
+            }
+          }
+        },
+        "required": [
+          "route",
+          "name",
+          "color",
+          "textColor",
+          "direction",
+          "headsign",
+          "arrivals"
+        ],
+        "additionalProperties": false
+      },
+      "Arrival": {
+        "type": "object",
+        "properties": {
+          "time": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "When the train reaches the stop (epoch seconds)."
+          },
+          "headsign": {
+            "type": "string",
+            "description": "Name of the trip's last passenger stop in the feed."
+          },
+          "tripId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "time",
+          "headsign",
+          "tripId"
+        ],
+        "additionalProperties": false
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

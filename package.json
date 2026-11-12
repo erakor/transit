@@ -11,6 +11,7 @@
     "node": "26.x"
   },
   "scripts": {
+    "build:openapi": "tsx scripts/build-openapi.ts",
     "build:static": "tsx scripts/build-static.ts",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm knip && pnpm test",
     "format": "prettier --write .",

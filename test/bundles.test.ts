@@ -17,6 +17,8 @@ const ALLOWED: Record<string, (fn: string) => boolean> = {
   'src/data/subway.generated.ts': fn => /^api\/(subway\/|stops\/|preview\/subway\.ts)/.test(fn),
   // Every agency's static data.
   'src/agency/agencies.ts': fn => fn === 'api/agency.ts',
+  // The docs generator runs at build time only.
+  'src/openapi.ts': () => false,
 }
 
 /** Vercel deploys one function per file under api/. */

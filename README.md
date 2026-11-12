@@ -12,7 +12,11 @@ Runs on Vercel, one serverless function per route, TypeScript.
 
 ## Endpoints
 
-All JSON. Times are epoch seconds. Every route except `/health` needs the client token.
+All JSON. Times are epoch seconds. Every route needs the client token except `/health`, `/docs` and
+`/openapi.json`.
+
+`/docs` is an interactive reference, generated from the routes' schemas (`/openapi.json`). It
+covers the routes that have schemas so far, `/subway/arrivals` for now; this README covers them all.
 
 ### `GET /subway/arrivals?stop=<id>&limit=<n>`
 
@@ -418,6 +422,7 @@ pnpm test             # unit tests (recorded feeds in test/fixtures)
 pnpm check            # every check CI runs: format, lint, types, unused code (knip), tests
 pnpm format           # Prettier; a pre-commit hook also formats and lints staged files
 pnpm build:static     # regenerate src/data/*.generated.ts (subway, lirr, mnr, ferry)
+pnpm build:openapi    # regenerate public/openapi.json after changing a route's schemas
 pnpm record-fixtures  # re-record test/fixtures from the live feeds (or just `transit` / `citibike`)
 pnpm smoke            # check the live feeds (see below)
 ```
@@ -439,6 +444,8 @@ src/preview.ts       the "next departure per destination" line shared by PATH an
 src/stops/           station resolution and name search
 src/static/          static GTFS preprocessing (pure) and its types
 src/data/            generated static data
+src/openapi.ts       the OpenAPI document, built from the routes' schemas
+public/              static files: /docs (Scalar) and the generated openapi.json
 scripts/             build-static, record-fixtures, smoke
 test/                vitest tests and fixture feeds
 vercel.json          rewrites the public paths to the functions
