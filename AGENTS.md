@@ -22,12 +22,10 @@ pnpm record-fixtures citibike        # only the Citi Bike feeds (`transit`: only
 pnpm smoke                           # live feed checks, Citi Bike included (+ deployment checks if TRANSIT_BASE_URL is set)
 ```
 
-Style is Prettier's (`.prettierrc.json`: no semicolons, single quotes, 120 columns); `.prettierignore`
-skips the generated data, the fixtures and Markdown, whose prose is wrapped by hand. ESLint
-(`eslint.config.js`) adds the TypeScript recommended rules and turns the import rules below into
-errors. A pre-commit hook (husky, `.husky/pre-commit`) runs both on the staged files through
-lint-staged, and CI runs `format:check`, `lint`, `typecheck`, `knip` and the tests. A reformat that
-touches many lines goes in its own commit, listed in `.git-blame-ignore-revs`.
+Style is Prettier's (`.prettierrc.json`; Markdown is skipped because its prose is wrapped by hand),
+and ESLint (`eslint.config.js`) turns the import rules below into errors. A pre-commit hook
+(`.husky/pre-commit`, through lint-staged) runs both on staged files; CI runs `pnpm check`. A
+reformat that touches many lines goes in its own commit, listed in `.git-blame-ignore-revs`.
 
 There is no build step: Vercel compiles `api/**/*.ts` itself. To check what
 Vercel will produce, `pnpm dlx vercel build` works offline with a stub `.vercel/project.json`
@@ -82,8 +80,9 @@ The LIRR, Metro-North and NYC Ferry share one implementation, driven by the `AGE
   it, not from each other.
 - Each function bundles what it imports: `src/routes/agency.ts` must not import the subway's
   station index (155 KiB of data), and subway routes must not import `src/agency/agencies.ts`.
-  ESLint checks direct imports for these, for the provider folders and for the `#src/*` alias
-  (`no-restricted-imports` in `eslint.config.js`); a new rule of this kind belongs there too.
+  `test/bundles.test.ts` walks each function's imports, indirect ones included, and fails when a
+  large module reaches a function not allowed to bundle it; list a new large module there. ESLint
+  checks that provider folders don't import each other (`eslint.config.js`).
 - Adding an agency whose realtime feed is plain GTFS-realtime with its own static GTFS is a row
   in `AGENCIES`, a source in `scripts/build-static.ts`, entries in `vercel.json`, and a
   `MAIN_STOP` in `scripts/smoke.ts`; the fixture recorder and the tests' fetcher follow `AGENCIES`.
@@ -197,7 +196,7 @@ Ids, which clients store as favorites, so keep them stable:
   imports, so only an alias Node resolves at runtime works once deployed. Imports of `test/` or
   `api/` stay relative.
 - TypeScript is pinned to 5.9: Vercel's build reported type errors with TypeScript 7.
-- Toolchain: Node 26 (`engines` in `package.json`, `.nvmrc`, which the workflows read) and pnpm, pinned
+- Toolchain: Node 26 (`engines` in `package.json`, which Vercel and the workflows read) and pnpm, pinned
   by `packageManager`. Vercel picks a pnpm version from the lockfile format rather than
   `packageManager`, so `installCommand` in `vercel.json` pins the same version: bump both together.
   Node 26 ships without Corepack; CI installs pnpm with `pnpm/action-setup`, which reads `packageManager`.

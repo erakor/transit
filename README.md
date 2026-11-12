@@ -415,7 +415,7 @@ tells whether the CDN served it (`HIT`, `STALE`) or not (`MISS`).
 ```sh
 pnpm install
 pnpm test             # unit tests (recorded feeds in test/fixtures)
-pnpm check            # format, lint, typecheck, unused code (knip) and tests, as CI runs them
+pnpm check            # every check CI runs: format, lint, types, unused code (knip), tests
 pnpm format           # Prettier; a pre-commit hook also formats and lints staged files
 pnpm build:static     # regenerate src/data/*.generated.ts (subway, lirr, mnr, ferry)
 pnpm record-fixtures  # re-record test/fixtures from the live feeds (or just `transit` / `citibike`)

@@ -1,8 +1,4 @@
-# Prettier also reads .gitignore, but everything is listed here so editor integrations and runs with a
-# custom --ignore-path behave the same as the CLI.
-
-# Dependencies and build output
-node_modules/
+# Prettier also reads .gitignore; .vercel/ and coverage/ are repeated for editor integrations that don't.
 .vercel/
 coverage/
 
@@ -16,5 +12,3 @@ pnpm-lock.yaml
 
 # Prose is wrapped by hand
 *.md
-
-.env*
