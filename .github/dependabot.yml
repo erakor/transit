@@ -19,7 +19,8 @@ updates:
     groups:
       tooling:
         patterns: ['eslint', '@eslint/*', 'typescript-eslint', 'prettier', 'knip', 'husky', 'lint-staged']
-      # Majors fall out of the catch-all as their own PRs, to be reviewed one at a time.
+        update-types: [minor, patch]
+      # Majors fall out of the groups as their own PRs, to be reviewed one at a time.
       npm:
         patterns: ['*']
         update-types: [minor, patch]

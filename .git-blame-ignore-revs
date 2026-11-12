@@ -1,4 +1,5 @@
 # Commits git blame skips (GitHub reads this file; locally: git config blame.ignoreRevsFile .git-blame-ignore-revs).
+# Their ids must be on main: merge a branch that adds one with a merge commit, not squash or rebase.
 
 # Format with Prettier
 7ed24b457d4c753f86492c99bc2b6b7c6abf2756
