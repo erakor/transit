@@ -1,7 +1,7 @@
 /** The OpenAPI document, built from the route schemas. No function bundles this (test/bundles.test.ts). */
 import * as z from 'zod'
 import { TOKEN_HEADER } from '#src/auth.js'
-import { ErrorBody } from '#src/schema.js'
+import { DIGITS, ErrorBody } from '#src/schema.js'
 import { Arrival, ArrivalsQuery, ArrivalsResponse, RouteDirectionArrivals } from '#src/subway/schemas.js'
 
 interface Route {
@@ -57,6 +57,11 @@ export function buildOpenApi(version: string) {
       const query = z.toJSONSchema(route.query, { io: 'input' })
       const parameters = Object.entries(query.properties ?? {}).map(([name, property]) => {
         const { description, ...schema } = property as Record<string, unknown>
+        // Count parameters arrive as text but are numbers to clients (countParam in src/schema.ts).
+        if (schema.pattern === DIGITS.source) {
+          delete schema.pattern
+          Object.assign(schema, { type: 'integer', minimum: 1, default: Number(schema.default) })
+        }
         return { name, in: 'query', required: query.required?.includes(name) ?? false, description, schema }
       })
       const responses = {
@@ -79,7 +84,7 @@ export function buildOpenApi(version: string) {
       version,
       description:
         'Normalized JSON over the NYC transit feeds. Times are epoch seconds. This lists the routes that have ' +
-        'schemas so far; the README documents every route.',
+        'schemas so far.',
     },
     servers: [{ url: '/' }],
     security: [{ token: [] }],

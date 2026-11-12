@@ -15,7 +15,16 @@ describe('public/openapi.json', () => {
   })
 
   it('documents only public paths that exist', () => {
-    const sources = (read('vercel.json').rewrites as { source: string }[]).map(r => r.source)
-    for (const route of ROUTES) expect(sources).toContain(route.path)
+    // Rewrite sources are patterns: `:op(stations|arrivals)` is one of those words, a bare `:name` one segment.
+    const sources = (read('vercel.json').rewrites as { source: string }[]).map(
+      r => new RegExp(`^${r.source.replace(/:\w+\(([^)]+)\)/g, '($1)').replace(/:\w+/g, '[^/]+')}$`)
+    )
+    for (const route of ROUTES)
+      expect(
+        sources.some(s => s.test(route.path)),
+        route.path
+      ).toBe(true)
+    expect(sources.some(s => s.test('/lirr/arrivals'))).toBe(true)
+    expect(sources.some(s => s.test('/nowhere'))).toBe(false)
   })
 })

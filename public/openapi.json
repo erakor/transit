@@ -3,7 +3,7 @@
   "info": {
     "title": "transit",
     "version": "0.1.0",
-    "description": "Normalized JSON over the NYC transit feeds. Times are epoch seconds. This lists the routes that have schemas so far; the README documents every route."
+    "description": "Normalized JSON over the NYC transit feeds. Times are epoch seconds. This lists the routes that have schemas so far."
   },
   "servers": [
     {
@@ -38,9 +38,9 @@
             "required": false,
             "description": "Trains per route and direction. Default 3, at most 10 (larger values are lowered to 10).",
             "schema": {
-              "default": "3",
-              "type": "string",
-              "pattern": "^\\d+$"
+              "default": 3,
+              "type": "integer",
+              "minimum": 1
             }
           }
         ],
