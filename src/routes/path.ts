@@ -39,12 +39,14 @@ export function pathArrivalsHandler({ fetcher, now = () => Date.now() }: PathDep
 
 /** GET /path/stations: the 13 stations with the routes serving them. */
 export function pathStationsHandler() {
-  return authenticated(() => {
-    const body: PathStationsResponse = {
-      stations: PATH_STATIONS.map(s => ({ id: s.id, name: s.name, routes: routesOf(s) })),
-    }
-    return json(body, { cache: STATIC_CACHE })
-  })
+  return authenticated(() =>
+    json(
+      {
+        stations: PATH_STATIONS.map(s => ({ id: s.id, name: s.name, routes: routesOf(s) })),
+      } satisfies PathStationsResponse,
+      { cache: STATIC_CACHE }
+    )
+  )
 }
 
 /**
@@ -55,10 +57,10 @@ export function pathPreviewHandler({ fetcher, now = () => Date.now() }: PathDeps
   return authenticated(async (_request, url) => {
     const parsed = parseQuery(PathPreviewQuery, url)
     if (!parsed.ok) return parsed.response
-    const { q, station: stationParam } = parsed.query
+    const { id } = parsed.query
 
-    const station = stationParam ? pathStation(stationParam) : searchPathStations(q!)[0]
-    if (!station) return errorResponse(404, stationParam ? `unknown station ${stationParam}` : 'no matching station')
+    const station = id !== undefined ? pathStation(id) : searchPathStations(parsed.query.q)[0]
+    if (!station) return errorResponse(404, id !== undefined ? `unknown station ${id}` : 'no matching station')
 
     const nowMs = now()
     const feed = await loadFeed(fetcher, nowMs)

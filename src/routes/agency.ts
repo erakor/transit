@@ -148,10 +148,13 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
   async preview({ agency, url, now, load }) {
     const parsed = parseQuery(STOP_SCHEMAS[agency.stopParam].PreviewQuery, url)
     if (!parsed.ok) return parsed.response
-    const { q, stop: param } = parsed.query
-    const stop = param ? findStop(agency.data, param) : searchStops(agency.data, q!)[0]
+    const { id } = parsed.query
+    const stop = id !== undefined ? findStop(agency.data, id) : searchStops(agency.data, parsed.query.q)[0]
     if (!stop)
-      return errorResponse(404, param ? `unknown ${agency.stopParam} ${param}` : `no matching ${agency.stopParam}`)
+      return errorResponse(
+        404,
+        id !== undefined ? `unknown ${agency.stopParam} ${id}` : `no matching ${agency.stopParam}`
+      )
     const feed = await load(agency.tripsFeed)
     if (!feed) return unavailable(agency)
     const { arrivals } = computeAgencyArrivals(stop, feed, agency.data, { now, limit: Infinity })

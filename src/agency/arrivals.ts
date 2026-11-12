@@ -4,7 +4,7 @@ import type { StopRef } from '#src/schema.js'
 import type { AgencyArrival } from './schemas.js'
 import type { AgencyData, AgencyStop } from './types.js'
 
-/** The response, which names the stop by the agency's word for it (`station` or `stop`). */
+/** What the route answers, before it renames `stop` to the agency's word for it (`station` on the railroads). */
 interface AgencyArrivalsResult {
   stop: StopRef
   updatedAt: number | null

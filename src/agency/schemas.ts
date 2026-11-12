@@ -11,13 +11,15 @@ import {
   AlertsResult,
   countParam,
   EpochSeconds,
-  HexColor,
+  FeedUpdatedAt,
   Latitude,
   Longitude,
   MAX_QUERY_LENGTH,
   optionalParam,
+  previewQuery,
   requiredParam,
   RouteDisplay,
+  RouteFields,
   StopRef,
   VehicleStatus,
 } from '#src/schema.js'
@@ -30,10 +32,7 @@ const ROUTE_DESCRIPTION = 'Only this route id (from `routes` in the station list
 export const AgencyArrival = z.strictObject({
   time: EpochSeconds.meta({ description: 'When it leaves this stop, or arrives where its trip ends.' }),
   delay: z.int().optional().meta({ description: 'Seconds behind schedule (negative: ahead), when the feed says.' }),
-  route: z.string().meta({ description: 'Route id.' }),
-  name: z.string().meta({ description: 'Route name.' }),
-  color: HexColor,
-  textColor: HexColor,
+  ...RouteFields,
   headsign: z.string().meta({ description: 'Where the trip ends.' }),
   tripId: z.string(),
 })
@@ -88,7 +87,7 @@ function stopSchemas(p: StopParam) {
 
   const ArrivalsResponse = z.strictObject({
     ...keyed(p, StopRef),
-    updatedAt: EpochSeconds.nullable().meta({ description: "The feed's header timestamp." }),
+    updatedAt: FeedUpdatedAt,
     arrivals: z.array(AgencyArrival).meta({
       description: 'Every route and direction in one list, soonest first, like a departure board.',
     }),
@@ -103,9 +102,8 @@ function stopSchemas(p: StopParam) {
     limit: countParam('limit', 10, 25, `${p}s to return with \`q\`.`),
   })
 
-  const Stop = z.strictObject({
+  const Stop = StopRef.extend({
     id: z.string().meta({ description: 'GTFS stop id. Stable: store it as a favorite.' }),
-    name: z.string(),
     lat: Latitude,
     lon: Longitude,
     routes: z.array(RouteDisplay).meta({ description: 'Routes with scheduled service here.' }),
@@ -127,13 +125,7 @@ function stopSchemas(p: StopParam) {
     ...keyed(p, StopRef.optional().meta({ description: `The ${p}, when \`${p}\` was given.` })),
   })
 
-  const PreviewQuery = z
-    .object({
-      q: optionalParam('q', `A ${p} name: the best match is used.`, MAX_QUERY_LENGTH),
-      ...keyed(p, optionalParam(p, `Instead of \`q\`. ${description}`)),
-    })
-    .refine(query => query.q || query[p], { error: `q or ${p} is required` })
-    .transform(query => ({ q: query.q, stop: query[p] }))
+  const PreviewQuery = previewQuery(p, `A ${p} name: the best match is used.`, description)
 
   return { ArrivalsQuery, ArrivalsResponse, StopsQuery, StopsResponse, AlertsQuery, AlertsResponse, PreviewQuery }
 }

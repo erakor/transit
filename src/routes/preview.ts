@@ -20,15 +20,11 @@ export function subwayPreviewHandler({ fetcher, now = () => Date.now(), index = 
   return authenticated(async (_request, url) => {
     const parsed = parseQuery(PreviewQuery, url)
     if (!parsed.ok) return parsed.response
-    const { q, stop: stopParam } = parsed.query
+    const query = parsed.query
 
     const idx = index()
-    let stopId = stopParam
-    if (!stopId) {
-      search ??= new StopSearch(idx.data)
-      stopId = search.search(q!, 1)[0]?.id
-      if (!stopId) return errorResponse(404, 'no matching station')
-    }
+    const stopId = query.id !== undefined ? query.id : (search ??= new StopSearch(idx.data)).search(query.q, 1)[0]?.id
+    if (!stopId) return errorResponse(404, 'no matching station')
     const stop = idx.resolve(stopId)
     if (!stop) return errorResponse(404, `unknown stop ${stopId}`)
 

@@ -41,9 +41,9 @@
             "required": false,
             "description": "Trains per route and direction. Default 3, at most 10 (larger values are lowered to 10).",
             "schema": {
-              "default": 3,
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "default": 3
             }
           }
         ],
@@ -137,9 +137,9 @@
             "required": false,
             "description": "Stations to return. Default 10, at most 25 (larger values are lowered to 25).",
             "schema": {
-              "default": 10,
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "default": 10
             }
           }
         ],
@@ -471,9 +471,9 @@
             "required": false,
             "description": "Trains per route and direction. Default 3, at most 10 (larger values are lowered to 10).",
             "schema": {
-              "default": 3,
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "default": 3
             }
           }
         ],
@@ -702,9 +702,9 @@
             "required": false,
             "description": "Departures to return. Default 10, at most 30 (larger values are lowered to 30).",
             "schema": {
-              "default": 10,
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "default": 10
             }
           }
         ],
@@ -797,9 +797,9 @@
             "required": false,
             "description": "stations to return with `q`. Default 10, at most 25 (larger values are lowered to 25).",
             "schema": {
-              "default": 10,
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "default": 10
             }
           }
         ],
@@ -1120,9 +1120,9 @@
             "required": false,
             "description": "Departures to return. Default 10, at most 30 (larger values are lowered to 30).",
             "schema": {
-              "default": 10,
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "default": 10
             }
           }
         ],
@@ -1215,9 +1215,9 @@
             "required": false,
             "description": "stations to return with `q`. Default 10, at most 25 (larger values are lowered to 25).",
             "schema": {
-              "default": 10,
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "default": 10
             }
           }
         ],
@@ -1538,9 +1538,9 @@
             "required": false,
             "description": "Departures to return. Default 10, at most 30 (larger values are lowered to 30).",
             "schema": {
-              "default": 10,
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "default": 10
             }
           }
         ],
@@ -1633,9 +1633,9 @@
             "required": false,
             "description": "stops to return with `q`. Default 10, at most 25 (larger values are lowered to 25).",
             "schema": {
-              "default": 10,
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "default": 10
             }
           }
         ],
@@ -2093,9 +2093,9 @@
             "required": true,
             "description": "Latitude of the point, in decimal degrees.",
             "schema": {
+              "type": "number",
               "minimum": -90,
-              "maximum": 90,
-              "type": "number"
+              "maximum": 90
             }
           },
           {
@@ -2104,9 +2104,9 @@
             "required": true,
             "description": "Longitude of the point, in decimal degrees.",
             "schema": {
+              "type": "number",
               "minimum": -180,
-              "maximum": 180,
-              "type": "number"
+              "maximum": 180
             }
           },
           {
@@ -2115,9 +2115,9 @@
             "required": false,
             "description": "Stations to return. Default 5, at most 25 (larger values are lowered to 25).",
             "schema": {
-              "default": 5,
               "type": "integer",
-              "minimum": 1
+              "minimum": 1,
+              "default": 5
             }
           }
         ],
@@ -2651,7 +2651,8 @@
             "description": "PATH route id (`HOB-WTC`, `JSQ-33-HOB`). A line color PATH hasn't used before shows under its color."
           },
           "name": {
-            "type": "string"
+            "type": "string",
+            "description": "Rider-facing route name."
           },
           "color": {
             "type": "string",
@@ -2864,7 +2865,7 @@
           },
           "name": {
             "type": "string",
-            "description": "Route name."
+            "description": "Rider-facing route name."
           },
           "color": {
             "type": "string",

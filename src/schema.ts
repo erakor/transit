@@ -7,7 +7,6 @@
  * comments so they end up in those docs too.
  */
 import * as z from 'zod'
-import { VEHICLE_STATUS } from './gtfsrt.js'
 import { errorResponse } from './http.js'
 
 /** Times in responses: whole seconds since the Unix epoch. */
@@ -30,11 +29,26 @@ export const RouteDisplay = z.strictObject({
   textColor: HexColor,
 })
 
+/** A route's display fields, flattened into a group of arrivals: spread them, and override `route`'s description. */
+export const RouteFields = {
+  route: z.string().meta({ description: 'Route id.' }),
+  name: RouteDisplay.shape.name,
+  color: HexColor,
+  textColor: HexColor,
+}
+
 /** A stop or station named in a response. */
 export const StopRef = z.strictObject({ id: z.string(), name: z.string() })
 
+export const FeedUpdatedAt = EpochSeconds.nullable().meta({ description: "The feed's header timestamp." })
+
+/**
+ * `VehiclePosition.current_status`. Spelled out rather than imported from `gtfsrt.ts`, which would
+ * bundle the protobuf bindings into functions that decode no feed; `VEHICLE_STATUS` there is
+ * checked against this.
+ */
 export const VehicleStatus = z
-  .enum(VEHICLE_STATUS)
+  .enum(['INCOMING_AT', 'STOPPED_AT', 'IN_TRANSIT_TO'])
   .meta({ description: 'GTFS-realtime `current_status`, relative to `stop`.' })
 
 export const Alert = z.strictObject({
@@ -51,7 +65,7 @@ export const Alert = z.strictObject({
 })
 
 export const AlertsResult = z.strictObject({
-  updatedAt: EpochSeconds.nullable().meta({ description: "The feed's header timestamp." }),
+  updatedAt: FeedUpdatedAt,
   alerts: z.array(Alert).meta({ description: 'In effect now: current events first, then planned work; newest first.' }),
 })
 
@@ -64,6 +78,7 @@ export const HealthResponse = z.strictObject({
 
 export type RouteDisplay = z.infer<typeof RouteDisplay>
 export type StopRef = z.infer<typeof StopRef>
+export type VehicleStatus = z.infer<typeof VehicleStatus>
 export type Alert = z.infer<typeof Alert>
 export type AlertsResult = z.infer<typeof AlertsResult>
 export type HealthResponse = z.infer<typeof HealthResponse>
@@ -94,8 +109,19 @@ function capped(text: z.ZodString, name: string, maxLength: number | undefined):
   return maxLength === undefined ? text : text.max(maxLength, { error: `${name} is too long` })
 }
 
+/**
+ * Count and coordinate parameters are checked as text, since that is what arrives, but are numbers
+ * to clients: `asNumber` in their `.meta()` is the JSON Schema the docs show instead of the text
+ * rule (`src/openapi.ts`).
+ */
+declare module 'zod' {
+  interface GlobalMeta {
+    asNumber?: { type: 'integer' | 'number'; minimum: number; maximum?: number; default?: number }
+  }
+}
+
 /** Digits only: the text a count parameter accepts. */
-export const DIGITS = /^\d+$/
+const DIGITS = /^\d+$/
 
 /**
  * An optional positive integer query parameter: `fallback` when absent, clamped to `max` when
@@ -122,17 +148,17 @@ export function countParam(name: string, fallback: number, max: number, descript
       .prefault(String(fallback))
       .meta({
         description: `${description} Default ${fallback}, at most ${max} (larger values are lowered to ${max}).`,
+        asNumber: { type: 'integer', minimum: 1, default: fallback },
       })
   )
 }
 
 /** A decimal number, as a coordinate parameter accepts it (`Number()` also reads `0x10` and `0b1`). */
-export const DECIMAL = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/
+const DECIMAL = /^[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/
 
 /**
  * A required coordinate query parameter: a decimal number between `-max` and `max`. Like a count
- * parameter, it is text checked first and then turned into a number; `minimum` and `maximum` in
- * `.meta()` are there for the docs, which show it as a number (`src/openapi.ts`).
+ * parameter, it is text checked first and then turned into a number.
  */
 export function coordinateParam(name: string, max: number, description: string) {
   const required = { error: `${name} is required` }
@@ -144,7 +170,26 @@ export function coordinateParam(name: string, max: number, description: string) 
     .regex(DECIMAL, range)
     .transform(Number)
     .pipe(z.number().min(-max, range).max(max, range))
-    .meta({ description, minimum: -max, maximum: max })
+    .meta({ description, asNumber: { type: 'number', minimum: -max, maximum: max } })
+}
+
+/**
+ * The query of a preview route: `q`, a name to search, or `param`, an id that wins over it. The
+ * output says which was given, `{ id }` or `{ q }`, so handlers branch without assertions.
+ */
+export function previewQuery(param: string, qDescription: string, paramDescription: string) {
+  return z
+    .object({
+      q: optionalParam('q', qDescription, MAX_QUERY_LENGTH),
+      [param]: optionalParam(param, `Instead of \`q\`. ${paramDescription}`),
+    })
+    .transform((query, ctx): { id: string; q?: undefined } | { id?: undefined; q: string } => {
+      const id = query[param]
+      if (id) return { id }
+      if (query.q) return { q: query.q }
+      ctx.addIssue({ code: 'custom', message: `q or ${param} is required` })
+      return z.NEVER
+    })
 }
 
 /**

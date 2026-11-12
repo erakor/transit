@@ -49,8 +49,7 @@ function stationHandler(loadStations: Loader) {
     if (!stations) return errorResponse(502, UNAVAILABLE)
     const station = stations.byId.get(id)
     if (!station) return errorResponse(404, `unknown station ${id}`)
-    const body: StationResponse = { updatedAt: stations.updatedAt, station }
-    return json(body, { cache: LIVE_CACHE })
+    return json({ updatedAt: stations.updatedAt, station } satisfies StationResponse, { cache: LIVE_CACHE })
   })
 }
 
@@ -67,13 +66,10 @@ function nearbyHandler(loadStations: Loader) {
 
     const stations = await loadStations()
     if (!stations) return errorResponse(502, UNAVAILABLE)
-    const body: NearbyResponse = {
-      lat,
-      lon,
-      updatedAt: stations.updatedAt,
-      stations: nearestStations(stations.byId.values(), lat, lon, n),
-    }
-    return json(body, { cache: LIVE_CACHE })
+    const nearest = nearestStations(stations.byId.values(), lat, lon, n)
+    return json({ lat, lon, updatedAt: stations.updatedAt, stations: nearest } satisfies NearbyResponse, {
+      cache: LIVE_CACHE,
+    })
   })
 }
 

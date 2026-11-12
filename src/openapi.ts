@@ -24,10 +24,9 @@ import {
   PathArrivalsResponse,
   PathPreviewQuery,
   PathRouteDirectionArrivals,
-  PathStationsQuery,
   PathStationsResponse,
 } from '#src/path/schemas.js'
-import { Alert, AlertsResult, DECIMAL, DIGITS, ErrorBody, HealthResponse, RouteDisplay } from '#src/schema.js'
+import { Alert, AlertsResult, ErrorBody, HealthResponse, RouteDisplay } from '#src/schema.js'
 import {
   AlertsQuery,
   AlertsResponse,
@@ -66,19 +65,18 @@ const PREVIEW =
 
 /** `/lirr/...`, `/mnr/...` and `/ferry/...`: the same routes, named after what the agency calls a stop. */
 function agencyRoutes(): Route[] {
-  return Object.values(AGENCIES).flatMap(({ id, name, stopParam: p, vehicleWord }): Route[] => {
+  return Object.values(AGENCIES).flatMap(({ id, name, stopParam: p, vehicleWord, data }): Route[] => {
     const s = STOP_SCHEMAS[p]
-    const tag = name
     const unknown = `Unknown \`${p}\`.`
     const unavailable = `The ${name} feed failed.`
     return [
       {
         path: `/${id}/arrivals`,
-        tag,
+        tag: name,
         summary: `Next departures at a ${name} ${p}`,
         description:
           'Every route and direction in one list, soonest first, like a departure board.' +
-          (AGENCIES[id]!.data.trips
+          (data.trips
             ? ' Stops the feed does not predict are timed from the last predicted stop with the schedule.'
             : ''),
         query: s.ArrivalsQuery,
@@ -87,7 +85,7 @@ function agencyRoutes(): Route[] {
       },
       {
         path: `/${id}/${p}s`,
-        tag,
+        tag: name,
         summary: `${name} ${p}s`,
         description: `All ${p}s by name, or those matching \`q\`, best first. Changes only with a deploy.`,
         query: s.StopsQuery,
@@ -96,7 +94,7 @@ function agencyRoutes(): Route[] {
       },
       {
         path: `/${id}/alerts`,
-        tag,
+        tag: name,
         summary: `${name} service alerts`,
         description: `The alerts in effect now, optionally for one route or ${p}.`,
         query: s.AlertsQuery,
@@ -105,7 +103,7 @@ function agencyRoutes(): Route[] {
       },
       {
         path: `/${id}/vehicles`,
-        tag,
+        tag: name,
         summary: `Where the ${name} ${vehicleWord} are`,
         description: 'Positions from the realtime feed, with the trip each vehicle runs when known.',
         query: AgencyVehiclesQuery,
@@ -114,7 +112,7 @@ function agencyRoutes(): Route[] {
       },
       {
         path: `/preview/${id}`,
-        tag,
+        tag: name,
         summary: `${name} departures as one line of text`,
         description: `${PREVIEW} The next departure to each destination.`,
         query: s.PreviewQuery,
@@ -196,7 +194,7 @@ export const ROUTES: Route[] = [
     tag: 'PATH',
     summary: 'PATH stations',
     description: 'The 13 stations with the routes serving them.',
-    query: PathStationsQuery,
+    query: NoQuery,
     response: PathStationsResponse,
     errors: {},
   },
@@ -293,19 +291,15 @@ function embedded(schema: object): Record<string, unknown> {
 }
 
 /**
- * Query parameters arrive as text, and their schemas check the text, but count and coordinate
- * parameters are numbers to clients (countParam and coordinateParam in src/schema.ts).
+ * Count and coordinate parameters are checked as text but are numbers to clients: their helpers in
+ * src/schema.ts give the schema to show in `.meta({ asNumber })`, which replaces the text rule.
  */
-function asNumber(schema: Record<string, unknown>): Record<string, unknown> {
-  if (schema.pattern === DIGITS.source) {
-    const { pattern: _pattern, ...rest } = schema
-    return { ...rest, type: 'integer', minimum: 1, default: Number(schema.default) }
-  }
-  if (schema.pattern === DECIMAL.source) {
-    const { pattern: _pattern, minLength: _minLength, ...rest } = schema
-    return { ...rest, type: 'number' }
-  }
-  return schema
+const asNumber: NonNullable<z.core.JSONSchemaGeneratorParams['override']> = ({ zodSchema, jsonSchema }) => {
+  const number = z.globalRegistry.get(zodSchema)?.asNumber
+  if (!number) return
+  const { description } = jsonSchema
+  for (const key of Object.keys(jsonSchema)) delete jsonSchema[key]
+  Object.assign(jsonSchema, number, { description })
 }
 
 export function buildOpenApi(version: string) {
@@ -325,7 +319,7 @@ export function buildOpenApi(version: string) {
 
   const paths = Object.fromEntries(
     ROUTES.map(route => {
-      const query = z.toJSONSchema(route.query, { io: 'input' })
+      const query = z.toJSONSchema(route.query, { io: 'input', override: asNumber })
       const parameters = Object.entries(query.properties ?? {}).map(([name, property]) => {
         const { description, ...schema } = property as Record<string, unknown>
         return {
@@ -333,7 +327,7 @@ export function buildOpenApi(version: string) {
           in: 'query',
           required: query.required?.includes(name) ?? false,
           description,
-          schema: asNumber(schema),
+          schema,
         }
       })
       const ok =

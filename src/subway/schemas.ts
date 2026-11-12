@@ -8,13 +8,15 @@ import {
   AlertsResult,
   countParam,
   EpochSeconds,
-  HexColor,
+  FeedUpdatedAt,
   Latitude,
   Longitude,
+  MAX_QUERY_LENGTH,
   optionalParam,
+  previewQuery,
   requiredParam,
   RouteDisplay,
-  MAX_QUERY_LENGTH,
+  RouteFields,
   StopRef,
   VehicleStatus,
 } from '#src/schema.js'
@@ -35,19 +37,16 @@ export const Arrival = z.strictObject({
 })
 
 export const RouteDirectionArrivals = z.strictObject({
+  ...RouteFields,
   route: z.string().meta({ description: 'GTFS route id. Diamond express trips keep their own (`6X`, `7X`, `FX`).' }),
   name: z.string().meta({ description: 'Rider-facing route name (`S` for the shuttles).' }),
-  color: HexColor,
-  textColor: HexColor,
   direction: z.enum(['N', 'S']).meta({ description: "The MTA's northbound or southbound platform." }),
   headsign: z.string().meta({ description: 'Headsign of the next train.' }),
   arrivals: z.array(Arrival),
 })
 
 /** A station as the arrivals and alerts name it. */
-const Station = z.strictObject({
-  id: z.string(),
-  name: z.string(),
+const Station = StopRef.extend({
   stops: z.array(z.string()).meta({ description: 'GTFS stop ids the station is made of.' }),
 })
 
@@ -72,9 +71,8 @@ export const SearchQuery = z.object({
   limit: countParam('limit', 10, 25, 'Stations to return.'),
 })
 
-export const SearchResult = z.strictObject({
+export const SearchResult = StopRef.extend({
   id: z.string().meta({ description: 'Station id, for `stop` in the other routes. Stable: store it as a favorite.' }),
-  name: z.string(),
   lat: Latitude,
   lon: Longitude,
   stops: z.array(StopRef).meta({ description: 'The GTFS stops (parent stations) it is made of.' }),
@@ -118,18 +116,17 @@ export const SubwayTrain = z.strictObject({
 
 export const VehiclesResponse = z.strictObject({
   route: RouteDisplay,
-  updatedAt: EpochSeconds.nullable().meta({ description: "The feed's header timestamp." }),
+  updatedAt: FeedUpdatedAt,
   vehicles: z
     .array(SubwayTrain)
     .meta({ description: 'Northbound first, each direction in stop id order. The feeds carry no coordinates.' }),
 })
 
-export const PreviewQuery = z
-  .object({
-    q: optionalParam('q', 'A station name: the best /stops/search match is used.', MAX_QUERY_LENGTH),
-    stop: optionalParam('stop', `Instead of \`q\`. ${STOP_DESCRIPTION}`),
-  })
-  .refine(query => query.q || query.stop, { error: 'q or stop is required' })
+export const PreviewQuery = previewQuery(
+  'stop',
+  'A station name: the best /stops/search match is used.',
+  STOP_DESCRIPTION
+)
 
 export type Arrival = z.infer<typeof Arrival>
 export type RouteDirectionArrivals = z.infer<typeof RouteDirectionArrivals>

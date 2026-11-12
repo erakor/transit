@@ -3,11 +3,10 @@ import * as z from 'zod'
 import {
   countParam,
   EpochSeconds,
-  HexColor,
-  optionalParam,
+  previewQuery,
   requiredParam,
   RouteDisplay,
-  MAX_QUERY_LENGTH,
+  RouteFields,
   StopRef,
 } from '#src/schema.js'
 
@@ -26,12 +25,10 @@ export const PathArrival = z.strictObject({
 })
 
 export const PathRouteDirectionArrivals = z.strictObject({
+  ...RouteFields,
   route: z.string().meta({
     description: "PATH route id (`HOB-WTC`, `JSQ-33-HOB`). A line color PATH hasn't used before shows under its color.",
   }),
-  name: z.string(),
-  color: HexColor,
-  textColor: HexColor,
   direction: z
     .enum(['NY', 'NJ'])
     .meta({ description: '`NY` toward Manhattan or `NJ`, as the feed labels the train at this station.' }),
@@ -49,8 +46,6 @@ export const PathArrivalsResponse = z.strictObject({
     .meta({ description: "In PATH's route order, then toward New York before New Jersey." }),
 })
 
-export const PathStationsQuery = z.object({})
-
 export const PathStationsResponse = z.strictObject({
   stations: z.array(
     StopRef.extend({
@@ -60,14 +55,12 @@ export const PathStationsResponse = z.strictObject({
   ),
 })
 
-export const PathPreviewQuery = z
-  .object({
-    q: optionalParam('q', 'A station name (`hoboken`, `wtc`, `journal sq`): the best match is used.', MAX_QUERY_LENGTH),
-    station: optionalParam('station', `Instead of \`q\`. ${STATION_DESCRIPTION}`),
-  })
-  .refine(query => query.q || query.station, { error: 'q or station is required' })
+export const PathPreviewQuery = previewQuery(
+  'station',
+  'A station name (`hoboken`, `wtc`, `journal sq`): the best match is used.',
+  STATION_DESCRIPTION
+)
 
-export type PathArrival = z.infer<typeof PathArrival>
 export type PathRouteDirectionArrivals = z.infer<typeof PathRouteDirectionArrivals>
 export type PathArrivalsResponse = z.infer<typeof PathArrivalsResponse>
 export type PathStationsResponse = z.infer<typeof PathStationsResponse>
