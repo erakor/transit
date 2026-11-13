@@ -5,7 +5,7 @@ small, pre-joined JSON to apps and servers (the alfresco launcher and other pers
 so clients never touch protobuf or GTFS.
 
 It covers the MTA subway (arrivals, alerts, train positions), PATH, the LIRR, Metro-North and
-NYC Ferry, MTA buses (arrivals by stop code, alerts) and Citi Bike stations. NJ Transit will be
+NYC Ferry, MTA buses (arrivals, positions, nearby stops, alerts) and Citi Bike stations. NJ Transit will be
 added later as its own route group with the same conventions.
 
 Runs on Vercel, TypeScript: ten serverless functions, most serving a provider's routes together.
@@ -322,8 +322,8 @@ Penn Station · Ronkonkoma 1 · Huntington 9 · Port Washington 16 · Babylon 32
 ### `GET /bus/arrivals?stop=<code>&limit=<n>`
 
 The buses on their way to one stop, from MTA Bus Time, every route in one list. `stop` is the
-six-digit code on the bus stop sign (`401687`; `MTA_401687`, as Bus Time writes it, works too).
-There is no bus stop search yet. `limit` defaults to 10, max 30.
+six-digit code on the bus stop sign (`401687`; `MTA_401687`, as Bus Time writes it, works too),
+or from `/bus/nearby`. `limit` defaults to 10, max 30.
 
 ```json
 {
@@ -341,6 +341,7 @@ There is no bus stop search yet. `limit` defaults to 10, max 30.
       "stopsAway": 1,
       "meters": 412,
       "atTerminal": false,
+      "cancelled": false,
       "vehicle": "5791",
       "tripId": "MTA NYCT_MQ_D6-Weekday-SDon-077800_M15+_731"
     }
@@ -352,6 +353,8 @@ There is no bus stop search yet. `limit` defaults to 10, max 30.
   usually for a bus still at its terminal (`atTerminal`); those follow, nearest first.
 - `distance` is Bus Time's text for riders; `stopsAway` and `meters` are null when unknown.
 - `route` is the GTFS route id, as in `/bus/alerts`; `name` is what the bus shows.
+- `cancelled` is true for a cancelled trip: Bus Time lists it at its scheduled time so riders
+  know that bus won't come. The preview leaves cancelled buses out.
 - `stop.name` comes from Bus Time and is null when no bus is on its way.
 - Errors: 400 (missing or malformed `stop`), 404 (Bus Time knows no such stop), 401, 502 (Bus
   Time failed), 500 (`BUSTIME_KEY` not set on the server).
@@ -363,6 +366,58 @@ One line like the other previews: the next bus of each route, soonest first.
 ```
 1 AV/E 14 ST · M15-SBS 2 · M15 5 min
 ```
+
+### `GET /bus/vehicles?route=<id>`
+
+Every bus on one route, both directions, from Bus Time. `route` is the GTFS route id as in
+`/bus/alerts` (`M15`, `Q06`, `BX12`), case insensitive. Select Bus Service routes end in `+`,
+which a query string must encode (`M15%2B`), or can be written as the bus shows them (`M15-SBS`).
+
+```json
+{
+  "route": { "id": "M15+", "name": "M15-SBS", "color": "#B933AD", "textColor": "#FFFFFF" },
+  "updatedAt": 1794538089,
+  "vehicles": [
+    {
+      "id": "6218", "headsign": "SELECT BUS SERVICE SOUTH FERRY via 2 AV",
+      "lat": 40.707984, "lon": -74.003537, "heading": 225,
+      "stop": { "id": "405338", "name": "PEARL ST/BEEKMAN ST" },
+      "distance": "at stop", "stopsAway": 0, "atTerminal": false,
+      "time": 1794538088, "tripId": "MTA NYCT_OF_D6-Weekday-SDon-121500_SBS15_454"
+    }
+  ]
+}
+```
+
+- `heading` is a compass heading in degrees, clockwise from north (Bus Time's own bearing counts
+  counterclockwise from east; the service converts it). `stop` is the bus's next stop, with the
+  code `/bus/arrivals` takes. `time` is when the position was recorded.
+- Buses are listed by headsign, then bus number.
+- Errors: 400 (missing `route`), 404 (unknown route, or one Bus Time doesn't run), 401, 502,
+  500 (`BUSTIME_KEY` not set).
+
+### `GET /bus/nearby?lat=<lat>&lon=<lon>&limit=<n>`
+
+The bus stops within 500 m of a point, nearest first, from Bus Time's stop lookup API. `limit`
+defaults to 10, max 25.
+
+```json
+{
+  "stops": [
+    {
+      "id": "401687", "name": "1 AV/E 14 ST", "direction": "NE",
+      "lat": 40.732122, "lon": -73.981946, "distance": 0,
+      "routes": [{ "id": "M15", "name": "M15", "color": "#00AEEF", "textColor": "#FFFFFF" }]
+    }
+  ]
+}
+```
+
+- `id` is the code `/bus/arrivals` takes. `direction` is the compass direction buses travel
+  there (`NE`), which tells apart the two stops on either side of a street. `distance` is in
+  meters, in a straight line.
+- Cached like static data (an hour on the CDN): stops change with the quarterly schedules.
+- Errors: 400 (missing or out of range `lat`, `lon`, bad `limit`), 401, 502, 500.
 
 ### `GET /citibike/nearby?lat=<lat>&lon=<lon>&n=<n>`
 
@@ -484,11 +539,13 @@ tells whether the CDN served it (`HIT`, `STALE`) or not (`MISS`).
   its next stop.
 - The LIRR, Metro-North and ferry data files (`src/data/<agency>.generated.ts`) are built and
   refreshed like the subway's, by the same script and workflow.
-- **Buses**: MTA Bus Time's SIRI StopMonitoring API (`bustime.mta.info`), one request per stop,
-  which needs a free API key (`BUSTIME_KEY`, see Deploying). Its answer names the stop and each
-  bus's destination, so the only static bus data is `src/data/bus.generated.ts`: route names and
-  colors from the six static bus GTFS feeds (one per borough and MTA Bus Company), built and
-  refreshed like the others. Each function instance keeps a stop's answer for 15 s.
+- **Buses**: MTA Bus Time's SIRI StopMonitoring and VehicleMonitoring APIs (`bustime.mta.info`),
+  one request per stop or route, and its OneBusAway "Discovery" API (`bustime-classic.mta.info`)
+  for stops near a point. All need a free API key (`BUSTIME_KEY`, see Deploying). Their answers
+  name the stops and each bus's destination, so the only static bus data is
+  `src/data/bus.generated.ts`: route names and colors from the six static bus GTFS feeds (one per
+  borough and MTA Bus Company), built and refreshed like the others. Each function instance
+  keeps a stop's or route's answer for 15 s, and a stop lookup for 10 minutes.
 
 ## Development
 
@@ -514,11 +571,12 @@ src/subway/          feed list, arrivals computation, train positions, preview l
 src/citibike/        Citi Bike: GBFS fetching, station join and nearest-station search
 src/path/            PATH stations and routes, feed fetching and parsing, arrivals, preview line
 src/agency/          LIRR, Metro-North and NYC Ferry: registry, departures, vehicle positions
-src/bus/             buses: Bus Time (SIRI) fetching and parsing, arrivals
+src/bus/             buses: Bus Time (SIRI, Discovery) fetching and parsing, arrivals, vehicles, stops
 src/gtfsrt.ts        GTFS-realtime plumbing shared by every provider: fetch, decode, memo, helpers
 src/alerts.ts        alerts in effect, from any GTFS-realtime alerts feed
 src/mercury.ts       the MTA's alert statuses and their extension to GTFS-realtime
 src/protowire.ts     reads the MTA's GTFS-realtime extensions, which the bindings keep undecoded
+src/geo.ts           distances, for the routes that answer "near a point"
 src/preview.ts       the "next departure per destination" line shared by PATH and the agencies
 src/stops/           station resolution and name search
 src/static/          static GTFS preprocessing (pure) and its types
@@ -570,6 +628,8 @@ curl -i -H "X-Transit-Token: $TOKEN" "$BASE/mnr/stations?q=rye"         # 200
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/preview/ferry?q=wall"       # 200, one line of text
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/bus/alerts?route=Q29"       # 200
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/bus/arrivals?stop=401687"  # 200 (500 without BUSTIME_KEY)
+curl -i -H "X-Transit-Token: $TOKEN" "$BASE/bus/vehicles?route=M15"     # 200
+curl -i -H "X-Transit-Token: $TOKEN" "$BASE/bus/nearby?lat=40.7321&lon=-73.9819"  # 200
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/citibike/nearby?lat=40.7559&lon=-73.9871"  # 200
 ```
 
@@ -591,8 +651,9 @@ Or run `TRANSIT_BASE_URL=$BASE TRANSIT_TOKEN=$TOKEN pnpm smoke`, which does the 
   recorded feeds.
 - `test/alerts.test.ts`: alerts in effect on hand-built and recorded feeds, `/subway/alerts`
   and `/subway/vehicles`.
-- `test/bus.test.ts`: the static bus build, Bus Time parsing (a fixture answer and hand-built
-  ones), arrivals ordering, and the bus routes, key handling included.
+- `test/bus.test.ts`: the static bus build, Bus Time parsing (recorded answers and hand-built
+  ones, cancelled trips included), arrivals ordering, vehicle positions, nearby stops, and the
+  bus routes, key handling included.
 - `test/citibike.test.ts`: the station join and nearest-station search on hand-built feeds and
   on recorded GBFS feeds (trimmed to the stations around Times Sq), and both routes.
 - `.github/workflows/smoke.yml`: twice a day against the live feeds. It fails on stale feeds,
@@ -601,8 +662,8 @@ Or run `TRANSIT_BASE_URL=$BASE TRANSIT_TOKEN=$TOKEN pnpm smoke`, which does the 
   stale data, or Journal Square with no trains; for the LIRR, Metro-North and the ferry, on
   stale feeds, ids missing from the static data, a main stop with no departures or no vehicle
   positions; for Citi Bike, on feeds that are stale or no longer join; for buses (with
-  `BUSTIME_KEY`), on a changed or stale Bus Time answer, unknown routes or no buses at 1 Av/E 14
-  St; and on alert feeds that stop decoding, MTA alerts without a status or with one
+  `BUSTIME_KEY`), on a changed or stale Bus Time answer, unknown routes, no buses at 1 Av/E 14
+  St, no M15 positions, or a stop lookup that misses 1 Av/E 14 St; and on alert feeds that stop decoding, MTA alerts without a status or with one
   missing from the MTA's table.
 
 ## Roadmap
@@ -614,10 +675,8 @@ In code, that means one function for the provider, `api/<provider>.ts` (Vercel's
 allows 12 and there are 10), with its routes dispatched by `byOp()`, handlers in `src/routes/`
 wrapped in `authenticated(...)`, and the `LIVE_CACHE` or `STATIC_CACHE` headers from `src/http.ts`.
 
-- **Bus stops**: search by name and nearby stops for `/bus/arrivals`, which today takes the code
-  on the stop's sign. Needs the static bus stops (about 13,500) in the bus function, or Bus
-  Time's stops API.
-- **Bus positions**: `/bus/vehicles?route=`, from Bus Time's vehicle monitoring.
+- **Bus stop search by name**: `/bus/nearby` finds stops by position; Bus Time's stop lookup has
+  no name search, so this needs the static bus stops (about 13,500) in the bus function.
 - **NJ Transit**: rail and bus arrivals. Source: NJ Transit's GTFS-realtime feeds, which need a
   developer account.
 - **Stop search across systems**: extend `/stops/search` to PATH, LIRR, Metro-North and ferry

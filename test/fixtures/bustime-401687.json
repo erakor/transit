@@ -1,147 +1,638 @@
 {
  "Siri": {
   "ServiceDelivery": {
-   "ResponseTimestamp": "2026-11-10T13:18:56.123-05:00",
+   "ResponseTimestamp": "2026-11-12T21:48:09.437-05:00",
    "StopMonitoringDelivery": [
     {
      "MonitoredStopVisit": [
       {
        "MonitoredVehicleJourney": {
-        "LineRef": "MTA NYCT_M15+",
+        "LineRef": "MTA NYCT_M15",
         "DirectionRef": "0",
         "FramedVehicleJourneyRef": {
-         "DataFrameRef": "2026-11-10",
-         "DatedVehicleJourneyRef": "MTA NYCT_MQ_D6-Weekday-SDon-077800_M15+_731"
+         "DataFrameRef": "2026-11-12",
+         "DatedVehicleJourneyRef": "MTA NYCT_OH_D6-Weekday-SDon-133000_M15_239"
         },
-        "JourneyPatternRef": "MTA_M150371",
-        "PublishedLineName": ["M15-SBS"],
-        "OperatorRef": "MTA NYCT",
-        "OriginRef": "MTA_903013",
-        "DestinationRef": "MTA_803101",
-        "DestinationName": ["SBS EAST HARLEM 126 ST via 1 AV"],
+        "PublishedLineName": [
+         "M15"
+        ],
+        "DestinationRef": "MTA_803054",
+        "DestinationName": [
+         "EAST HARLEM 125 ST via 1 AV"
+        ],
+        "OriginAimedDepartureTime": "2026-11-12T22:10:00.000-05:00",
+        "SituationRef": [
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:26106"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:32844"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:alert:276004:26"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:31064"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:30414"
+         }
+        ],
         "Monitored": true,
-        "VehicleLocation": { "Longitude": -73.983795, "Latitude": 40.728911 },
-        "Bearing": 54.8,
+        "VehicleLocation": {
+         "Longitude": -73.991878,
+         "Latitude": 40.716528
+        },
+        "Bearing": 243.01978,
         "ProgressRate": "normalProgress",
-        "BlockRef": "MTA NYCT_MQ_D6-Weekday-SDon_E_MQ_47640_M15+-731",
-        "VehicleRef": "MTA NYCT_5791",
+        "ProgressStatus": [
+         "prevTrip"
+        ],
+        "VehicleRef": "MTA NYCT_5923",
         "MonitoredCall": {
-         "ExpectedArrivalTime": "2026-11-10T13:21:10.000-05:00",
-         "ExpectedDepartureTime": "2026-11-10T13:21:10.000-05:00",
-         "ArrivalProximityText": "approaching",
-         "DistanceFromStop": 412,
-         "NumberOfStopsAway": 1,
-         "StopPointRef": "MTA_401687",
+         "AimedArrivalTime": "2026-11-12T22:31:00.472-05:00",
+         "ExpectedArrivalTime": "2026-11-12T22:30:54.246-05:00",
+         "ArrivalProximityText": "4.6 miles away",
+         "ExpectedDepartureTime": "2026-11-12T22:30:54.246-05:00",
+         "DistanceFromStop": 7440,
+         "NumberOfStopsAway": 18,
          "VisitNumber": 1,
-         "StopPointName": ["1 AV/E 14 ST"]
+         "StopPointName": [
+          "1 AV/E 14 ST"
+         ]
         }
        },
-       "RecordedAtTime": "2026-11-10T13:18:41.000-05:00"
+       "RecordedAtTime": "2026-11-12T21:48:01.119-05:00"
       },
       {
        "MonitoredVehicleJourney": {
         "LineRef": "MTA NYCT_M15",
         "DirectionRef": "0",
         "FramedVehicleJourneyRef": {
-         "DataFrameRef": "2026-11-10",
-         "DatedVehicleJourneyRef": "MTA NYCT_MQ_D6-Weekday-SDon-078300_M15_708"
+         "DataFrameRef": "2026-11-12",
+         "DatedVehicleJourneyRef": "MTA NYCT_OH_D6-Weekday-SDon-127800_M15_247"
         },
-        "JourneyPatternRef": "MTA_M150339",
-        "PublishedLineName": ["M15"],
-        "OperatorRef": "MTA NYCT",
-        "OriginRef": "MTA_903012",
-        "DestinationRef": "MTA_803101",
-        "DestinationName": ["EAST HARLEM 126 ST via 1 AV"],
+        "PublishedLineName": [
+         "M15"
+        ],
+        "DestinationRef": "MTA_803054",
+        "DestinationName": [
+         "EAST HARLEM 125 ST via 1 AV"
+        ],
+        "OriginAimedDepartureTime": "2026-11-12T21:18:00.000-05:00",
+        "SituationRef": [
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:26106"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:32844"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:alert:276004:26"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:31064"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:30414"
+         }
+        ],
         "Monitored": true,
-        "VehicleLocation": { "Longitude": -73.988215, "Latitude": 40.72165 },
-        "Bearing": 55.2,
+        "VehicleLocation": {
+         "Longitude": -73.988942,
+         "Latitude": 40.722468
+        },
+        "Bearing": 248.28552,
         "ProgressRate": "normalProgress",
-        "BlockRef": "MTA NYCT_MQ_D6-Weekday-SDon_E_MQ_43260_M15-708",
-        "VehicleRef": "MTA NYCT_6434",
+        "Occupancy": "seatsAvailable",
+        "ProgressStatus": [
+         "prevTrip"
+        ],
+        "VehicleRef": "MTA NYCT_6075",
         "MonitoredCall": {
-         "ExpectedArrivalTime": "2026-11-10T13:24:40.000-05:00",
-         "ExpectedDepartureTime": "2026-11-10T13:24:40.000-05:00",
-         "ArrivalProximityText": "5 stops away",
-         "DistanceFromStop": 1630,
-         "NumberOfStopsAway": 5,
-         "StopPointRef": "MTA_401687",
+         "AimedArrivalTime": "2026-11-12T21:39:00.465-05:00",
+         "ExpectedArrivalTime": "2026-11-12T22:25:41.539-05:00",
+         "ArrivalProximityText": "5.1 miles away",
+         "ExpectedDepartureTime": "2026-11-12T22:25:41.539-05:00",
+         "DistanceFromStop": 8145,
+         "NumberOfStopsAway": 18,
          "VisitNumber": 1,
-         "StopPointName": ["1 AV/E 14 ST"]
+         "StopPointName": [
+          "1 AV/E 14 ST"
+         ]
         }
        },
-       "RecordedAtTime": "2026-11-10T13:18:30.000-05:00"
-      },
-      {
-       "MonitoredVehicleJourney": {
-        "LineRef": "MTA NYCT_M15+",
-        "DirectionRef": "0",
-        "FramedVehicleJourneyRef": {
-         "DataFrameRef": "2026-11-10",
-         "DatedVehicleJourneyRef": "MTA NYCT_MQ_D6-Weekday-SDon-079000_M15+_733"
-        },
-        "JourneyPatternRef": "MTA_M150371",
-        "PublishedLineName": ["M15-SBS"],
-        "OperatorRef": "MTA NYCT",
-        "OriginRef": "MTA_903013",
-        "DestinationRef": "MTA_803101",
-        "DestinationName": ["SBS EAST HARLEM 126 ST via 1 AV"],
-        "Monitored": true,
-        "VehicleLocation": { "Longitude": -74.011802, "Latitude": 40.702068 },
-        "Bearing": 30.1,
-        "ProgressRate": "normalProgress",
-        "BlockRef": "MTA NYCT_MQ_D6-Weekday-SDon_E_MQ_48010_M15+-733",
-        "VehicleRef": "MTA NYCT_5802",
-        "MonitoredCall": {
-         "ExpectedArrivalTime": "2026-11-10T13:31:05.000-05:00",
-         "ExpectedDepartureTime": "2026-11-10T13:31:05.000-05:00",
-         "ArrivalProximityText": "2.6 miles away",
-         "DistanceFromStop": 4210,
-         "NumberOfStopsAway": 9,
-         "StopPointRef": "MTA_401687",
-         "VisitNumber": 1,
-         "StopPointName": ["1 AV/E 14 ST"]
-        }
-       },
-       "RecordedAtTime": "2026-11-10T13:18:50.000-05:00"
+       "RecordedAtTime": "2026-11-12T21:47:41.000-05:00"
       },
       {
        "MonitoredVehicleJourney": {
         "LineRef": "MTA NYCT_M15",
         "DirectionRef": "0",
         "FramedVehicleJourneyRef": {
-         "DataFrameRef": "2026-11-10",
-         "DatedVehicleJourneyRef": "MTA NYCT_MQ_D6-Weekday-SDon-080100_M15_712"
+         "DataFrameRef": "2026-11-12",
+         "DatedVehicleJourneyRef": "MTA NYCT_OH_D6-Weekday-SDon-135000_M15_241"
         },
-        "JourneyPatternRef": "MTA_M150339",
-        "PublishedLineName": ["M15"],
-        "OperatorRef": "MTA NYCT",
-        "OriginRef": "MTA_903012",
-        "DestinationRef": "MTA_803101",
-        "DestinationName": ["EAST HARLEM 126 ST via 1 AV"],
+        "PublishedLineName": [
+         "M15"
+        ],
+        "DestinationRef": "MTA_803054",
+        "DestinationName": [
+         "EAST HARLEM 125 ST via 1 AV"
+        ],
+        "OriginAimedDepartureTime": "2026-11-12T22:30:00.000-05:00",
+        "SituationRef": [
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:26106"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:32844"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:alert:276004:26"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:31064"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:30414"
+         }
+        ],
         "Monitored": true,
-        "VehicleLocation": { "Longitude": -74.01306, "Latitude": 40.70158 },
-        "Bearing": 31.4,
-        "ProgressRate": "noProgress",
-        "ProgressStatus": ["layover"],
-        "BlockRef": "MTA NYCT_MQ_D6-Weekday-SDon_E_MQ_44100_M15-712",
-        "VehicleRef": "MTA NYCT_6521",
+        "VehicleLocation": {
+         "Longitude": -73.98057,
+         "Latitude": 40.738337
+        },
+        "Bearing": 237.38075,
+        "ProgressRate": "normalProgress",
+        "ProgressStatus": [
+         "prevTrip"
+        ],
+        "VehicleRef": "MTA NYCT_6049",
         "MonitoredCall": {
-         "ArrivalProximityText": "3.1 miles away",
-         "DistanceFromStop": 4990,
-         "NumberOfStopsAway": 22,
-         "StopPointRef": "MTA_401687",
+         "AimedArrivalTime": "2026-11-12T22:51:00.495-05:00",
+         "ArrivalProximityText": "6.4 miles away",
+         "DistanceFromStop": 10279,
+         "NumberOfStopsAway": 18,
          "VisitNumber": 1,
-         "StopPointName": ["1 AV/E 14 ST"]
+         "StopPointName": [
+          "1 AV/E 14 ST"
+         ]
         }
        },
-       "RecordedAtTime": "2026-11-10T13:17:58.000-05:00"
+       "RecordedAtTime": "2026-11-12T21:48:06.000-05:00"
+      },
+      {
+       "MonitoredVehicleJourney": {
+        "LineRef": "MTA NYCT_M15",
+        "DirectionRef": "0",
+        "FramedVehicleJourneyRef": {
+         "DataFrameRef": "2026-11-12",
+         "DatedVehicleJourneyRef": "MTA NYCT_OH_D6-Weekday-SDon-134000_M15_240"
+        },
+        "PublishedLineName": [
+         "M15"
+        ],
+        "DestinationRef": "MTA_803054",
+        "DestinationName": [
+         "EAST HARLEM 125 ST via 1 AV"
+        ],
+        "OriginAimedDepartureTime": "2026-11-12T22:20:00.000-05:00",
+        "SituationRef": [
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:26106"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:32844"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:alert:276004:26"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:31064"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:30414"
+         }
+        ],
+        "Monitored": true,
+        "VehicleLocation": {
+         "Longitude": -73.980158,
+         "Latitude": 40.738934
+        },
+        "Bearing": 234.56668,
+        "ProgressRate": "normalProgress",
+        "ProgressStatus": [
+         "prevTrip"
+        ],
+        "VehicleRef": "MTA NYCT_5840",
+        "MonitoredCall": {
+         "AimedArrivalTime": "2026-11-12T22:41:00.480-05:00",
+         "ExpectedArrivalTime": "2026-11-12T22:40:54.246-05:00",
+         "ArrivalProximityText": "6.4 miles away",
+         "ExpectedDepartureTime": "2026-11-12T22:40:54.246-05:00",
+         "DistanceFromStop": 10353,
+         "NumberOfStopsAway": 18,
+         "VisitNumber": 1,
+         "StopPointName": [
+          "1 AV/E 14 ST"
+         ]
+        }
+       },
+       "RecordedAtTime": "2026-11-12T21:48:08.000-05:00"
+      },
+      {
+       "MonitoredVehicleJourney": {
+        "LineRef": "MTA NYCT_M15",
+        "DirectionRef": "0",
+        "FramedVehicleJourneyRef": {
+         "DataFrameRef": "2026-11-12",
+         "DatedVehicleJourneyRef": "MTA NYCT_OH_D6-Weekday-SDon-131000_M15_238"
+        },
+        "PublishedLineName": [
+         "M15"
+        ],
+        "DestinationRef": "MTA_803054",
+        "DestinationName": [
+         "EAST HARLEM 125 ST via 1 AV"
+        ],
+        "OriginAimedDepartureTime": "2026-11-12T21:50:00.000-05:00",
+        "SituationRef": [
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:26106"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:32844"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:alert:276004:26"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:31064"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:30414"
+         }
+        ],
+        "Monitored": true,
+        "VehicleLocation": {
+         "Longitude": -73.976098,
+         "Latitude": 40.744507
+        },
+        "Bearing": 234.03716,
+        "ProgressRate": "normalProgress",
+        "ProgressStatus": [
+         "prevTrip"
+        ],
+        "VehicleRef": "MTA NYCT_5850",
+        "MonitoredCall": {
+         "AimedArrivalTime": "2026-11-12T22:11:00.488-05:00",
+         "ExpectedArrivalTime": "2026-11-12T22:42:46.676-05:00",
+         "ArrivalProximityText": "6.9 miles away",
+         "ExpectedDepartureTime": "2026-11-12T22:42:46.676-05:00",
+         "DistanceFromStop": 11061,
+         "NumberOfStopsAway": 18,
+         "VisitNumber": 1,
+         "StopPointName": [
+          "1 AV/E 14 ST"
+         ]
+        }
+       },
+       "RecordedAtTime": "2026-11-12T21:47:51.000-05:00"
+      },
+      {
+       "MonitoredVehicleJourney": {
+        "LineRef": "MTA NYCT_M15",
+        "DirectionRef": "0",
+        "FramedVehicleJourneyRef": {
+         "DataFrameRef": "2026-11-12",
+         "DatedVehicleJourneyRef": "MTA NYCT_OH_D6-Weekday-SDon-136000_M15_252"
+        },
+        "PublishedLineName": [
+         "M15"
+        ],
+        "DestinationRef": "MTA_803054",
+        "DestinationName": [
+         "EAST HARLEM 125 ST via 1 AV"
+        ],
+        "OriginAimedDepartureTime": "2026-11-12T21:02:00.000-05:00",
+        "SituationRef": [
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:26106"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:32844"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:alert:276004:26"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:31064"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:30414"
+         }
+        ],
+        "Monitored": true,
+        "VehicleLocation": {
+         "Longitude": -73.972571,
+         "Latitude": 40.749336
+        },
+        "Bearing": 233.72922,
+        "ProgressRate": "normalProgress",
+        "ProgressStatus": [
+         "prevTrip"
+        ],
+        "VehicleRef": "MTA NYCT_5303",
+        "MonitoredCall": {
+         "AimedArrivalTime": "2026-11-12T23:01:00.503-05:00",
+         "ArrivalProximityText": "7.3 miles away",
+         "DistanceFromStop": 11675,
+         "NumberOfStopsAway": 18,
+         "VisitNumber": 1,
+         "StopPointName": [
+          "1 AV/E 14 ST"
+         ]
+        }
+       },
+       "RecordedAtTime": "2026-11-12T21:48:01.000-05:00"
       }
      ],
-     "ResponseTimestamp": "2026-11-10T13:18:56.123-05:00",
-     "ValidUntil": "2026-11-10T13:19:56.123-05:00"
+     "ResponseTimestamp": "2026-11-12T21:48:09.437-05:00",
+     "ValidUntil": "2026-11-12T21:49:09.437-05:00"
     }
    ],
-   "SituationExchangeDelivery": []
+   "SituationExchangeDelivery": [
+    {
+     "Situations": {
+      "PtSituationElement": [
+       {
+        "PublicationWindow": {
+         "StartTime": "2026-04-08T00:00:00.000-04:00",
+         "EndTime": "2027-05-11T22:43:04.000-04:00"
+        },
+        "Severity": "undefined",
+        "Summary": [
+         "M15 stops on South St at Whitehall St will be bypassed, the first and last stops will be made on Whitehall St at Water St"
+        ],
+        "Description": [
+         "M15 stops on South St at Whitehall St will be bypassed, the first and last stops will be made on Whitehall St at Water St\n<p><strong>What's happening?</strong></p><p>DOT Construction - Battery Park</p><p></p><p><strong>Note: </strong>Bus arrival information may not be available/accurate while buses are detoured</p>"
+        ],
+        "Affects": {
+         "VehicleJourneys": {
+          "AffectedVehicleJourney": [
+           {
+            "LineRef": "MTA NYCT_M15",
+            "DirectionRef": "1"
+           },
+           {
+            "LineRef": "MTA NYCT_M15",
+            "DirectionRef": "0"
+           }
+          ]
+         }
+        },
+        "CreationTime": "2026-04-08T15:23:36.000-04:00",
+        "SituationNumber": "MTA NYCT_lmm:planned_work:31064"
+       },
+       {
+        "PublicationWindow": {
+         "StartTime": "2025-07-21T00:00:00.000-04:00",
+         "EndTime": "2027-05-11T22:43:04.000-04:00"
+        },
+        "Severity": "undefined",
+        "Summary": [
+         "Northbound M15 stop on 1st Ave at E 77th St is being bypassed"
+        ],
+        "Description": [
+         "Northbound M15 stop on 1st Ave at E 77th St is being bypassed\n<p>Please use the stops on <strong>1st Ave</strong> at <strong>E 75th St</strong> or <strong>E 81st St</strong> instead.</p><p></p><p><strong>What's happening?</strong></p><p>Construction</p>"
+        ],
+        "Affects": {
+         "VehicleJourneys": {
+          "AffectedVehicleJourney": [
+           {
+            "LineRef": "MTA NYCT_M15",
+            "DirectionRef": "1"
+           },
+           {
+            "LineRef": "MTA NYCT_M15",
+            "DirectionRef": "0"
+           }
+          ]
+         }
+        },
+        "CreationTime": "2025-07-21T13:56:50.000-04:00",
+        "SituationNumber": "MTA NYCT_lmm:planned_work:26106"
+       },
+       {
+        "PublicationWindow": {
+         "StartTime": "2026-11-12T15:04:53.000-05:00",
+         "EndTime": "1969-12-31T19:00:00.000-05:00"
+        },
+        "Severity": "undefined",
+        "Summary": [
+         "Expect delays on all Manhattan bus routes due to inclement weather.Allow additional travel time"
+        ],
+        "Description": [
+         "Expect delays on all Manhattan bus routes due to inclement weather.Allow additional travel time"
+        ],
+        "Affects": {
+         "VehicleJourneys": {
+          "AffectedVehicleJourney": [
+           {
+            "LineRef": "MTA NYCT_M20"
+           },
+           {
+            "LineRef": "MTA NYCT_M15"
+           },
+           {
+            "LineRef": "MTA NYCT_M23+"
+           },
+           {
+            "LineRef": "MTA NYCT_M72"
+           },
+           {
+            "LineRef": "MTA NYCT_M1"
+           },
+           {
+            "LineRef": "MTA NYCT_M7"
+           },
+           {
+            "LineRef": "MTA NYCT_M14A+"
+           },
+           {
+            "LineRef": "MTA NYCT_M21"
+           },
+           {
+            "LineRef": "MTA NYCT_M104"
+           },
+           {
+            "LineRef": "MTA NYCT_M35"
+           },
+           {
+            "LineRef": "MTA NYCT_M86+"
+           },
+           {
+            "LineRef": "MTA NYCT_M8"
+           },
+           {
+            "LineRef": "MTA NYCT_M15+"
+           },
+           {
+            "LineRef": "MTA NYCT_M55"
+           },
+           {
+            "LineRef": "MTA NYCT_M34A+"
+           },
+           {
+            "LineRef": "MTA NYCT_M100"
+           },
+           {
+            "LineRef": "MTA NYCT_M4"
+           },
+           {
+            "LineRef": "MTA NYCT_M66"
+           },
+           {
+            "LineRef": "MTA NYCT_M5"
+           },
+           {
+            "LineRef": "MTA NYCT_M34+"
+           },
+           {
+            "LineRef": "MTA NYCT_M96"
+           },
+           {
+            "LineRef": "MTA NYCT_M22"
+           },
+           {
+            "LineRef": "MTA NYCT_M31"
+           },
+           {
+            "LineRef": "MTA NYCT_M42"
+           },
+           {
+            "LineRef": "MTA NYCT_M14D+"
+           },
+           {
+            "LineRef": "MTA NYCT_M116"
+           },
+           {
+            "LineRef": "MTA NYCT_M60+"
+           },
+           {
+            "LineRef": "MTA NYCT_M12"
+           },
+           {
+            "LineRef": "MTA NYCT_M9"
+           },
+           {
+            "LineRef": "MTA NYCT_M102"
+           },
+           {
+            "LineRef": "MTA NYCT_M90"
+           },
+           {
+            "LineRef": "MTA NYCT_M10"
+           },
+           {
+            "LineRef": "MTA NYCT_M57"
+           },
+           {
+            "LineRef": "MTA NYCT_M98"
+           },
+           {
+            "LineRef": "MTA NYCT_M125"
+           },
+           {
+            "LineRef": "MTA NYCT_M2"
+           },
+           {
+            "LineRef": "MTA NYCT_M106"
+           },
+           {
+            "LineRef": "MTA NYCT_M103"
+           },
+           {
+            "LineRef": "MTA NYCT_M3"
+           },
+           {
+            "LineRef": "MTA NYCT_M11"
+           },
+           {
+            "LineRef": "MTA NYCT_M101"
+           },
+           {
+            "LineRef": "MTA NYCT_M79+"
+           },
+           {
+            "LineRef": "MTA NYCT_M50"
+           }
+          ]
+         }
+        },
+        "CreationTime": "2026-11-12T15:04:53.000-05:00",
+        "SituationNumber": "MTA NYCT_lmm:alert:276004:26"
+       },
+       {
+        "PublicationWindow": {
+         "StartTime": "2026-06-18T00:00:00.000-04:00",
+         "EndTime": "2027-01-01T00:00:00.000-05:00"
+        },
+        "Severity": "undefined",
+        "Summary": [
+         "Southbound M15 stop on E 106th St is closed; buses are making a temporary stop on 2nd Ave between E 107th St and E 106th St."
+        ],
+        "Description": [
+         "Southbound M15 stop on E 106th St is closed; buses are making a temporary stop on 2nd Ave between E 107th St and E 106th St.\n<p><strong>What's happening?</strong></p><p><a title=\"\" href=\"https://www.mta.info/project/second-avenue-subway-phase-2\" rel=\"noopener noreferrer nofollow\" target=\"_blank\">Construction - Second Avenue Subway Extension</a></p><p></p><p><strong>Note:</strong> Bus arrival information may not be available/accurate while buses are detoured</p>"
+        ],
+        "Affects": {
+         "VehicleJourneys": {
+          "AffectedVehicleJourney": [
+           {
+            "LineRef": "MTA NYCT_M15",
+            "DirectionRef": "0"
+           },
+           {
+            "LineRef": "MTA NYCT_M15",
+            "DirectionRef": "1"
+           }
+          ]
+         }
+        },
+        "CreationTime": "2026-06-18T13:09:53.000-04:00",
+        "SituationNumber": "MTA NYCT_lmm:planned_work:32844"
+       },
+       {
+        "PublicationWindow": {
+         "StartTime": "2026-03-03T00:00:00.000-05:00",
+         "EndTime": "2027-05-11T22:43:04.000-04:00"
+        },
+        "Severity": "undefined",
+        "Summary": [
+         "The northbound M15 and M15-SBS bus stops on Water St at Wall St and Pine St has been temporarily moved to the far side of Pine St"
+        ],
+        "Description": [
+         "The northbound M15 and M15-SBS bus stops on Water St at Wall St and Pine St has been temporarily moved to the far side of Pine St\n<p><strong>What's happening?</strong></p><p>Construction - Water St</p><p></p><p><strong>NOTE</strong>: <strong>M15-SBS</strong> customers must pay fare before boarding by using the machine at regular bus stop located on Water St at Pine St or bus door with OMNY.</p>"
+        ],
+        "Affects": {
+         "VehicleJourneys": {
+          "AffectedVehicleJourney": [
+           {
+            "LineRef": "MTA NYCT_M15+"
+           },
+           {
+            "LineRef": "MTA NYCT_M15"
+           }
+          ]
+         }
+        },
+        "CreationTime": "2026-03-03T17:35:41.000-05:00",
+        "SituationNumber": "MTA NYCT_lmm:planned_work:30414"
+       }
+      ]
+     }
+    }
+   ]
   }
  }
 }

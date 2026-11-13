@@ -93,10 +93,14 @@ The LIRR, Metro-North and NYC Ferry share one implementation, driven by the `AGE
   in `AGENCIES`, a source in `scripts/build-static.ts`, entries in `vercel.json`, and a
   `MAIN_STOP` in `scripts/smoke.ts`; the fixture recorder and the tests' fetcher follow `AGENCIES`.
 
-Buses (`/bus/arrivals`, `/preview/bus`, `/bus/alerts`) are not an agency: they are their own
-function, `api/bus.ts` (`busHandler()` in `src/routes/bus.ts`). Arrivals come from MTA Bus Time's SIRI
-StopMonitoring API, one JSON request per stop (`fetchStopMonitoring()` in `src/bus/siri.ts`, through
-`memoized()`), read by `parseStopMonitoring()` and ordered by `computeBusArrivals()` (both pure). The
+Buses (`/bus/arrivals`, `/preview/bus`, `/bus/alerts`, `/bus/vehicles`, `/bus/nearby`) are not an
+agency: they are their own function, `api/bus.ts` (`busHandler()` in `src/routes/bus.ts`). Arrivals
+come from MTA Bus Time's SIRI StopMonitoring API, one JSON request per stop (`fetchStopMonitoring()`
+in `src/bus/siri.ts`, through `memoized()`), read by `parseStopMonitoring()` and ordered by
+`computeBusArrivals()` (both pure). Positions come from SIRI VehicleMonitoring, one request per route
+(`fetchVehicleMonitoring()`, `computeBusVehicles()` in `src/bus/vehicles.ts`), and nearby stops from
+Bus Time's OneBusAway "Discovery" API on `bustime-classic.mta.info` (`src/bus/stops.ts`), which
+serves the static stop data so the function doesn't bundle it. The
 answer names the stop and destinations, so the only static data is route names and colors
 (`src/data/bus.generated.ts`, from six zips, built by `src/static/bus.ts`). The key is
 `BUSTIME_KEY` (a Vercel environment variable); without it those two routes answer 500. It goes in
@@ -174,9 +178,21 @@ Ids, which clients store as favorites, so keep them stable:
   it is listed after the timed ones with `time: null`.
 - Names and statuses can be a string or a list of strings. Distances are `MonitoredCall` fields in
   SIRI 2 (requested with `version=2`) and `Extensions.Distances` in SIRI 1; the parser reads both.
-- test/fixtures/bustime-*.json were written by hand from Bus Time's documented format until a key
-  was available; `pnpm record-fixtures bus` replaces them with real answers (then update
-  `BUS_FIXTURE_NOW_MS` in `test/helpers.ts`, and the counts and names `test/bus.test.ts` expects).
+- The detail level decides which fields come back: StopMonitoring's `minimum` leaves out
+  `LineRef`, `FramedVehicleJourneyRef` and `StopPointName`, so the request asks for `basic`;
+  VehicleMonitoring asks for `normal`, the first level with the next stop's `StopPointRef`.
+- VehicleMonitoring with `version=2` redirects (302) to `vehicle-monitoring-v2.json`; `fetch`
+  follows it. Its `LineRef` takes the plain GTFS route id (`M15+`), operator optional.
+- Cancelled trips come only on the `/api/2/siri/` path, as `VehicleStatus: cancelled` (SIRI 2) or
+  `ArrivalStatus`/`DepartureStatus: cancelled` on the call (SIRI 1), at their `AimedArrivalTime`.
+  None was running when the fixtures were recorded, so the tests build them by hand from the
+  documented format.
+- `Bearing` counts counterclockwise from east; responses carry a compass `heading`.
+- The Discovery API answers a bad key with a 200 and a body of `null`: `parseStopsForLocation()`
+  throws on anything but `code: 200` with a stop list, so it is a 502 and not memoized.
+- test/fixtures/bustime-*.json are real answers, recorded late in the evening (`pnpm record-fixtures
+  bus`); after re-recording, update `BUS_FIXTURE_NOW_MS` in `test/helpers.ts`, and the counts and
+  names `test/bus.test.ts` expects.
 
 ### Other feed quirks handled in code
 

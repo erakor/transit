@@ -9,7 +9,8 @@ import {
   type GbfsStationInformation,
   type GbfsStationStatus,
 } from '#src/citibike/feeds.js'
-import { distanceMeters, joinStations, nearestStations } from '#src/citibike/stations.js'
+import { joinStations, nearestStations } from '#src/citibike/stations.js'
+import { distanceMeters } from '#src/geo.js'
 import { citibikeHandler, citibikeNearbyHandler, citibikeStationHandler } from '#src/routes/citibike.js'
 import { LIVE_CACHE, providerOp } from '#src/http.js'
 import {

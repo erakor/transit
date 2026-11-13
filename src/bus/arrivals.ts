@@ -13,7 +13,8 @@ export function busRoute(routes: Record<string, RouteDisplay>, id: string, shown
 
 /**
  * The buses on their way to `stop`, in one list: predicted ones soonest first, then those Bus Time
- * can't time yet (at their terminal), nearest first. Pure.
+ * can't time yet (at their terminal), nearest first. Cancelled trips are listed at their scheduled
+ * time, marked. Pure.
  */
 export function computeBusArrivals(
   stop: string,
@@ -34,6 +35,7 @@ export function computeBusArrivals(
       stopsAway: v.stopsAway ?? null,
       meters: v.meters ?? null,
       atTerminal: v.notYetDeparted,
+      cancelled: v.cancelled,
       vehicle: v.vehicle,
       tripId: v.tripId,
     }

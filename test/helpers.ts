@@ -28,9 +28,12 @@ export function useRouteTestSetup(): void {
  * ("nyct/gtfs-ace" -> gtfs-ace, "camsys/subway-alerts" -> subway-alerts), prefixed with the
  * agency id for an agency's own host (the ferry's "tripupdate" -> ferry-tripupdate), and Citi Bike's
  * GBFS feeds ("station_status.json" -> citibike-station_status.json), and a Bus Time stop by its
- * code (bustime-401687.json).
+ * code (bustime-401687.json), a route's buses by its id (bustime-vehicles-M15+.json), and the
+ * stops around a point (bustime-stops.json, whatever the point).
  */
 export function fixtureName(url: string): string {
+  if (url.includes('stops-for-location')) return 'bustime-stops.json'
+  if (url.includes('vehicle-monitoring')) return `bustime-vehicles-${new URL(url).searchParams.get('LineRef')}.json`
   if (url.includes('bustime.mta.info')) return `bustime-${new URL(url).searchParams.get('MonitoringRef')}.json`
   const name = decodeURIComponent(url).split('/').pop()!
   if (url.includes('/gbfs/')) return `citibike-${name}`
@@ -73,7 +76,11 @@ export function get(path: string, headers: Record<string, string> = {}): Request
  * test/fixtures/bustime-999999.json is Bus Time's answer for a stop it doesn't know.
  */
 export const BUS_STOP = '401687'
-export const BUS_FIXTURE_NOW_MS = 1794334736_000
+/** Where `BUS_STOP` is: the point of the recorded stop lookup. */
+export const BUS_STOP_POINT = { lat: 40.732122, lon: -73.981946 }
+/** The route of the recorded vehicle positions: the M15 Select Bus Service, which serves `BUS_STOP`. */
+export const BUS_ROUTE = 'M15+'
+export const BUS_FIXTURE_NOW_MS = 1794538089_000
 
 /** The recorded Citi Bike feeds: `fail` and `calls` name them as `CITIBIKE_INFORMATION` and `CITIBIKE_STATUS`. */
 export const CITIBIKE_INFORMATION = 'citibike-station_information.json'

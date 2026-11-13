@@ -16,7 +16,9 @@ import { ErrorBody } from '#src/schema.js'
 import {
   auth,
   BUS_FIXTURE_NOW_MS,
+  BUS_ROUTE,
   BUS_STOP,
+  BUS_STOP_POINT,
   fixtureFetcher,
   FIXTURE_NOW_MS,
   get,
@@ -83,6 +85,8 @@ const REQUESTS = [
   `/preview/bus?stop=${BUS_STOP}`,
   '/bus/alerts',
   '/bus/alerts?route=M15',
+  `/bus/vehicles?route=${encodeURIComponent(BUS_ROUTE)}`,
+  `/bus/nearby?lat=${BUS_STOP_POINT.lat}&lon=${BUS_STOP_POINT.lon}`,
   '/citibike/station?id=f72a253f-3cef-4da8-9591-0cbd3a692162',
   '/citibike/nearby?lat=40.7559&lon=-73.9871',
   '/health',

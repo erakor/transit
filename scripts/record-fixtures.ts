@@ -15,7 +15,9 @@
  * Times Sq (the full ones are about 1 MB each), untouched, in feed order.
  *
  * Bus: Bus Time's answers for the fixture stop (`BUS_STOP`) and for a stop it doesn't know, as
- * test/fixtures/bustime-<stop>.json. The key is in the request only, never in what is written.
+ * test/fixtures/bustime-<stop>.json; the buses of `BUS_ROUTE` and of a route it doesn't know
+ * (bustime-vehicles-<route>.json); and the stops around `BUS_STOP_POINT` (bustime-stops.json).
+ * The key is in the request only, never in what is written.
  */
 import { writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
@@ -23,14 +25,16 @@ import GtfsRealtimeBindings from 'gtfs-realtime-bindings'
 import { AGENCIES } from '#src/agency/agencies.js'
 import { inEffect } from '#src/alerts.js'
 import { gbfsUrl } from '#src/citibike/feeds.js'
-import { distanceMeters } from '#src/citibike/stations.js'
+import { distanceMeters } from '#src/geo.js'
 import { decodeFeed, feedUrl } from '#src/gtfsrt.js'
 import { parsePathFeed, PATH_FEED_URL } from '#src/path/feed.js'
 import { BUS_ALERTS_FEED } from '#src/routes/bus.js'
 import { SUBWAY_ALERTS_FEED } from '#src/routes/alerts.js'
 import { FEEDS } from '#src/subway/feeds.js'
-import { stopMonitoringUrl } from '#src/bus/siri.js'
-import { BUS_STOP, fixtureName, TIMES_SQ } from '../test/helpers.js'
+import { stopMonitoringUrl, vehicleMonitoringUrl } from '#src/bus/siri.js'
+import { stopsForLocationUrl } from '#src/bus/stops.js'
+import { NEARBY_RADIUS_M } from '#src/routes/bus.js'
+import { BUS_ROUTE, BUS_STOP, BUS_STOP_POINT, fixtureName, TIMES_SQ } from '../test/helpers.js'
 
 const { FeedMessage } = GtfsRealtimeBindings.transit_realtime
 const out = (file: string) => fileURLToPath(new URL(`../test/fixtures/${file}`, import.meta.url))
@@ -124,20 +128,25 @@ async function recordBus(): Promise<void> {
     console.log('bus: skipped, BUSTIME_KEY is not set')
     return
   }
-  for (const stop of [BUS_STOP, '999999']) {
-    const url = stopMonitoringUrl(stop, key)
+  const save = async (url: string, label: string) => {
     // `get` would put the URL, and so the key, in its error.
-    const res = await fetch(url, { signal: AbortSignal.timeout(15_000) })
-    if (!res.ok) throw new Error(`bustime stop ${stop}: HTTP ${res.status}`)
+    const res = await fetch(url, { signal: AbortSignal.timeout(20_000) })
+    if (!res.ok) throw new Error(`bustime ${label}: HTTP ${res.status}`)
     const body = JSON.stringify(await res.json(), null, 1) + '\n'
     await writeFile(out(fixtureName(url)), body)
     console.log(`${fixtureName(url)}: ${body.length} bytes`)
+    return body
+  }
+  for (const stop of [BUS_STOP, '999999']) {
+    const body = await save(stopMonitoringUrl(stop, key), `stop ${stop}`)
     if (stop === BUS_STOP) {
       const stamp = (JSON.parse(body) as { Siri?: { ServiceDelivery?: { ResponseTimestamp?: string } } }).Siri
         ?.ServiceDelivery?.ResponseTimestamp
       console.log(`Update BUS_FIXTURE_NOW_MS in test/helpers.ts to ${Math.floor(Date.parse(stamp ?? '') / 1000)}_000.`)
     }
   }
+  for (const route of [BUS_ROUTE, 'ZZZ']) await save(vehicleMonitoringUrl(route, key), `route ${route}`)
+  await save(stopsForLocationUrl(BUS_STOP_POINT.lat, BUS_STOP_POINT.lon, NEARBY_RADIUS_M, key), 'stops')
 }
 
 const recorders: Record<string, () => Promise<void>> = {
