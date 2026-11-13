@@ -32,6 +32,14 @@ const ROUTE_DESCRIPTION = 'Only this route id (from `routes` in the station list
 export const AgencyArrival = z.strictObject({
   time: EpochSeconds.meta({ description: 'When it leaves this stop, or arrives where its trip ends.' }),
   delay: z.int().optional().meta({ description: 'Seconds behind schedule (negative: ahead), when the feed says.' }),
+  track: z.string().optional().meta({
+    description:
+      'LIRR and Metro-North: the track it uses at this station (`2`, `2A`, `204`), when the railroad has posted it.',
+  }),
+  status: z.string().optional().meta({
+    description:
+      "Metro-North: the train's status at this station, as the railroad words it (`On-Time`, `Late`, `Arriving`, `Departed`, `Bus` for a bus substitute).",
+  }),
   ...RouteFields,
   headsign: z.string().meta({ description: 'Where the trip ends.' }),
   tripId: z.string(),

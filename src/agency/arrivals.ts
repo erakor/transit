@@ -1,5 +1,6 @@
 import { num, terminalName, type FeedMessage } from '#src/gtfsrt.js'
 import { routeInfo } from './agencies.js'
+import { railroadStopTime } from './mtarr.js'
 import type { AgencyArrival, AgencyArrivalsResult } from './schemas.js'
 import type { AgencyData, AgencyStop } from './types.js'
 
@@ -59,6 +60,7 @@ export function computeAgencyArrivals(
     arrivals.push({
       time,
       ...(delay === undefined ? {} : { delay }),
+      ...(here ? railroadStopTime(here) : {}),
       route: route.id,
       name: route.name,
       color: route.color,

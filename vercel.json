@@ -56,7 +56,7 @@
       "destination": "/api/agency?agency=:agency&op=preview"
     },
     {
-      "source": "/bus/:op(arrivals|alerts)",
+      "source": "/bus/:op(arrivals|alerts|vehicles|nearby)",
       "destination": "/api/bus?op=:op"
     },
     {

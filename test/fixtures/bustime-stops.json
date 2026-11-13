@@ -1,0 +1,1819 @@
+{
+ "code": 200,
+ "currentTime": 1794538090491,
+ "data": {
+  "limitExceeded": false,
+  "stops": [
+   {
+    "code": "401182",
+    "direction": "NW",
+    "id": "MTA_401182",
+    "lat": 40.729501,
+    "locationType": 0,
+    "lon": -73.978117,
+    "name": "E 14 ST/AVENUE B",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av D",
+      "id": "MTA NYCT_M14D+",
+      "longName": "Lower East Side - Chelsea Piers",
+      "shortName": "M14D-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401183",
+    "direction": "NW",
+    "id": "MTA_401183",
+    "lat": 40.730455,
+    "locationType": 0,
+    "lon": -73.980421,
+    "name": "E 14 ST/AVENUE A",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av A",
+      "id": "MTA NYCT_M14A+",
+      "longName": "Lower East Side - Abingdon Sq",
+      "shortName": "M14A-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av D",
+      "id": "MTA NYCT_M14D+",
+      "longName": "Lower East Side - Chelsea Piers",
+      "shortName": "M14D-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401191",
+    "direction": "SE",
+    "id": "MTA_401191",
+    "lat": 40.733008,
+    "locationType": 0,
+    "lon": -73.986729,
+    "name": "E 14 ST/3 AV",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "EE352E",
+      "description": "via 14 St",
+      "id": "MTA NYCT_L92",
+      "longName": "L Shuttle Bus - Abingdon Sq - FDR Drive",
+      "shortName": "L92",
+      "textColor": "FFFFFF",
+      "type": 711,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av A",
+      "id": "MTA NYCT_M14A+",
+      "longName": "Lower East Side - Abingdon Sq",
+      "shortName": "M14A-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av D",
+      "id": "MTA NYCT_M14D+",
+      "longName": "Lower East Side - Chelsea Piers",
+      "shortName": "M14D-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401192",
+    "direction": "SE",
+    "id": "MTA_401192",
+    "lat": 40.732083,
+    "locationType": 0,
+    "lon": -73.984535,
+    "name": "E 14 ST/2 AV",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "EE352E",
+      "description": "via 14 St",
+      "id": "MTA NYCT_L92",
+      "longName": "L Shuttle Bus - Abingdon Sq - FDR Drive",
+      "shortName": "L92",
+      "textColor": "FFFFFF",
+      "type": 711,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av A",
+      "id": "MTA NYCT_M14A+",
+      "longName": "Lower East Side - Abingdon Sq",
+      "shortName": "M14A-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av D",
+      "id": "MTA NYCT_M14D+",
+      "longName": "Lower East Side - Chelsea Piers",
+      "shortName": "M14D-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401193",
+    "direction": "SE",
+    "id": "MTA_401193",
+    "lat": 40.731086,
+    "locationType": 0,
+    "lon": -73.982172,
+    "name": "E 14 ST/1 AV",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "EE352E",
+      "description": "via 14 St",
+      "id": "MTA NYCT_L92",
+      "longName": "L Shuttle Bus - Abingdon Sq - FDR Drive",
+      "shortName": "L92",
+      "textColor": "FFFFFF",
+      "type": 711,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av A",
+      "id": "MTA NYCT_M14A+",
+      "longName": "Lower East Side - Abingdon Sq",
+      "shortName": "M14A-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av D",
+      "id": "MTA NYCT_M14D+",
+      "longName": "Lower East Side - Chelsea Piers",
+      "shortName": "M14D-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401194",
+    "direction": "SE",
+    "id": "MTA_401194",
+    "lat": 40.730404,
+    "locationType": 0,
+    "lon": -73.980445,
+    "name": "E 14 ST/AVENUE A",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av A",
+      "id": "MTA NYCT_M14A+",
+      "longName": "Lower East Side - Abingdon Sq",
+      "shortName": "M14A-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av D",
+      "id": "MTA NYCT_M14D+",
+      "longName": "Lower East Side - Chelsea Piers",
+      "shortName": "M14D-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401195",
+    "direction": "SE",
+    "id": "MTA_401195",
+    "lat": 40.72942,
+    "locationType": 0,
+    "lon": -73.978171,
+    "name": "E 14 ST/AVENUE B",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av D",
+      "id": "MTA NYCT_M14D+",
+      "longName": "Lower East Side - Chelsea Piers",
+      "shortName": "M14D-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401547",
+    "direction": "SE",
+    "id": "MTA_401547",
+    "lat": 40.727645,
+    "locationType": 0,
+    "lon": -73.981877,
+    "name": "E 10 ST/AVENUE A",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "00AEEF",
+      "description": "via 8 & 9 St Crosstown",
+      "id": "MTA NYCT_M8",
+      "longName": "West Village - East Village",
+      "shortName": "M8",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401554",
+    "direction": "NW",
+    "id": "MTA_401554",
+    "lat": 40.727828,
+    "locationType": 0,
+    "lon": -73.982068,
+    "name": "E 10 ST/AVENUE A",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "00AEEF",
+      "description": "via 8 & 9 St Crosstown",
+      "id": "MTA NYCT_M8",
+      "longName": "West Village - East Village",
+      "shortName": "M8",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401556",
+    "direction": "W",
+    "id": "MTA_401556",
+    "lat": 40.728392,
+    "locationType": 0,
+    "lon": -73.985207,
+    "name": "E 9 ST/1 AV",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "00AEEF",
+      "description": "via 8 & 9 St Crosstown",
+      "id": "MTA NYCT_M8",
+      "longName": "West Village - East Village",
+      "shortName": "M8",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401557",
+    "direction": "W",
+    "id": "MTA_401557",
+    "lat": 40.729413,
+    "locationType": 0,
+    "lon": -73.987642,
+    "name": "E 9 ST/2 AV",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "00AEEF",
+      "description": "via 8 & 9 St Crosstown",
+      "id": "MTA NYCT_M8",
+      "longName": "West Village - East Village",
+      "shortName": "M8",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401610",
+    "direction": "SW",
+    "id": "MTA_401610",
+    "lat": 40.728215,
+    "locationType": 0,
+    "lon": -73.982068,
+    "name": "AVENUE A/E 11 ST",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "EE352E",
+      "description": "via 14 St",
+      "id": "MTA NYCT_L92",
+      "longName": "L Shuttle Bus - Abingdon Sq - FDR Drive",
+      "shortName": "L92",
+      "textColor": "FFFFFF",
+      "type": 711,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av A",
+      "id": "MTA NYCT_M14A+",
+      "longName": "Lower East Side - Abingdon Sq",
+      "shortName": "M14A-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401659",
+    "direction": "NE",
+    "id": "MTA_401659",
+    "lat": 40.728676,
+    "locationType": 0,
+    "lon": -73.981509,
+    "name": "AVENUE A/E 11 ST",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "EE352E",
+      "description": "via 14 St",
+      "id": "MTA NYCT_L92",
+      "longName": "L Shuttle Bus - Abingdon Sq - FDR Drive",
+      "shortName": "L92",
+      "textColor": "FFFFFF",
+      "type": 711,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av A",
+      "id": "MTA NYCT_M14A+",
+      "longName": "Lower East Side - Abingdon Sq",
+      "shortName": "M14A-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401660",
+    "direction": "NE",
+    "id": "MTA_401660",
+    "lat": 40.729975,
+    "locationType": 0,
+    "lon": -73.980567,
+    "name": "AVENUE A/E 14 ST",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "EE352E",
+      "description": "via 14 St",
+      "id": "MTA NYCT_L92",
+      "longName": "L Shuttle Bus - Abingdon Sq - FDR Drive",
+      "shortName": "L92",
+      "textColor": "FFFFFF",
+      "type": 711,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401685",
+    "direction": "NE",
+    "id": "MTA_401685",
+    "lat": 40.727823,
+    "locationType": 0,
+    "lon": -73.985061,
+    "name": "1 AV/SAINT MARKS PL",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "006CB7",
+      "description": "via 1st Av / 2nd Av",
+      "id": "MTA NYCT_M15",
+      "longName": "East Harlem - South Ferry",
+      "shortName": "M15",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401686",
+    "direction": "NE",
+    "id": "MTA_401686",
+    "lat": 40.729636,
+    "locationType": 0,
+    "lon": -73.983733,
+    "name": "1 AV/E 11 ST",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "006CB7",
+      "description": "via 1st Av / 2nd Av",
+      "id": "MTA NYCT_M15",
+      "longName": "East Harlem - South Ferry",
+      "shortName": "M15",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401687",
+    "direction": "NE",
+    "id": "MTA_401687",
+    "lat": 40.732122,
+    "locationType": 0,
+    "lon": -73.981946,
+    "name": "1 AV/E 14 ST",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "006CB7",
+      "description": "via 1st Av / 2nd Av",
+      "id": "MTA NYCT_M15",
+      "longName": "East Harlem - South Ferry",
+      "shortName": "M15",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401688",
+    "direction": "NE",
+    "id": "MTA_401688",
+    "lat": 40.733155,
+    "locationType": 0,
+    "lon": -73.981188,
+    "name": "1 AV/E 17 ST",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "006CB7",
+      "description": "via 1st Av / 2nd Av",
+      "id": "MTA NYCT_M15",
+      "longName": "East Harlem - South Ferry",
+      "shortName": "M15",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401689",
+    "direction": "NE",
+    "id": "MTA_401689",
+    "lat": 40.735109,
+    "locationType": 0,
+    "lon": -73.979751,
+    "name": "1 AV/E 20 ST",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "006CB7",
+      "description": "via 1st Av / 2nd Av",
+      "id": "MTA NYCT_M15",
+      "longName": "East Harlem - South Ferry",
+      "shortName": "M15",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401780",
+    "direction": "SW",
+    "id": "MTA_401780",
+    "lat": 40.735746,
+    "locationType": 0,
+    "lon": -73.982489,
+    "name": "2 AV/E 20 ST",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "006CB7",
+      "description": "via 1st Av / 2nd Av",
+      "id": "MTA NYCT_M15",
+      "longName": "East Harlem - South Ferry",
+      "shortName": "M15",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401781",
+    "direction": "SW",
+    "id": "MTA_401781",
+    "lat": 40.733996,
+    "locationType": 0,
+    "lon": -73.983769,
+    "name": "2 AV/E 17 ST",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "006CB7",
+      "description": "via 1st Av / 2nd Av",
+      "id": "MTA NYCT_M15",
+      "longName": "East Harlem - South Ferry",
+      "shortName": "M15",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401782",
+    "direction": "SW",
+    "id": "MTA_401782",
+    "lat": 40.732196,
+    "locationType": 0,
+    "lon": -73.985105,
+    "name": "2 AV/E 14 ST",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "006CB7",
+      "description": "via 1st Av / 2nd Av",
+      "id": "MTA NYCT_M15",
+      "longName": "East Harlem - South Ferry",
+      "shortName": "M15",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "401784",
+    "direction": "SW",
+    "id": "MTA_401784",
+    "lat": 40.728891,
+    "locationType": 0,
+    "lon": -73.987523,
+    "name": "2 AV/E 9 ST",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "006CB7",
+      "description": "via 1st Av / 2nd Av",
+      "id": "MTA NYCT_M15",
+      "longName": "East Harlem - South Ferry",
+      "shortName": "M15",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "402142",
+    "direction": "NW",
+    "id": "MTA_402142",
+    "lat": 40.73495,
+    "locationType": 0,
+    "lon": -73.979534,
+    "name": "E 20 ST/1 AV",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "B933AD",
+      "description": "Select Bus Service via 23rd St Crosstown",
+      "id": "MTA NYCT_M23+",
+      "longName": "Chelsea Piers - East Side",
+      "shortName": "M23-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "402670",
+    "direction": "NE",
+    "id": "MTA_402670",
+    "lat": 40.735511,
+    "locationType": 0,
+    "lon": -73.985465,
+    "name": "3 AV/E 17 ST",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "FAA61A",
+      "description": "via Third Av / Lexington Av / Amsterdam Av",
+      "id": "MTA NYCT_M101",
+      "longName": "East Village - Fort George",
+      "shortName": "M101",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "FAA61A",
+      "description": "via 3rd Av / Lexington Av / Lenox Av",
+      "id": "MTA NYCT_M102",
+      "longName": "Harlem - East Village",
+      "shortName": "M102",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "B933AD",
+      "description": "via 3rd Av / Lexington Av",
+      "id": "MTA NYCT_M103",
+      "longName": "East Harlem - City Hall",
+      "shortName": "M103",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "402856",
+    "direction": "SW",
+    "id": "MTA_402856",
+    "lat": 40.73487,
+    "locationType": 0,
+    "lon": -73.986103,
+    "name": "3 AV/E 17 ST",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "FAA61A",
+      "description": "via Third Av / Lexington Av / Amsterdam Av",
+      "id": "MTA NYCT_M101",
+      "longName": "East Village - Fort George",
+      "shortName": "M101",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "FAA61A",
+      "description": "via 3rd Av / Lexington Av / Lenox Av",
+      "id": "MTA NYCT_M102",
+      "longName": "Harlem - East Village",
+      "shortName": "M102",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "B933AD",
+      "description": "via 3rd Av / Lexington Av",
+      "id": "MTA NYCT_M103",
+      "longName": "East Harlem - City Hall",
+      "shortName": "M103",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "403870",
+    "direction": "NW",
+    "id": "MTA_403870",
+    "lat": 40.732484,
+    "locationType": 0,
+    "lon": -73.985195,
+    "name": "E 14 ST/2 AV",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "EE352E",
+      "description": "via 14 St",
+      "id": "MTA NYCT_L92",
+      "longName": "L Shuttle Bus - Abingdon Sq - FDR Drive",
+      "shortName": "L92",
+      "textColor": "FFFFFF",
+      "type": 711,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av A",
+      "id": "MTA NYCT_M14A+",
+      "longName": "Lower East Side - Abingdon Sq",
+      "shortName": "M14A-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av D",
+      "id": "MTA NYCT_M14D+",
+      "longName": "Lower East Side - Chelsea Piers",
+      "shortName": "M14D-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "403871",
+    "direction": "W",
+    "id": "MTA_403871",
+    "lat": 40.733546,
+    "locationType": 0,
+    "lon": -73.98758,
+    "name": "E 14 ST/3 AV",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "EE352E",
+      "description": "via 14 St",
+      "id": "MTA NYCT_L92",
+      "longName": "L Shuttle Bus - Abingdon Sq - FDR Drive",
+      "shortName": "L92",
+      "textColor": "FFFFFF",
+      "type": 711,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av A",
+      "id": "MTA NYCT_M14A+",
+      "longName": "Lower East Side - Abingdon Sq",
+      "shortName": "M14A-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av D",
+      "id": "MTA NYCT_M14D+",
+      "longName": "Lower East Side - Chelsea Piers",
+      "shortName": "M14D-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "403913",
+    "direction": "NE",
+    "id": "MTA_403913",
+    "lat": 40.733689,
+    "locationType": 0,
+    "lon": -73.986787,
+    "name": "3 AV/E 14 ST",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "FAA61A",
+      "description": "via Third Av / Lexington Av / Amsterdam Av",
+      "id": "MTA NYCT_M101",
+      "longName": "East Village - Fort George",
+      "shortName": "M101",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "FAA61A",
+      "description": "via 3rd Av / Lexington Av / Lenox Av",
+      "id": "MTA NYCT_M102",
+      "longName": "Harlem - East Village",
+      "shortName": "M102",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "B933AD",
+      "description": "via 3rd Av / Lexington Av",
+      "id": "MTA NYCT_M103",
+      "longName": "East Harlem - City Hall",
+      "shortName": "M103",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "404029",
+    "direction": "NW",
+    "id": "MTA_404029",
+    "lat": 40.73115,
+    "locationType": 0,
+    "lon": -73.981962,
+    "name": "E 14 ST/1 AV",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "EE352E",
+      "description": "via 14 St",
+      "id": "MTA NYCT_L92",
+      "longName": "L Shuttle Bus - Abingdon Sq - FDR Drive",
+      "shortName": "L92",
+      "textColor": "FFFFFF",
+      "type": 711,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av A",
+      "id": "MTA NYCT_M14A+",
+      "longName": "Lower East Side - Abingdon Sq",
+      "shortName": "M14A-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "6CBE45",
+      "description": "Select Bus Service via 14th St / Av D",
+      "id": "MTA NYCT_M14D+",
+      "longName": "Lower East Side - Chelsea Piers",
+      "shortName": "M14D-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "404099",
+    "direction": "NW",
+    "id": "MTA_404099",
+    "lat": 40.734053,
+    "locationType": 0,
+    "lon": -73.97755,
+    "name": "E 20 ST/E 20 ST Loop",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "B933AD",
+      "description": "via Avenue C / E Broadway",
+      "id": "MTA NYCT_M9",
+      "longName": "Battery Park City - Kips Bay",
+      "shortName": "M9",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "B933AD",
+      "description": "Select Bus Service via 23rd St Crosstown",
+      "id": "MTA NYCT_M23+",
+      "longName": "Chelsea Piers - East Side",
+      "shortName": "M23-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "404105",
+    "direction": "SW",
+    "id": "MTA_404105",
+    "lat": 40.730796,
+    "locationType": 0,
+    "lon": -73.986156,
+    "name": "2 AV/E 12 ST",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "006CB7",
+      "description": "via 1st Av / 2nd Av",
+      "id": "MTA NYCT_M15",
+      "longName": "East Harlem - South Ferry",
+      "shortName": "M15",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "404106",
+    "direction": "SW",
+    "id": "MTA_404106",
+    "lat": 40.732955,
+    "locationType": 0,
+    "lon": -73.987502,
+    "name": "3 AV/E 14 ST",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "FAA61A",
+      "description": "via Third Av / Lexington Av / Amsterdam Av",
+      "id": "MTA NYCT_M101",
+      "longName": "East Village - Fort George",
+      "shortName": "M101",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "FAA61A",
+      "description": "via 3rd Av / Lexington Av / Lenox Av",
+      "id": "MTA NYCT_M102",
+      "longName": "Harlem - East Village",
+      "shortName": "M102",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     },
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "B933AD",
+      "description": "via 3rd Av / Lexington Av",
+      "id": "MTA NYCT_M103",
+      "longName": "East Harlem - City Hall",
+      "shortName": "M103",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "405322",
+    "direction": "NE",
+    "id": "MTA_405322",
+    "lat": 40.732139,
+    "locationType": 0,
+    "lon": -73.981946,
+    "name": "1 AV/E 15 ST",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "006CB7",
+      "description": "Select Bus Service via 1st Av / 2nd Av",
+      "id": "MTA NYCT_M15+",
+      "longName": "East Harlem - South Ferry",
+      "shortName": "M15-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "405340",
+    "direction": "SW",
+    "id": "MTA_405340",
+    "lat": 40.73179,
+    "locationType": 0,
+    "lon": -73.985449,
+    "name": "2 AV/E 13 ST",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "006CB7",
+      "description": "Select Bus Service via 1st Av / 2nd Av",
+      "id": "MTA NYCT_M15+",
+      "longName": "East Harlem - South Ferry",
+      "shortName": "M15-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "405508",
+    "direction": "SE",
+    "id": "MTA_405508",
+    "lat": 40.736071,
+    "locationType": 0,
+    "lon": -73.97724,
+    "name": "E 23 ST/1 AV",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "B933AD",
+      "description": "Select Bus Service via 23rd St Crosstown",
+      "id": "MTA NYCT_M23+",
+      "longName": "Chelsea Piers - East Side",
+      "shortName": "M23-SBS",
+      "textColor": "FFFFFF",
+      "type": 3,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   },
+   {
+    "code": "803193",
+    "direction": "SW",
+    "id": "MTA_803193",
+    "lat": 40.730267,
+    "locationType": 0,
+    "lon": -73.980555,
+    "name": "AV A/E 14 ST",
+    "routes": [
+     {
+      "agency": {
+       "disclaimer": "",
+       "email": "",
+       "fareUrl": "",
+       "id": "MTA NYCT",
+       "lang": "en",
+       "name": "MTA New York City Transit",
+       "phone": "718-330-1234",
+       "privateService": false,
+       "timezone": "America/New_York",
+       "url": "http://www.mta.info"
+      },
+      "color": "EE352E",
+      "description": "via 14 St",
+      "id": "MTA NYCT_L92",
+      "longName": "L Shuttle Bus - Abingdon Sq - FDR Drive",
+      "shortName": "L92",
+      "textColor": "FFFFFF",
+      "type": 711,
+      "url": ""
+     }
+    ],
+    "wheelchairBoarding": "UNKNOWN"
+   }
+  ]
+ },
+ "text": "OK",
+ "version": 1
+}

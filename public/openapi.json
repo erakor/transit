@@ -1938,7 +1938,7 @@
           "Bus"
         ],
         "summary": "Next buses at a bus stop",
-        "description": "The buses on their way to one stop, from MTA Bus Time, every route in one list. Stops are found by the code on their sign; there is no bus stop search yet.",
+        "description": "The buses on their way to one stop, from MTA Bus Time, every route in one list, cancelled trips marked. Stops are found by the code on their sign, or with `/bus/nearby`.",
         "parameters": [
           {
             "name": "stop",
@@ -2110,6 +2110,187 @@
         }
       }
     },
+    "/bus/vehicles": {
+      "get": {
+        "operationId": "busVehicles",
+        "tags": [
+          "Bus"
+        ],
+        "summary": "Where a bus route's buses are",
+        "description": "Every bus on one route, both directions, from MTA Bus Time: position, heading and next stop.",
+        "parameters": [
+          {
+            "name": "route",
+            "in": "query",
+            "required": true,
+            "description": "A bus route id (`M15`, `Q06`, `BX12`). Select Bus Service routes end in `+` (`M15+`, sent as `M15%2B`) or can be written `M15-SBS`. Case insensitive.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusVehiclesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing `route`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown route, or one Bus Time does not run.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bus Time failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bus/nearby": {
+      "get": {
+        "operationId": "busNearby",
+        "tags": [
+          "Bus"
+        ],
+        "summary": "Bus stops near a point",
+        "description": "The bus stops within 500 m of a point, nearest first, with the code `/bus/arrivals` takes and the routes that stop there. From MTA Bus Time.",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "description": "Latitude of the point, in decimal degrees.",
+            "schema": {
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            }
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "required": true,
+            "description": "Longitude of the point, in decimal degrees.",
+            "schema": {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Stops to return. Default 10, at most 25 (larger values are lowered to 25).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusNearbyResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or out of range `lat` or `lon`, or bad `limit`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or wrong token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bus Time failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/bus/alerts": {
       "get": {
         "operationId": "busAlerts",
@@ -2123,7 +2304,7 @@
             "name": "route",
             "in": "query",
             "required": false,
-            "description": "Only alerts about this bus route id (`M15`, `B44+`). Case insensitive.",
+            "description": "Only alerts about this route. A bus route id (`M15`, `Q06`, `BX12`). Select Bus Service routes end in `+` (`M15+`, sent as `M15%2B`) or can be written `M15-SBS`. Case insensitive.",
             "schema": {
               "type": "string"
             }
@@ -2515,12 +2696,44 @@
           },
           "tripId": {
             "type": "string"
+          },
+          "assigned": {
+            "type": "boolean",
+            "description": "A train has been assigned to the trip: it is running or about to leave its terminal. The feed also lists trips due to start in the next 30 minutes before a train is assigned; those are likelier to be changed or cancelled."
+          },
+          "change": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "reroute",
+                  "skip-stop",
+                  "short-turn"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How the trip differs from its schedule, when the MTA marks it: rerouted, skipping stops, or turned short of its usual terminal. Null for a scheduled trip, and when the feed doesn't say (the B Division routes mark changes differently)."
+          },
+          "stalled": {
+            "type": "boolean",
+            "description": "The train hasn't moved for over 90 seconds. Its predictions stop with it, so `time` is too early; station countdown clocks stop counting down then."
+          },
+          "delayed": {
+            "type": "boolean",
+            "description": "The feed reports the train delayed (\"Train delayed\")."
           }
         },
         "required": [
           "time",
           "headsign",
-          "tripId"
+          "tripId",
+          "assigned",
+          "change",
+          "stalled",
+          "delayed"
         ],
         "additionalProperties": false
       },
@@ -2622,7 +2835,7 @@
             "items": {
               "$ref": "#/components/schemas/Alert"
             },
-            "description": "In effect now: current events first, then planned work; newest first."
+            "description": "In effect now: current events first, then planned work; by priority, then newest first."
           },
           "stop": {
             "description": "The station `stop` resolved to, when given.",
@@ -3038,6 +3251,14 @@
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
           },
+          "track": {
+            "description": "LIRR and Metro-North: the track it uses at this station (`2`, `2A`, `204`), when the railroad has posted it.",
+            "type": "string"
+          },
+          "status": {
+            "description": "Metro-North: the train's status at this station, as the railroad words it (`On-Time`, `Late`, `Arriving`, `Departed`, `Bus` for a bus substitute).",
+            "type": "string"
+          },
           "route": {
             "type": "string",
             "description": "Route id."
@@ -3201,7 +3422,7 @@
             "items": {
               "$ref": "#/components/schemas/Alert"
             },
-            "description": "In effect now: current events first, then planned work; newest first."
+            "description": "In effect now: current events first, then planned work; by priority, then newest first."
           },
           "station": {
             "description": "The station, when `station` was given.",
@@ -3249,7 +3470,7 @@
             "items": {
               "$ref": "#/components/schemas/Alert"
             },
-            "description": "In effect now: current events first, then planned work; newest first."
+            "description": "In effect now: current events first, then planned work; by priority, then newest first."
           },
           "stop": {
             "description": "The stop, when `stop` was given.",
@@ -3534,6 +3755,10 @@
             "type": "boolean",
             "description": "The bus is waiting to start its trip or still finishing its previous one, so its time is less sure."
           },
+          "cancelled": {
+            "type": "boolean",
+            "description": "The trip is cancelled: listed at its scheduled time (or without one) so riders know it won't come."
+          },
           "vehicle": {
             "type": "string",
             "description": "The bus number; empty when unknown."
@@ -3553,8 +3778,221 @@
           "stopsAway",
           "meters",
           "atTerminal",
+          "cancelled",
           "vehicle",
           "tripId"
+        ],
+        "additionalProperties": false
+      },
+      "BusVehiclesResponse": {
+        "type": "object",
+        "properties": {
+          "route": {
+            "$ref": "#/components/schemas/Route"
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Epoch seconds."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Bus Time's response timestamp."
+          },
+          "vehicles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BusVehicle"
+            },
+            "description": "Every bus on the route, both directions, by headsign then bus number."
+          }
+        },
+        "required": [
+          "route",
+          "updatedAt",
+          "vehicles"
+        ],
+        "additionalProperties": false
+      },
+      "BusVehicle": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The bus number."
+          },
+          "headsign": {
+            "type": "string",
+            "description": "Where its trip ends, as the bus shows it."
+          },
+          "lat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "lon": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "heading": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 359
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Compass heading in degrees, clockwise from north; null when unknown."
+          },
+          "stop": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Its next stop: the stop code and name. Null when unknown."
+          },
+          "distance": {
+            "type": "string",
+            "description": "How far from that stop, for riders: `at stop`, `approaching`, `1 stop away`."
+          },
+          "stopsAway": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "atTerminal": {
+            "type": "boolean",
+            "description": "Waiting to start its trip or still finishing its previous one."
+          },
+          "time": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Epoch seconds."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the position was recorded."
+          },
+          "tripId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "headsign",
+          "lat",
+          "lon",
+          "heading",
+          "stop",
+          "distance",
+          "stopsAway",
+          "atTerminal",
+          "time",
+          "tripId"
+        ],
+        "additionalProperties": false
+      },
+      "BusNearbyResponse": {
+        "type": "object",
+        "properties": {
+          "stops": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NearbyBusStop"
+            },
+            "description": "Stops within 500 m of the point, nearest first; empty when there are none."
+          }
+        },
+        "required": [
+          "stops"
+        ],
+        "additionalProperties": false
+      },
+      "NearbyBusStop": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The six-digit code on the stop sign, which `/bus/arrivals` takes."
+          },
+          "name": {
+            "type": "string",
+            "description": "As Bus Time names it (`1 AV/E 14 ST`)."
+          },
+          "direction": {
+            "type": "string",
+            "description": "The compass direction buses there travel (`N`, `NE`, ... `NW`); empty when unknown."
+          },
+          "lat": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "lon": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "distance": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "description": "Meters from the point, in a straight line."
+          },
+          "routes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Route"
+            },
+            "description": "The routes that stop there."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "direction",
+          "lat",
+          "lon",
+          "distance",
+          "routes"
         ],
         "additionalProperties": false
       },
@@ -3580,7 +4018,7 @@
             "items": {
               "$ref": "#/components/schemas/Alert"
             },
-            "description": "In effect now: current events first, then planned work; newest first."
+            "description": "In effect now: current events first, then planned work; by priority, then newest first."
           }
         },
         "required": [
@@ -3593,11 +4031,32 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
+            "type": "string",
+            "description": "The MTA's alert id, without the status rank it appends to its entity ids, so it stays the same when the status changes."
           },
           "planned": {
             "type": "boolean",
             "description": "Scheduled work rather than something that just happened."
+          },
+          "category": {
+            "description": "The MTA's status for the alert, such as `Delays`, `Part Suspended` or `Planned - Stops Skipped`: one of the 35 names in the MTA's status table. Null when the feed has none (NYC Ferry).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 35
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The status's rank in the MTA's table, from 1 (`No Scheduled Service`) to 35 (`Suspended`); higher is more serious. Null with `category`."
           },
           "header": {
             "type": "string",
@@ -3623,11 +4082,27 @@
                 },
                 "name": {
                   "type": "string"
+                },
+                "direction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "N",
+                        "S"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Subway only: the one direction the alert affects there, the MTA's northbound (`N`) or southbound (`S`) platform. Null when it affects both or the feed doesn't say."
                 }
               },
               "required": [
                 "id",
-                "name"
+                "name",
+                "direction"
               ],
               "additionalProperties": false
             },
@@ -3665,6 +4140,8 @@
         "required": [
           "id",
           "planned",
+          "category",
+          "priority",
           "header",
           "description",
           "routes",

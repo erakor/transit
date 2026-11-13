@@ -2,12 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { AGENCIES, findStop, searchStops } from '#src/agency/agencies.js'
 import { computeAgencyArrivals } from '#src/agency/arrivals.js'
 import type { AgencyData } from '#src/agency/types.js'
+import { railroadStopTime } from '#src/agency/mtarr.js'
 import { computeAgencyVehicles } from '#src/agency/vehicles.js'
 import { ALERTS_CACHE, LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from '#src/http.js'
 import { agencyHandler, agencyRoute } from '#src/routes/agency.js'
 import { buildAgencyData } from '#src/static/agency.js'
 import { clearFeedMemo, decodeFeed, VEHICLE_MAX_AGE_S } from '#src/gtfsrt.js'
-import { feedFrom } from './feed.js'
+import { extensionField, feedFrom, withExtension } from './feed.js'
 import { auth, fixture, fixtureFetcher, FIXTURE_NOW_MS, get, useRouteTestSetup } from './helpers.js'
 
 const NOW = 1_800_000_000
@@ -264,6 +265,22 @@ describe('computeAgencyArrivals', () => {
   })
 })
 
+describe('railroadStopTime', () => {
+  const stopTime = (values: Record<number, string>) => railroadStopTime(withExtension({}, extensionField(1005, values)))
+
+  it('reads the track and status of the MTA railroad extension', () => {
+    expect(stopTime({ 1: '2A', 2: 'On-Time' })).toEqual({ track: '2A', status: 'On-Time' })
+    // LIRR posts tracks only, and an empty status.
+    expect(stopTime({ 1: ' 204 ', 2: '' })).toEqual({ track: '204' })
+    expect(stopTime({ 2: 'Bus' })).toEqual({ status: 'Bus' })
+  })
+
+  it('reads nothing from a stop without it, or from another extension', () => {
+    expect(railroadStopTime({})).toEqual({})
+    expect(railroadStopTime(withExtension({}, extensionField(1001, { 1: '3' })))).toEqual({})
+  })
+})
+
 describe('computeAgencyVehicles', () => {
   const position = { latitude: 40.7031234, longitude: -74.0061234 }
   const feed = feedFrom(NOW, [
@@ -357,10 +374,15 @@ describe('agency routes', () => {
     for (const a of body.arrivals) {
       expect(
         Object.keys(a)
-          .filter(k => k !== 'delay')
+          .filter(k => !['delay', 'track', 'status'].includes(k))
           .sort()
       ).toEqual(['color', 'headsign', 'name', 'route', 'textColor', 'time', 'tripId'])
     }
+    // The railroads post tracks (and Metro-North a status) through their extension; the ferry neither.
+    const tracks = body.arrivals.filter((a: { track?: string }) => a.track)
+    const statuses = body.arrivals.filter((a: { status?: string }) => a.status)
+    expect(tracks.length > 0).toBe(feed !== 'ferry-tripupdate')
+    expect(statuses.length > 0).toBe(feed === 'gtfs-mnr')
   })
 
   it.each([
@@ -480,15 +502,18 @@ describe('agency routes', () => {
     const all = await r.json()
     expect(all.alerts.length).toBeGreaterThan(0)
     expect(Object.keys(all.alerts[0]).sort()).toEqual([
+      'category',
       'description',
       'end',
       'header',
       'id',
       'planned',
+      'priority',
       'routes',
       'start',
       'stops',
     ])
+    expect(all.alerts[0].category).toEqual(expect.any(String))
 
     const routeId: string = all.alerts.find((a: { routes: unknown[] }) => a.routes.length > 0).routes[0].id
     const byRoute = await (await call(`/lirr/alerts?route=${routeId}`).res).json()

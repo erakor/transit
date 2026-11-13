@@ -9,7 +9,19 @@ import {
   STOP_SCHEMAS,
 } from '#src/agency/schemas.js'
 import { TOKEN_HEADER } from '#src/auth.js'
-import { BusAlertsQuery, BusArrival, BusArrivalsQuery, BusArrivalsResponse, BusPreviewQuery } from '#src/bus/schemas.js'
+import {
+  BusAlertsQuery,
+  BusArrival,
+  BusArrivalsQuery,
+  BusArrivalsResponse,
+  BusNearbyQuery,
+  BusNearbyResponse,
+  BusPreviewQuery,
+  BusVehicle,
+  BusVehiclesQuery,
+  BusVehiclesResponse,
+  NearbyBusStop,
+} from '#src/bus/schemas.js'
 import {
   BikeStation,
   NearbyQuery,
@@ -217,8 +229,8 @@ export const ROUTES: Route[] = [
     tag: 'Bus',
     summary: 'Next buses at a bus stop',
     description:
-      'The buses on their way to one stop, from MTA Bus Time, every route in one list. Stops are found by the ' +
-      'code on their sign; there is no bus stop search yet.',
+      'The buses on their way to one stop, from MTA Bus Time, every route in one list, cancelled trips marked. ' +
+      'Stops are found by the code on their sign, or with `/bus/nearby`.',
     query: BusArrivalsQuery,
     response: BusArrivalsResponse,
     errors: {
@@ -239,6 +251,30 @@ export const ROUTES: Route[] = [
       404: 'Bus Time knows no such stop.',
       502: 'Bus Time failed.',
     },
+  },
+  {
+    path: '/bus/vehicles',
+    tag: 'Bus',
+    summary: "Where a bus route's buses are",
+    description: 'Every bus on one route, both directions, from MTA Bus Time: position, heading and next stop.',
+    query: BusVehiclesQuery,
+    response: BusVehiclesResponse,
+    errors: {
+      400: 'Missing `route`.',
+      404: 'Unknown route, or one Bus Time does not run.',
+      502: 'Bus Time failed.',
+    },
+  },
+  {
+    path: '/bus/nearby',
+    tag: 'Bus',
+    summary: 'Bus stops near a point',
+    description:
+      'The bus stops within 500 m of a point, nearest first, with the code `/bus/arrivals` takes and the routes ' +
+      'that stop there. From MTA Bus Time.',
+    query: BusNearbyQuery,
+    response: BusNearbyResponse,
+    errors: { 400: 'Missing or out of range `lat` or `lon`, or bad `limit`.', 502: 'Bus Time failed.' },
   },
   {
     path: '/bus/alerts',
@@ -303,6 +339,10 @@ const NAMED: Record<string, z.ZodType> = {
   AgencyVehicle,
   BusArrivalsResponse,
   BusArrival,
+  BusVehiclesResponse,
+  BusVehicle,
+  BusNearbyResponse,
+  NearbyBusStop,
   AlertsResponse: AlertsResult,
   Alert,
   CitibikeStationResponse: StationResponse,

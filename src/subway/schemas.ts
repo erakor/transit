@@ -34,6 +34,19 @@ export const Arrival = z.strictObject({
   time: EpochSeconds.meta({ description: 'When the train reaches the stop (epoch seconds).' }),
   headsign: z.string().meta({ description: "Name of the trip's last passenger stop in the feed." }),
   tripId: z.string(),
+  assigned: z.boolean().meta({
+    description:
+      'A train has been assigned to the trip: it is running or about to leave its terminal. The feed also lists trips due to start in the next 30 minutes before a train is assigned; those are likelier to be changed or cancelled.',
+  }),
+  change: z.enum(['reroute', 'skip-stop', 'short-turn']).nullable().meta({
+    description:
+      "How the trip differs from its schedule, when the MTA marks it: rerouted, skipping stops, or turned short of its usual terminal. Null for a scheduled trip, and when the feed doesn't say (the B Division routes mark changes differently).",
+  }),
+  stalled: z.boolean().meta({
+    description:
+      "The train hasn't moved for over 90 seconds. Its predictions stop with it, so `time` is too early; station countdown clocks stop counting down then.",
+  }),
+  delayed: z.boolean().meta({ description: 'The feed reports the train delayed ("Train delayed").' }),
 })
 
 export const RouteDirectionArrivals = z.strictObject({

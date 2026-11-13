@@ -1,6 +1,7 @@
 import type { RouteInfo, SubwayData } from '#src/static/types.js'
 import type { ResolvedStop, StationIndex } from '#src/stops/stations.js'
 import { num, oldestTimestamp, terminalName, type FeedMessage } from '#src/gtfsrt.js'
+import { nyctTrip, tripConditions } from './nyct.js'
 
 // Type-only: this pure module, the preview and the smoke test don't load zod.
 import type { ArrivalsResult, RouteDirectionArrivals } from './schemas.js'
@@ -30,6 +31,7 @@ export function computeArrivals(
   const seen = new Set<string>()
 
   for (const feed of feeds) {
+    const { stalled, delayed } = tripConditions(feed)
     for (const entity of feed.entity) {
       const tu = entity.tripUpdate
       if (!tu || entity.isDeleted) continue
@@ -62,7 +64,15 @@ export function computeArrivals(
           }
           groups.set(key, g)
         }
-        g.arrivals.push({ time, headsign, tripId })
+        // Read here, for the few trips that stop at the station, rather than for every trip in the feed.
+        g.arrivals.push({
+          time,
+          headsign,
+          tripId,
+          ...nyctTrip(tu.trip),
+          stalled: stalled.has(tripId),
+          delayed: delayed.has(tripId),
+        })
       }
     }
   }

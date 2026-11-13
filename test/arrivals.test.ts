@@ -6,7 +6,8 @@ import { ArrivalsResult } from '#src/subway/schemas.js'
 import { decodeFeed } from '#src/gtfsrt.js'
 import { FEEDS, feedsForRoutes } from '#src/subway/feeds.js'
 import { fixture, FIXTURE_NOW_MS } from './helpers.js'
-import { makeFeed } from './feed.js'
+import { nyctTrip, STALLED_AFTER_S } from '#src/subway/nyct.js'
+import { extensionField, feedFrom, makeFeed, withExtension } from './feed.js'
 
 const index = new StationIndex(SUBWAY_DATA)
 const NOW = 1_800_000_000
@@ -98,7 +99,16 @@ describe('computeArrivals on a built feed', () => {
       color: SUBWAY_DATA.routes['1']!.color,
       headsign: SUBWAY_DATA.stops['103']!.name,
     })
-    expect(g.arrivals[1]).toEqual({ time: NOW + 120, headsign: 'Van Cortlandt Park-242 St', tripId: 't1' })
+    expect(g.arrivals[1]).toEqual({
+      time: NOW + 120,
+      headsign: 'Van Cortlandt Park-242 St',
+      tripId: 't1',
+      // A feed without the NYCT extension: no train assigned, nothing known to be wrong.
+      assigned: false,
+      change: null,
+      stalled: false,
+      delayed: false,
+    })
   })
 
   it('covers every stop of a station complex', () => {
@@ -145,6 +155,77 @@ describe('computeArrivals on recorded MTA feeds', () => {
       expect(total).toBeGreaterThan(0)
     })
   }
+
+  it('reads the NYCT extension of the recorded trips', () => {
+    const trips = Object.keys(FEEDS).flatMap(name =>
+      decodeFeed(fixture(`${name}.pb`)).entity.flatMap(e => (e.tripUpdate ? [nyctTrip(e.tripUpdate.trip)] : []))
+    )
+    // Most trips are underway; the next half hour's are listed before a train is assigned.
+    expect(trips.filter(t => t.assigned).length).toBeGreaterThan(trips.length / 2)
+    expect(trips.filter(t => !t.assigned).length).toBeGreaterThan(0)
+  })
+})
+
+describe('NYCT trip conditions', () => {
+  // The 1-6 lines' train ids: trip type, line, origin time, origin and destination.
+  const trip = (trainId: string, assigned: boolean) =>
+    extensionField(1001, assigned ? { 1: trainId, 2: 1, 3: 1 } : { 1: trainId, 3: 1 })
+  const feed = feedFrom(NOW, [
+    ...(
+      [
+        ['moving', '01 1932  BBR/PEL', true],
+        ['stalled', '$1 1940  BBR/PEL', true],
+        ['waiting', '=1 1950  BBR/PEL', false],
+      ] as const
+    ).map(([tripId]) => ({
+      id: tripId,
+      tripUpdate: {
+        trip: { tripId, routeId: '1' },
+        stopTimeUpdate: [{ stopId: '127N', arrival: { time: NOW + 300 } }],
+      },
+    })),
+    { id: 'v1', vehicle: { trip: { tripId: 'moving', routeId: '1' }, timestamp: NOW - STALLED_AFTER_S } },
+    { id: 'v2', vehicle: { trip: { tripId: 'stalled', routeId: '1' }, timestamp: NOW - STALLED_AFTER_S - 1 } },
+    {
+      id: 'a1',
+      alert: {
+        informedEntity: [{ trip: { tripId: 'stalled', routeId: '1' } }],
+        headerText: { translation: [{ text: 'Train delayed' }] },
+      },
+    },
+  ])
+  withExtension(feed.entity[0]!.tripUpdate!.trip!, trip('01 1932  BBR/PEL', true))
+  withExtension(feed.entity[1]!.tripUpdate!.trip!, trip('$1 1940  BBR/PEL', true))
+  withExtension(feed.entity[2]!.tripUpdate!.trip!, trip('=1 1950  BBR/PEL', false))
+
+  it('marks assigned, changed, stalled and delayed trains', () => {
+    const [g] = computeArrivals(index.resolve('127N')!, [feed], index, { now: NOW, limit: 5 }).groups
+    expect(
+      g!.arrivals.map(({ tripId, assigned, change, stalled, delayed }) => ({
+        tripId,
+        assigned,
+        change,
+        stalled,
+        delayed,
+      }))
+    ).toEqual([
+      { tripId: 'moving', assigned: true, change: null, stalled: false, delayed: false },
+      { tripId: 'stalled', assigned: true, change: 'short-turn', stalled: true, delayed: true },
+      { tripId: 'waiting', assigned: false, change: 'reroute', stalled: false, delayed: false },
+    ])
+  })
+
+  it('reads train id trip types the reference documents, and nothing else', () => {
+    const of = (trainId: string) => nyctTrip(withExtension({}, extensionField(1001, { 1: trainId }))).change
+    expect([of('06 0123+ PEL/BBR'), of('/6 0123+ PEL/BBR'), of('1A 1949 207/FAR'), of('E6 0123')]).toEqual([
+      null,
+      'skip-stop',
+      null,
+      null,
+    ])
+    expect(nyctTrip(undefined)).toEqual({ assigned: false, change: null })
+    expect(nyctTrip(withExtension({}, new Uint8Array([0x8a, 0x3e, 0x40])))).toEqual({ assigned: false, change: null })
+  })
 })
 
 describe('feedsForRoutes', () => {

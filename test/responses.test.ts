@@ -16,7 +16,9 @@ import { ErrorBody } from '#src/schema.js'
 import {
   auth,
   BUS_FIXTURE_NOW_MS,
+  BUS_ROUTE,
   BUS_STOP,
+  BUS_STOP_POINT,
   fixtureFetcher,
   FIXTURE_NOW_MS,
   get,
@@ -83,6 +85,8 @@ const REQUESTS = [
   `/preview/bus?stop=${BUS_STOP}`,
   '/bus/alerts',
   '/bus/alerts?route=M15',
+  `/bus/vehicles?route=${encodeURIComponent(BUS_ROUTE)}`,
+  `/bus/nearby?lat=${BUS_STOP_POINT.lat}&lon=${BUS_STOP_POINT.lon}`,
   '/citibike/station?id=f72a253f-3cef-4da8-9591-0cbd3a692162',
   '/citibike/nearby?lat=40.7559&lon=-73.9871',
   '/health',
@@ -114,8 +118,9 @@ describe('documented routes', () => {
       // The route's id parameter, the one an unknown value of is a 404.
       const params = Object.keys(z.toJSONSchema(route.query, { io: 'input' }).properties ?? {})
       const param = ['stop', 'station', 'id', 'route'].find(p => params.includes(p))
-      // Bus stop codes have a format: anything else is a 400, before Bus Time is asked.
-      const unknown = route.tag === 'Bus' ? '999999' : 'nope'
+      // Bus stop codes have a format: anything else is a 400, before Bus Time is asked. Bus Time
+      // decides which routes exist: ZZZ is its recorded answer for one it doesn't run.
+      const unknown = route.path === '/bus/vehicles' ? 'ZZZ' : route.tag === 'Bus' ? '999999' : 'nope'
       const res = await handlerFor(route.path)(get(`${route.path}?${param}=${unknown}`, auth))
       expect(res.status).toBe(404)
       expect(ErrorBody.safeParse(await res.json()).success).toBe(true)

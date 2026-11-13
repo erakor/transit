@@ -1,0 +1,990 @@
+{
+ "Siri": {
+  "ServiceDelivery": {
+   "ResponseTimestamp": "2026-11-12T21:48:09.772-05:00",
+   "VehicleMonitoringDelivery": [
+    {
+     "VehicleActivity": [
+      {
+       "MonitoredVehicleJourney": {
+        "LineRef": "MTA NYCT_M15+",
+        "DirectionRef": "1",
+        "FramedVehicleJourneyRef": {
+         "DataFrameRef": "2026-11-12",
+         "DatedVehicleJourneyRef": "MTA NYCT_OF_D6-Weekday-SDon-121500_SBS15_454"
+        },
+        "JourneyPatternRef": "MTA_SBS150003",
+        "PublishedLineName": [
+         "M15-SBS"
+        ],
+        "OperatorRef": "MTA NYCT",
+        "OriginRef": "MTA_401732",
+        "DestinationRef": "MTA_803120",
+        "DestinationName": [
+         "SELECT BUS SERVICE SOUTH FERRY via 2 AV"
+        ],
+        "SituationRef": [
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:alert:276004:26"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:30414"
+         }
+        ],
+        "Monitored": true,
+        "VehicleLocation": {
+         "Longitude": -74.003537,
+         "Latitude": 40.707984
+        },
+        "Bearing": 225,
+        "ProgressRate": "normalProgress",
+        "Occupancy": "seatsAvailable",
+        "BlockRef": "MTA NYCT_OF_D6-Weekday-SDon_E_OF_20760_SBS15-415",
+        "VehicleRef": "MTA NYCT_6218",
+        "MonitoredCall": {
+         "AimedArrivalTime": "2026-11-12T21:10:07.805-05:00",
+         "ExpectedArrivalTime": "2026-11-12T21:48:13.609-05:00",
+         "ArrivalProximityText": "at stop",
+         "ExpectedDepartureTime": "2026-11-12T21:48:13.609-05:00",
+         "DistanceFromStop": 19,
+         "NumberOfStopsAway": 0,
+         "Extensions": {
+          "Capacities": {
+           "EstimatedPassengerCount": 12,
+           "EstimatedPassengerCapacity": 80,
+           "EstimatedPassengerLoadFactor": "manySeatsAvailable"
+          }
+         },
+         "StopPointRef": "MTA_405338",
+         "VisitNumber": 1,
+         "StopPointName": [
+          "PEARL ST/BEEKMAN ST"
+         ]
+        }
+       },
+       "RecordedAtTime": "2026-11-12T21:48:08.000-05:00"
+      },
+      {
+       "MonitoredVehicleJourney": {
+        "LineRef": "MTA NYCT_M15+",
+        "DirectionRef": "0",
+        "FramedVehicleJourneyRef": {
+         "DataFrameRef": "2026-11-12",
+         "DatedVehicleJourneyRef": "MTA NYCT_OF_D6-Weekday-SDon-127000_SBS15_452"
+        },
+        "JourneyPatternRef": "MTA_SBS150191",
+        "PublishedLineName": [
+         "M15-SBS"
+        ],
+        "OperatorRef": "MTA NYCT",
+        "OriginRef": "MTA_405382",
+        "DestinationRef": "MTA_803054",
+        "DestinationName": [
+         "SELECT BUS SERVICE 125 ST via 1 AV"
+        ],
+        "SituationRef": [
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:alert:276004:26"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:30414"
+         }
+        ],
+        "Monitored": true,
+        "VehicleLocation": {
+         "Longitude": -73.976293,
+         "Latitude": 40.739961
+        },
+        "Bearing": 54.196655,
+        "ProgressRate": "normalProgress",
+        "BlockRef": "MTA NYCT_OF_D6-Weekday-SDon_E_OF_19680_SBS15-411",
+        "VehicleRef": "MTA NYCT_6160",
+        "MonitoredCall": {
+         "AimedArrivalTime": "2026-11-12T21:32:33.810-05:00",
+         "ExpectedArrivalTime": "2026-11-12T21:48:10.772-05:00",
+         "ArrivalProximityText": "approaching",
+         "ExpectedDepartureTime": "2026-11-12T21:48:10.772-05:00",
+         "DistanceFromStop": 75,
+         "NumberOfStopsAway": 0,
+         "StopPointRef": "MTA_404995",
+         "VisitNumber": 1,
+         "StopPointName": [
+          "1 AV/E 29 ST"
+         ]
+        }
+       },
+       "RecordedAtTime": "2026-11-12T21:47:43.000-05:00"
+      },
+      {
+       "MonitoredVehicleJourney": {
+        "LineRef": "MTA NYCT_M15+",
+        "DirectionRef": "0",
+        "FramedVehicleJourneyRef": {
+         "DataFrameRef": "2026-11-12",
+         "DatedVehicleJourneyRef": "MTA NYCT_OF_D6-Weekday-SDon-119400_SBS15_458"
+        },
+        "JourneyPatternRef": "MTA_SBS150191",
+        "PublishedLineName": [
+         "M15-SBS"
+        ],
+        "OperatorRef": "MTA NYCT",
+        "OriginRef": "MTA_405382",
+        "DestinationRef": "MTA_803054",
+        "DestinationName": [
+         "SELECT BUS SERVICE 125 ST via 1 AV"
+        ],
+        "SituationRef": [
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:alert:276004:26"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:30414"
+         }
+        ],
+        "Monitored": true,
+        "VehicleLocation": {
+         "Longitude": -73.953158,
+         "Latitude": 40.771667
+        },
+        "Bearing": 54.223923,
+        "ProgressRate": "normalProgress",
+        "Occupancy": "seatsAvailable",
+        "BlockRef": "MTA NYCT_OF_D6-Weekday-SDon_E_OF_54780_SBS15-441",
+        "VehicleRef": "MTA NYCT_6222",
+        "MonitoredCall": {
+         "AimedArrivalTime": "2026-11-12T20:35:18.835-05:00",
+         "ExpectedArrivalTime": "2026-11-12T21:48:19.083-05:00",
+         "ArrivalProximityText": "approaching",
+         "ExpectedDepartureTime": "2026-11-12T21:48:19.083-05:00",
+         "DistanceFromStop": 131,
+         "NumberOfStopsAway": 0,
+         "Extensions": {
+          "Capacities": {
+           "EstimatedPassengerCount": 20,
+           "EstimatedPassengerCapacity": 80,
+           "EstimatedPassengerLoadFactor": "manySeatsAvailable"
+          }
+         },
+         "StopPointRef": "MTA_405329",
+         "VisitNumber": 1,
+         "StopPointName": [
+          "1 AV/E 80 ST"
+         ]
+        }
+       },
+       "RecordedAtTime": "2026-11-12T21:47:54.000-05:00"
+      },
+      {
+       "MonitoredVehicleJourney": {
+        "LineRef": "MTA NYCT_M15+",
+        "DirectionRef": "0",
+        "FramedVehicleJourneyRef": {
+         "DataFrameRef": "2026-11-12",
+         "DatedVehicleJourneyRef": "MTA NYCT_OF_D6-Weekday-SDon-126000_SBS15_451"
+        },
+        "JourneyPatternRef": "MTA_SBS150191",
+        "PublishedLineName": [
+         "M15-SBS"
+        ],
+        "OperatorRef": "MTA NYCT",
+        "OriginRef": "MTA_405382",
+        "DestinationRef": "MTA_803054",
+        "DestinationName": [
+         "SELECT BUS SERVICE 125 ST via 1 AV"
+        ],
+        "SituationRef": [
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:alert:276004:26"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:30414"
+         }
+        ],
+        "Monitored": true,
+        "VehicleLocation": {
+         "Longitude": -73.979112,
+         "Latitude": 40.736099
+        },
+        "Bearing": 53.583622,
+        "ProgressRate": "normalProgress",
+        "Occupancy": "seatsAvailable",
+        "BlockRef": "MTA NYCT_OF_D6-Weekday-SDon_E_OF_21900_SBS15-420",
+        "VehicleRef": "MTA NYCT_6198",
+        "MonitoredCall": {
+         "AimedArrivalTime": "2026-11-12T21:21:29.784-05:00",
+         "ExpectedArrivalTime": "2026-11-12T21:48:54.330-05:00",
+         "ArrivalProximityText": "< 1 stop away",
+         "ExpectedDepartureTime": "2026-11-12T21:48:54.330-05:00",
+         "DistanceFromStop": 245,
+         "NumberOfStopsAway": 0,
+         "Extensions": {
+          "Capacities": {
+           "EstimatedPassengerCount": 15,
+           "EstimatedPassengerCapacity": 80,
+           "EstimatedPassengerLoadFactor": "manySeatsAvailable"
+          }
+         },
+         "StopPointRef": "MTA_405323",
+         "VisitNumber": 1,
+         "StopPointName": [
+          "1 AV/25 ST"
+         ]
+        }
+       },
+       "RecordedAtTime": "2026-11-12T21:47:48.000-05:00"
+      },
+      {
+       "MonitoredVehicleJourney": {
+        "LineRef": "MTA NYCT_M15+",
+        "DirectionRef": "0",
+        "FramedVehicleJourneyRef": {
+         "DataFrameRef": "2026-11-12",
+         "DatedVehicleJourneyRef": "MTA NYCT_OF_D6-Weekday-SDon-128000_SBS15_453"
+        },
+        "JourneyPatternRef": "MTA_SBS150191",
+        "PublishedLineName": [
+         "M15-SBS"
+        ],
+        "OperatorRef": "MTA NYCT",
+        "OriginRef": "MTA_405382",
+        "DestinationRef": "MTA_803054",
+        "DestinationName": [
+         "SELECT BUS SERVICE 125 ST via 1 AV"
+        ],
+        "SituationRef": [
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:alert:276004:26"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:30414"
+         }
+        ],
+        "Monitored": true,
+        "VehicleLocation": {
+         "Longitude": -74.009728,
+         "Latitude": 40.703576
+        },
+        "Bearing": 33.340706,
+        "ProgressRate": "normalProgress",
+        "BlockRef": "MTA NYCT_OF_D6-Weekday-SDon_E_OF_20280_SBS15-413",
+        "VehicleRef": "MTA NYCT_6213",
+        "MonitoredCall": {
+         "AimedArrivalTime": "2026-11-12T21:23:08.821-05:00",
+         "ExpectedArrivalTime": "2026-11-12T21:48:50.234-05:00",
+         "ArrivalProximityText": "< 1 stop away",
+         "ExpectedDepartureTime": "2026-11-12T21:48:50.234-05:00",
+         "DistanceFromStop": 326,
+         "NumberOfStopsAway": 0,
+         "StopPointRef": "MTA_405318",
+         "VisitNumber": 1,
+         "StopPointName": [
+          "WATER ST/PINE ST"
+         ]
+        }
+       },
+       "RecordedAtTime": "2026-11-12T21:47:53.000-05:00"
+      },
+      {
+       "MonitoredVehicleJourney": {
+        "LineRef": "MTA NYCT_M15+",
+        "DirectionRef": "1",
+        "FramedVehicleJourneyRef": {
+         "DataFrameRef": "2026-11-12",
+         "DatedVehicleJourneyRef": "MTA NYCT_OF_D6-Weekday-SDon-125100_SBS15_457"
+        },
+        "JourneyPatternRef": "MTA_SBS150003",
+        "PublishedLineName": [
+         "M15-SBS"
+        ],
+        "OperatorRef": "MTA NYCT",
+        "OriginRef": "MTA_401732",
+        "DestinationRef": "MTA_803120",
+        "DestinationName": [
+         "SELECT BUS SERVICE SOUTH FERRY via 2 AV"
+        ],
+        "SituationRef": [
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:alert:276004:26"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:30414"
+         }
+        ],
+        "Monitored": true,
+        "VehicleLocation": {
+         "Longitude": -74.000944,
+         "Latitude": 40.710415
+        },
+        "Bearing": 233.1301,
+        "ProgressRate": "normalProgress",
+        "VehicleRef": "MTA NYCT_6219",
+        "MonitoredCall": {
+         "AimedArrivalTime": "2026-11-12T21:44:07.826-05:00",
+         "ExpectedArrivalTime": "2026-11-12T21:49:40.703-05:00",
+         "ArrivalProximityText": "< 1 stop away",
+         "ExpectedDepartureTime": "2026-11-12T21:49:40.703-05:00",
+         "DistanceFromStop": 368,
+         "NumberOfStopsAway": 0,
+         "StopPointRef": "MTA_405338",
+         "VisitNumber": 1,
+         "StopPointName": [
+          "PEARL ST/BEEKMAN ST"
+         ]
+        }
+       },
+       "RecordedAtTime": "2026-11-12T21:47:53.000-05:00"
+      },
+      {
+       "MonitoredVehicleJourney": {
+        "LineRef": "MTA NYCT_M15+",
+        "DirectionRef": "1",
+        "FramedVehicleJourneyRef": {
+         "DataFrameRef": "2026-11-12",
+         "DatedVehicleJourneyRef": "MTA NYCT_OF_D6-Weekday-SDon-127500_SBS15_459"
+        },
+        "JourneyPatternRef": "MTA_SBS150003",
+        "PublishedLineName": [
+         "M15-SBS"
+        ],
+        "OperatorRef": "MTA NYCT",
+        "OriginRef": "MTA_401732",
+        "DestinationRef": "MTA_803120",
+        "DestinationName": [
+         "SELECT BUS SERVICE SOUTH FERRY via 2 AV"
+        ],
+        "SituationRef": [
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:alert:276004:26"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:30414"
+         }
+        ],
+        "Monitored": true,
+        "VehicleLocation": {
+         "Longitude": -73.983007,
+         "Latitude": 40.734977
+        },
+        "Bearing": 230.19443,
+        "ProgressRate": "normalProgress",
+        "VehicleRef": "MTA NYCT_6220",
+        "MonitoredCall": {
+         "AimedArrivalTime": "2026-11-12T21:52:25.799-05:00",
+         "ExpectedArrivalTime": "2026-11-12T21:49:24.502-05:00",
+         "ArrivalProximityText": "< 1 stop away",
+         "ExpectedDepartureTime": "2026-11-12T21:49:24.502-05:00",
+         "DistanceFromStop": 409,
+         "NumberOfStopsAway": 0,
+         "StopPointRef": "MTA_405340",
+         "VisitNumber": 1,
+         "StopPointName": [
+          "2 AV/E 13 ST"
+         ]
+        }
+       },
+       "RecordedAtTime": "2026-11-12T21:47:53.000-05:00"
+      },
+      {
+       "MonitoredVehicleJourney": {
+        "LineRef": "MTA NYCT_M15+",
+        "DirectionRef": "0",
+        "FramedVehicleJourneyRef": {
+         "DataFrameRef": "2026-11-12",
+         "DatedVehicleJourneyRef": "MTA NYCT_OF_D6-Weekday-SDon-132600_SBS15_457"
+        },
+        "JourneyPatternRef": "MTA_SBS150191",
+        "PublishedLineName": [
+         "M15-SBS"
+        ],
+        "OperatorRef": "MTA NYCT",
+        "OriginRef": "MTA_405382",
+        "DestinationRef": "MTA_803054",
+        "DestinationName": [
+         "SELECT BUS SERVICE 125 ST via 1 AV"
+        ],
+        "SituationRef": [
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:alert:276004:26"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:30414"
+         }
+        ],
+        "Monitored": true,
+        "VehicleLocation": {
+         "Longitude": -74.001376,
+         "Latitude": 40.709859
+        },
+        "Bearing": 52.696053,
+        "ProgressRate": "normalProgress",
+        "Occupancy": "seatsAvailable",
+        "BlockRef": "MTA NYCT_OF_D6-Weekday-SDon_E_OF_22080_SBS15-421",
+        "VehicleRef": "MTA NYCT_6195",
+        "MonitoredCall": {
+         "AimedArrivalTime": "2026-11-12T22:13:51.831-05:00",
+         "ExpectedArrivalTime": "2026-11-12T21:50:01.273-05:00",
+         "ArrivalProximityText": "< 1 stop away",
+         "ExpectedDepartureTime": "2026-11-12T21:50:01.273-05:00",
+         "DistanceFromStop": 471,
+         "NumberOfStopsAway": 0,
+         "Extensions": {
+          "Capacities": {
+           "EstimatedPassengerCount": 22,
+           "EstimatedPassengerCapacity": 80,
+           "EstimatedPassengerLoadFactor": "manySeatsAvailable"
+          }
+         },
+         "StopPointRef": "MTA_405319",
+         "VisitNumber": 1,
+         "StopPointName": [
+          "MADISON ST/CATHERINE ST"
+         ]
+        }
+       },
+       "RecordedAtTime": "2026-11-12T21:47:58.124-05:00"
+      },
+      {
+       "MonitoredVehicleJourney": {
+        "LineRef": "MTA NYCT_M15+",
+        "DirectionRef": "1",
+        "FramedVehicleJourneyRef": {
+         "DataFrameRef": "2026-11-12",
+         "DatedVehicleJourneyRef": "MTA NYCT_OF_D6-Weekday-SDon-123900_SBS15_456"
+        },
+        "JourneyPatternRef": "MTA_SBS150003",
+        "PublishedLineName": [
+         "M15-SBS"
+        ],
+        "OperatorRef": "MTA NYCT",
+        "OriginRef": "MTA_401732",
+        "DestinationRef": "MTA_803120",
+        "DestinationName": [
+         "SELECT BUS SERVICE SOUTH FERRY via 2 AV"
+        ],
+        "SituationRef": [
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:alert:276004:26"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:30414"
+         }
+        ],
+        "Monitored": true,
+        "VehicleLocation": {
+         "Longitude": -73.99944,
+         "Latitude": 40.711808
+        },
+        "Bearing": 184.93921,
+        "ProgressRate": "normalProgress",
+        "Occupancy": "seatsAvailable",
+        "BlockRef": "MTA NYCT_OF_D6-Weekday-SDon_E_OF_21240_SBS15-417",
+        "VehicleRef": "MTA NYCT_6200",
+        "MonitoredCall": {
+         "AimedArrivalTime": "2026-11-12T21:32:07.790-05:00",
+         "ExpectedArrivalTime": "2026-11-12T21:50:35.286-05:00",
+         "ArrivalProximityText": "< 1 stop away",
+         "ExpectedDepartureTime": "2026-11-12T21:50:35.286-05:00",
+         "DistanceFromStop": 576,
+         "NumberOfStopsAway": 0,
+         "Extensions": {
+          "Capacities": {
+           "EstimatedPassengerCount": 2,
+           "EstimatedPassengerCapacity": 80,
+           "EstimatedPassengerLoadFactor": "manySeatsAvailable"
+          }
+         },
+         "StopPointRef": "MTA_405338",
+         "VisitNumber": 1,
+         "StopPointName": [
+          "PEARL ST/BEEKMAN ST"
+         ]
+        }
+       },
+       "RecordedAtTime": "2026-11-12T21:47:47.000-05:00"
+      },
+      {
+       "MonitoredVehicleJourney": {
+        "LineRef": "MTA NYCT_M15+",
+        "DirectionRef": "0",
+        "FramedVehicleJourneyRef": {
+         "DataFrameRef": "2026-11-12",
+         "DatedVehicleJourneyRef": "MTA NYCT_OF_D6-Weekday-SDon-123000_SBS15_448"
+        },
+        "JourneyPatternRef": "MTA_SBS150191",
+        "PublishedLineName": [
+         "M15-SBS"
+        ],
+        "OperatorRef": "MTA NYCT",
+        "OriginRef": "MTA_405382",
+        "DestinationRef": "MTA_803054",
+        "DestinationName": [
+         "SELECT BUS SERVICE 125 ST via 1 AV"
+        ],
+        "SituationRef": [
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:alert:276004:26"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:30414"
+         }
+        ],
+        "Monitored": true,
+        "VehicleLocation": {
+         "Longitude": -73.965958,
+         "Latitude": 40.754124
+        },
+        "Bearing": 53.864624,
+        "ProgressRate": "normalProgress",
+        "Occupancy": "seatsAvailable",
+        "BlockRef": "MTA NYCT_OF_D6-Weekday-SDon_E_OF_18960_SBS15-409",
+        "VehicleRef": "MTA NYCT_6103",
+        "MonitoredCall": {
+         "AimedArrivalTime": "2026-11-12T21:02:52.815-05:00",
+         "ExpectedArrivalTime": "2026-11-12T21:50:18.181-05:00",
+         "ArrivalProximityText": "< 1 stop away",
+         "ExpectedDepartureTime": "2026-11-12T21:50:18.181-05:00",
+         "DistanceFromStop": 600,
+         "NumberOfStopsAway": 0,
+         "Extensions": {
+          "Capacities": {
+           "EstimatedPassengerCount": 23,
+           "EstimatedPassengerCapacity": 80,
+           "EstimatedPassengerLoadFactor": "manySeatsAvailable"
+          }
+         },
+         "StopPointRef": "MTA_401704",
+         "VisitNumber": 1,
+         "StopPointName": [
+          "1 AV/E 57 ST"
+         ]
+        }
+       },
+       "RecordedAtTime": "2026-11-12T21:48:07.000-05:00"
+      },
+      {
+       "MonitoredVehicleJourney": {
+        "LineRef": "MTA NYCT_M15+",
+        "DirectionRef": "0",
+        "FramedVehicleJourneyRef": {
+         "DataFrameRef": "2026-11-12",
+         "DatedVehicleJourneyRef": "MTA NYCT_OF_D6-Weekday-SDon-120200_SBS15_459"
+        },
+        "JourneyPatternRef": "MTA_SBS150191",
+        "PublishedLineName": [
+         "M15-SBS"
+        ],
+        "OperatorRef": "MTA NYCT",
+        "OriginRef": "MTA_405382",
+        "DestinationRef": "MTA_803054",
+        "DestinationName": [
+         "SELECT BUS SERVICE 125 ST via 1 AV"
+        ],
+        "SituationRef": [
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:alert:276004:26"
+         },
+         {
+          "SituationSimpleRef": "MTA NYCT_lmm:planned_work:30414"
+         }
+        ],
+        "Monitored": true,
+        "VehicleLocation": {
+         "Longitude": -73.935005,
+         "Latitude": 40.796539
+        },
+        "Bearing": 54.19303,
+        "ProgressRate": "normalProgress",
+        "BlockRef": "MTA NYCT_OF_D6-Weekday-SDon_E_OF_25380_SBS15-435",
+        "VehicleRef": "MTA NYCT_6095",
+        "MonitoredCall": {
+         "AimedArrivalTime": "2026-11-12T20:56:00.794-05:00",
+         "ExpectedArrivalTime": "2026-11-12T21:50:04.255-05:00",
+         "ArrivalProximityText": "< 1 stop away",
+         "ExpectedDepartureTime": "2026-11-12T21:50:04.255-05:00",
+         "DistanceFromStop": 645,
+         "NumberOfStopsAway": 0,
+         "StopPointRef": "MTA_401731",
+         "VisitNumber": 1,
+         "StopPointName": [
+          "1 AV/E 125 ST"
+         ]
+        }
+       },
+       "RecordedAtTime": "2026-11-12T21:47:50.049-05:00"
+      }
+     ],
+     "ResponseTimestamp": "2026-11-12T21:48:09.772-05:00",
+     "ValidUntil": "2026-11-12T21:49:09.772-05:00"
+    }
+   ],
+   "SituationExchangeDelivery": [
+    {
+     "Situations": {
+      "PtSituationElement": [
+       {
+        "PublicationWindow": {
+         "StartTime": "2026-11-12T15:04:53.000-05:00",
+         "EndTime": "1969-12-31T19:00:00.000-05:00"
+        },
+        "Severity": "undefined",
+        "Summary": [
+         "Expect delays on all Manhattan bus routes due to inclement weather.Allow additional travel time"
+        ],
+        "Description": [
+         "Expect delays on all Manhattan bus routes due to inclement weather.Allow additional travel time"
+        ],
+        "Affects": {
+         "VehicleJourneys": {
+          "AffectedVehicleJourney": [
+           {
+            "LineRef": "MTA NYCT_M8"
+           },
+           {
+            "LineRef": "MTA NYCT_M23+"
+           },
+           {
+            "LineRef": "MTA NYCT_M42"
+           },
+           {
+            "LineRef": "MTA NYCT_M96"
+           },
+           {
+            "LineRef": "MTA NYCT_M21"
+           },
+           {
+            "LineRef": "MTA NYCT_M14A+"
+           },
+           {
+            "LineRef": "MTA NYCT_M102"
+           },
+           {
+            "LineRef": "MTA NYCT_M104"
+           },
+           {
+            "LineRef": "MTA NYCT_M12"
+           },
+           {
+            "LineRef": "MTA NYCT_M125"
+           },
+           {
+            "LineRef": "MTA NYCT_M57"
+           },
+           {
+            "LineRef": "MTA NYCT_M11"
+           },
+           {
+            "LineRef": "MTA NYCT_M106"
+           },
+           {
+            "LineRef": "MTA NYCT_M60+"
+           },
+           {
+            "LineRef": "MTA NYCT_M35"
+           },
+           {
+            "LineRef": "MTA NYCT_M1"
+           },
+           {
+            "LineRef": "MTA NYCT_M2"
+           },
+           {
+            "LineRef": "MTA NYCT_M66"
+           },
+           {
+            "LineRef": "MTA NYCT_M31"
+           },
+           {
+            "LineRef": "MTA NYCT_M34A+"
+           },
+           {
+            "LineRef": "MTA NYCT_M15"
+           },
+           {
+            "LineRef": "MTA NYCT_M103"
+           },
+           {
+            "LineRef": "MTA NYCT_M79+"
+           },
+           {
+            "LineRef": "MTA NYCT_M90"
+           },
+           {
+            "LineRef": "MTA NYCT_M4"
+           },
+           {
+            "LineRef": "MTA NYCT_M15+"
+           },
+           {
+            "LineRef": "MTA NYCT_M72"
+           },
+           {
+            "LineRef": "MTA NYCT_M14D+"
+           },
+           {
+            "LineRef": "MTA NYCT_M100"
+           },
+           {
+            "LineRef": "MTA NYCT_M86+"
+           },
+           {
+            "LineRef": "MTA NYCT_M20"
+           },
+           {
+            "LineRef": "MTA NYCT_M9"
+           },
+           {
+            "LineRef": "MTA NYCT_M116"
+           },
+           {
+            "LineRef": "MTA NYCT_M3"
+           },
+           {
+            "LineRef": "MTA NYCT_M34+"
+           },
+           {
+            "LineRef": "MTA NYCT_M22"
+           },
+           {
+            "LineRef": "MTA NYCT_M55"
+           },
+           {
+            "LineRef": "MTA NYCT_M5"
+           },
+           {
+            "LineRef": "MTA NYCT_M7"
+           },
+           {
+            "LineRef": "MTA NYCT_M10"
+           },
+           {
+            "LineRef": "MTA NYCT_M98"
+           },
+           {
+            "LineRef": "MTA NYCT_M50"
+           },
+           {
+            "LineRef": "MTA NYCT_M101"
+           }
+          ]
+         }
+        },
+        "CreationTime": "2026-11-12T15:04:53.000-05:00",
+        "SituationNumber": "MTA NYCT_lmm:alert:276004:26"
+       },
+       {
+        "PublicationWindow": {
+         "StartTime": "2026-03-03T00:00:00.000-05:00",
+         "EndTime": "2027-05-11T22:43:51.000-04:00"
+        },
+        "Severity": "undefined",
+        "Summary": [
+         "The northbound M15 and M15-SBS bus stops on Water St at Wall St and Pine St has been temporarily moved to the far side of Pine St"
+        ],
+        "Description": [
+         "The northbound M15 and M15-SBS bus stops on Water St at Wall St and Pine St has been temporarily moved to the far side of Pine St\n<p><strong>What's happening?</strong></p><p>Construction - Water St</p><p></p><p><strong>NOTE</strong>: <strong>M15-SBS</strong> customers must pay fare before boarding by using the machine at regular bus stop located on Water St at Pine St or bus door with OMNY.</p>"
+        ],
+        "Affects": {
+         "VehicleJourneys": {
+          "AffectedVehicleJourney": [
+           {
+            "LineRef": "MTA NYCT_M15"
+           },
+           {
+            "LineRef": "MTA NYCT_M15+"
+           }
+          ]
+         }
+        },
+        "CreationTime": "2026-03-03T17:35:41.000-05:00",
+        "SituationNumber": "MTA NYCT_lmm:planned_work:30414"
+       }
+      ]
+     }
+    },
+    {
+     "Situations": {
+      "PtSituationElement": [
+       {
+        "PublicationWindow": {
+         "StartTime": "2026-03-03T00:00:00.000-05:00",
+         "EndTime": "2027-05-11T22:43:51.000-04:00"
+        },
+        "Severity": "undefined",
+        "Summary": [
+         "The northbound M15 and M15-SBS bus stops on Water St at Wall St and Pine St has been temporarily moved to the far side of Pine St"
+        ],
+        "Description": [
+         "The northbound M15 and M15-SBS bus stops on Water St at Wall St and Pine St has been temporarily moved to the far side of Pine St\n<p><strong>What's happening?</strong></p><p>Construction - Water St</p><p></p><p><strong>NOTE</strong>: <strong>M15-SBS</strong> customers must pay fare before boarding by using the machine at regular bus stop located on Water St at Pine St or bus door with OMNY.</p>"
+        ],
+        "Affects": {
+         "VehicleJourneys": {
+          "AffectedVehicleJourney": [
+           {
+            "LineRef": "MTA NYCT_M15"
+           },
+           {
+            "LineRef": "MTA NYCT_M15+"
+           }
+          ]
+         }
+        },
+        "CreationTime": "2026-03-03T17:35:41.000-05:00",
+        "SituationNumber": "MTA NYCT_lmm:planned_work:30414"
+       },
+       {
+        "PublicationWindow": {
+         "StartTime": "2026-11-12T15:04:53.000-05:00",
+         "EndTime": "1969-12-31T19:00:00.000-05:00"
+        },
+        "Severity": "undefined",
+        "Summary": [
+         "Expect delays on all Manhattan bus routes due to inclement weather.Allow additional travel time"
+        ],
+        "Description": [
+         "Expect delays on all Manhattan bus routes due to inclement weather.Allow additional travel time"
+        ],
+        "Affects": {
+         "VehicleJourneys": {
+          "AffectedVehicleJourney": [
+           {
+            "LineRef": "MTA NYCT_M8"
+           },
+           {
+            "LineRef": "MTA NYCT_M23+"
+           },
+           {
+            "LineRef": "MTA NYCT_M42"
+           },
+           {
+            "LineRef": "MTA NYCT_M96"
+           },
+           {
+            "LineRef": "MTA NYCT_M21"
+           },
+           {
+            "LineRef": "MTA NYCT_M14A+"
+           },
+           {
+            "LineRef": "MTA NYCT_M102"
+           },
+           {
+            "LineRef": "MTA NYCT_M104"
+           },
+           {
+            "LineRef": "MTA NYCT_M12"
+           },
+           {
+            "LineRef": "MTA NYCT_M125"
+           },
+           {
+            "LineRef": "MTA NYCT_M57"
+           },
+           {
+            "LineRef": "MTA NYCT_M11"
+           },
+           {
+            "LineRef": "MTA NYCT_M106"
+           },
+           {
+            "LineRef": "MTA NYCT_M60+"
+           },
+           {
+            "LineRef": "MTA NYCT_M35"
+           },
+           {
+            "LineRef": "MTA NYCT_M1"
+           },
+           {
+            "LineRef": "MTA NYCT_M2"
+           },
+           {
+            "LineRef": "MTA NYCT_M66"
+           },
+           {
+            "LineRef": "MTA NYCT_M31"
+           },
+           {
+            "LineRef": "MTA NYCT_M34A+"
+           },
+           {
+            "LineRef": "MTA NYCT_M15"
+           },
+           {
+            "LineRef": "MTA NYCT_M103"
+           },
+           {
+            "LineRef": "MTA NYCT_M79+"
+           },
+           {
+            "LineRef": "MTA NYCT_M90"
+           },
+           {
+            "LineRef": "MTA NYCT_M4"
+           },
+           {
+            "LineRef": "MTA NYCT_M15+"
+           },
+           {
+            "LineRef": "MTA NYCT_M72"
+           },
+           {
+            "LineRef": "MTA NYCT_M14D+"
+           },
+           {
+            "LineRef": "MTA NYCT_M100"
+           },
+           {
+            "LineRef": "MTA NYCT_M86+"
+           },
+           {
+            "LineRef": "MTA NYCT_M20"
+           },
+           {
+            "LineRef": "MTA NYCT_M9"
+           },
+           {
+            "LineRef": "MTA NYCT_M116"
+           },
+           {
+            "LineRef": "MTA NYCT_M3"
+           },
+           {
+            "LineRef": "MTA NYCT_M34+"
+           },
+           {
+            "LineRef": "MTA NYCT_M22"
+           },
+           {
+            "LineRef": "MTA NYCT_M55"
+           },
+           {
+            "LineRef": "MTA NYCT_M5"
+           },
+           {
+            "LineRef": "MTA NYCT_M7"
+           },
+           {
+            "LineRef": "MTA NYCT_M10"
+           },
+           {
+            "LineRef": "MTA NYCT_M98"
+           },
+           {
+            "LineRef": "MTA NYCT_M50"
+           },
+           {
+            "LineRef": "MTA NYCT_M101"
+           }
+          ]
+         }
+        },
+        "CreationTime": "2026-11-12T15:04:53.000-05:00",
+        "SituationNumber": "MTA NYCT_lmm:alert:276004:26"
+       }
+      ]
+     }
+    }
+   ]
+  }
+ }
+}

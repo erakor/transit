@@ -12,8 +12,23 @@ export function busRoute(routes: Record<string, RouteDisplay>, id: string, shown
 }
 
 /**
+ * A route id as riders may type it: any case, and `M15-SBS` for the Select Bus Service route
+ * `M15+`. Takes the parameter as the URL decodes it, before trimming: an unencoded `+` decodes
+ * as a space, and still means the Select Bus Service route rather than the local one.
+ */
+export function busRouteId(raw: string): string {
+  return raw
+    .replace(/^\s+/, '')
+    .replace(/(?<=\S) $/, '+')
+    .trim()
+    .toUpperCase()
+    .replace(/-SBS$/, '+')
+}
+
+/**
  * The buses on their way to `stop`, in one list: predicted ones soonest first, then those Bus Time
- * can't time yet (at their terminal), nearest first. Pure.
+ * can't time yet (at their terminal), nearest first. Cancelled trips are listed at their scheduled
+ * time, marked. Pure.
  */
 export function computeBusArrivals(
   stop: string,
@@ -34,6 +49,7 @@ export function computeBusArrivals(
       stopsAway: v.stopsAway ?? null,
       meters: v.meters ?? null,
       atTerminal: v.notYetDeparted,
+      cancelled: v.cancelled,
       vehicle: v.vehicle,
       tripId: v.tripId,
     }
@@ -47,5 +63,13 @@ export function computeBusArrivals(
       a.tripId.localeCompare(b.tripId)
   )
   const name = answer.visits.find(v => v.stopName)?.stopName ?? null
-  return { stop: { id: stop, name }, updatedAt: answer.updatedAt, arrivals: arrivals.slice(0, limit) }
+  // Cancelled trips stay where they fall, but only buses that will come count toward `limit`.
+  const kept: BusArrival[] = []
+  let coming = 0
+  for (const a of arrivals) {
+    if (coming === limit) break
+    kept.push(a)
+    if (!a.cancelled) coming++
+  }
+  return { stop: { id: stop, name }, updatedAt: answer.updatedAt, arrivals: kept }
 }

@@ -1,0 +1,18 @@
+{
+ "Siri": {
+  "ServiceDelivery": {
+   "ResponseTimestamp": "2026-11-12T21:48:09.998-05:00",
+   "VehicleMonitoringDelivery": [
+    {
+     "ResponseTimestamp": "2026-11-12T21:48:09.998-05:00",
+     "ErrorCondition": {
+      "OtherError": {
+       "ErrorText": "No such route: MTA NYCT_ZZZ. No such route: MTA_ZZZ. No such route: MTABC_ZZZ."
+      },
+      "Description": "No such route: MTA NYCT_ZZZ. No such route: MTA_ZZZ. No such route: MTABC_ZZZ."
+     }
+    }
+   ]
+  }
+ }
+}

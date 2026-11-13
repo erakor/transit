@@ -102,7 +102,11 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
         return s ? s === stop.id : stop.routes.includes(r)
       },
       route: id => agency.data.routes[id],
-      stopName: id => agency.data.stops[id]?.name,
+      // Their `direction_id`s have no documented meaning in alerts: no direction is shown.
+      stop: id => {
+        const name = agency.data.stops[id]?.name
+        return name ? { id, name, direction: null } : undefined
+      },
     })
     return json(stop ? { [agency.stopParam]: { id: stop.id, name: stop.name }, ...result } : result, {
       cache: ALERTS_CACHE,

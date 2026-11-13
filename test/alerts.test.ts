@@ -6,8 +6,9 @@ import { subwayAlertsHandler } from '#src/routes/alerts.js'
 import { subwayVehiclesHandler } from '#src/routes/vehicles.js'
 import { StationIndex } from '#src/stops/stations.js'
 import { decodeFeed, VEHICLE_MAX_AGE_S } from '#src/gtfsrt.js'
+import { ALERT_STATUSES, alertType, splitAlertId, statusRank } from '#src/mercury.js'
 import { computeSubwayTrains } from '#src/subway/vehicles.js'
-import { encodeFeed, feedFrom } from './feed.js'
+import { encodeFeed, feedFrom, mercuryAlert } from './feed.js'
 import { auth, fixture, fixtureFetcher, FIXTURE_NOW_MS, get, useRouteTestSetup } from './helpers.js'
 
 const NOW = 1_800_000_000
@@ -81,7 +82,10 @@ const feed = feedFrom(NOW - 30, [
 const options: AlertsOptions = {
   now: NOW,
   route: id => ({ id, name: `${id} train`, color: '#000000', textColor: '#FFFFFF' }),
-  stopName: id => ({ '127': 'Times Sq-42 St', '127N': 'Times Sq-42 St' })[id],
+  stop: id => {
+    const name = ({ '127': 'Times Sq-42 St', '127N': 'Times Sq-42 St' } as Record<string, string>)[id]
+    return name ? { id, name, direction: null } : undefined
+  },
 }
 
 describe('computeAlerts', () => {
@@ -96,6 +100,8 @@ describe('computeAlerts', () => {
     expect(incident).toEqual({
       id: 'lmm:alert:1',
       planned: false,
+      category: null,
+      priority: null,
       header: '[A][C] trains are delayed.',
       description: '',
       routes: [
@@ -114,8 +120,8 @@ describe('computeAlerts', () => {
       end: NOW + 5000,
       routes: [{ id: '1' }],
       stops: [
-        { id: '127', name: 'Times Sq-42 St' },
-        { id: '127N', name: 'Times Sq-42 St' },
+        { id: '127', name: 'Times Sq-42 St', direction: null },
+        { id: '127N', name: 'Times Sq-42 St', direction: null },
       ],
     })
     expect(trip).toMatchObject({ routes: [{ id: 'L' }], start: null, end: null })
@@ -141,9 +147,104 @@ describe('computeAlerts', () => {
         expect(a.header).not.toBe('')
         expect(a.header + a.description).not.toMatch(/<\/?(p|strong|br|a)\b/)
         expect(a.routes.length + a.stops.length).toBeGreaterThan(0)
+        // Every MTA alert has a status from the table; the ferry's have none.
+        if (name === 'ferry-alert') expect([a.category, a.priority]).toEqual([null, null])
+        else expect(statusRank(a.category ?? '')).toBe(a.priority)
       }
+      expect(new Set(alerts.map(a => a.id)).size).toBe(alerts.length)
     }
   )
+})
+
+describe('MTA alert statuses', () => {
+  it('splits the status rank off alert ids, not off planned work', () => {
+    expect(splitAlertId('lmm:alert:276100:26')).toEqual({ id: 'lmm:alert:276100', rank: 26 })
+    expect(splitAlertId('lmm:planned_work:36463')).toEqual({ id: 'lmm:planned_work:36463' })
+    expect(splitAlertId('lmm:alert:276100')).toEqual({ id: 'lmm:alert:276100' })
+    expect(splitAlertId('lmm:alert:276100:36')).toEqual({ id: 'lmm:alert:276100:36' })
+    expect(splitAlertId('ferry-1')).toEqual({ id: 'ferry-1' })
+  })
+
+  it('ranks the 35 statuses from No Scheduled Service to Suspended', () => {
+    expect(ALERT_STATUSES).toHaveLength(35)
+    expect(statusRank('No Scheduled Service')).toBe(1)
+    expect(statusRank('Delays')).toBe(26)
+    expect(statusRank('Suspended')).toBe(35)
+    expect(statusRank('Something New')).toBeUndefined()
+  })
+
+  it('reads alert types from the extension the bindings keep', () => {
+    const f = feedFrom(NOW, [
+      { id: 'a', alert: { headerText: en('x') }, alertType: 'Delays' },
+      { id: 'b', alert: { headerText: en('y') } },
+      { id: 'c', alert: { headerText: en('z') }, alertType: 'Planned - Stops Skipped ✓' },
+    ])
+    expect(f.entity.map(e => alertType(e.alert!))).toEqual(['Delays', undefined, 'Planned - Stops Skipped ✓'])
+    // Other unknown fields are skipped, unreadable bytes give nothing.
+    expect(alertType({ $unknowns: [mercuryAlert('Other', 1002), mercuryAlert('Delays')] })).toBe('Delays')
+    expect(alertType({ $unknowns: [new Uint8Array([0xca, 0x3e, 0x40, 0x01])] })).toBeUndefined()
+    // An unreadable field next to it doesn't hide the extension.
+    expect(alertType({ $unknowns: [new Uint8Array([0xcb, 0x3e]), mercuryAlert('Delays')] })).toBe('Delays')
+    expect(alertType({})).toBeUndefined()
+  })
+
+  const split = feedFrom(NOW - 30, [
+    {
+      id: 'lmm:alert:9:26',
+      alertType: 'Delays',
+      alert: {
+        activePeriod: [{ start: NOW - 300 }],
+        informedEntity: [{ routeId: '6' }, { routeId: '6X' }],
+        headerText: en('No [6] between 125 St and 3 Av/138 St'),
+      },
+    },
+    {
+      id: 'lmm:alert:9:25',
+      alertType: 'Express to Local',
+      alert: {
+        activePeriod: [{ start: NOW - 300 }],
+        informedEntity: [{ routeId: '4' }, { routeId: '5' }],
+        headerText: en('No [6] between 125 St and 3 Av/138 St'),
+      },
+    },
+    {
+      id: 'lmm:alert:10:3',
+      alert: { activePeriod: [{ start: NOW - 60 }], informedEntity: [{ routeId: '4' }], headerText: en('Notice') },
+    },
+    {
+      id: 'lmm:planned_work:11',
+      alertType: 'Planned - Suspended',
+      alert: { informedEntity: [{ routeId: '5' }], headerText: en('No [5] tonight') },
+    },
+    {
+      id: 'lmm:planned_work:12',
+      alertType: 'Boarding Change',
+      alert: { informedEntity: [{ routeId: '4' }], headerText: en('Board elsewhere') },
+    },
+  ])
+
+  it('merges the parts of an alert under its id, with the most serious status', () => {
+    const { alerts } = computeAlerts(split, options)
+    expect(alerts.map(a => [a.id, a.category, a.priority])).toEqual([
+      ['lmm:alert:9', 'Delays', 26],
+      // Newer, but a lower priority; its status comes from the rank alone.
+      ['lmm:alert:10', 'Station Notice', 3],
+      // Planned work has no rank in its id: it comes from the type.
+      ['lmm:planned_work:11', 'Planned - Suspended', 21],
+      ['lmm:planned_work:12', 'Boarding Change', 10],
+    ])
+    expect(alerts[0]!.routes.map(r => r.id)).toEqual(['6', '6X', '4', '5'])
+    expect(alerts[0]!.start).toBe(NOW - 300)
+  })
+
+  it('merges only the parts that pass the filter', () => {
+    const { alerts } = computeAlerts(split, { ...options, match: r => r === '5' })
+    expect(alerts.map(a => [a.id, a.category])).toEqual([
+      ['lmm:alert:9', 'Express to Local'],
+      ['lmm:planned_work:11', 'Planned - Suspended'],
+    ])
+    expect(alerts[0]!.routes.map(r => r.id)).toEqual(['4', '5'])
+  })
 })
 
 describe('subway alerts and vehicles routes', () => {
@@ -184,11 +285,45 @@ describe('subway alerts and vehicles routes', () => {
     expect(body.stop).toMatchObject({ id: TIMES_SQ, name: 'Times Sq-42 St' })
     // A and C stop in the complex; the L alert names a trip, not a stop here; ZZ is no route of it.
     expect(body.alerts.map((a: { id: string }) => a.id)).toEqual(['lmm:alert:1', 'lmm:planned_work:2'])
-    expect(body.alerts[1].stops[0]).toEqual({ id: '127', name: 'Times Sq-42 St' })
+    // It names the stop and its northbound platform: both directions.
+    expect(body.alerts[1].stops).toEqual([{ id: '127', name: 'Times Sq-42 St', direction: null }])
     const bedford = await (await alerts('/subway/alerts?stop=L08')).json()
     expect(bedford.alerts.map((a: { id: string }) => a.id)).toEqual(['lmm:alert:5'])
     const both = await (await alerts(`/subway/alerts?stop=${encodeURIComponent(TIMES_SQ)}&route=1`)).json()
     expect(both.alerts.map((a: { id: string }) => a.id)).toEqual(['lmm:planned_work:2'])
+  })
+
+  it('/subway/alerts names the direction an alert affects, and leaves the other platform out', async () => {
+    const directional = feedFrom(NOW - 30, [
+      {
+        id: 'lmm:planned_work:20',
+        alertType: 'Planned - Stops Skipped',
+        alert: {
+          informedEntity: [
+            { agencyId: 'MTASBWY', routeId: '7', stopId: '711', directionId: 1 },
+            { agencyId: 'MTASBWY', routeId: '7', stopId: '712', directionId: 1 },
+            { agencyId: 'MTASBWY', routeId: '7', stopId: '712', directionId: 0 },
+            { agencyId: 'MTASBWY', routeId: '7', stopId: '713S' },
+          ],
+          headerText: en('Some [7] stops are skipped'),
+        },
+      },
+    ])
+    const fetcher = async () => new Response(encodeFeed(directional) as Uint8Array<ArrayBuffer>)
+    const ids = async (stop: string) =>
+      (await (await alerts(`/subway/alerts?stop=${stop}`, fetcher)).json()).alerts.map((a: { id: string }) => a.id)
+    const [alert] = (await (await alerts('/subway/alerts?route=7', fetcher)).json()).alerts
+    expect(alert.stops.map((s: { id: string; direction: string | null }) => [s.id, s.direction])).toEqual([
+      ['711', 'S'],
+      ['712', null],
+      ['713', 'S'],
+    ])
+    expect(alert).toMatchObject({ category: 'Planned - Stops Skipped', priority: 16 })
+    expect(await ids('711')).toEqual(['lmm:planned_work:20'])
+    expect(await ids('711S')).toEqual(['lmm:planned_work:20'])
+    expect(await ids('711N')).toEqual([])
+    expect(await ids('712N')).toEqual(['lmm:planned_work:20'])
+    expect(await ids('713N')).toEqual([])
   })
 
   it.each([

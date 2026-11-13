@@ -1,5 +1,6 @@
 import type { GbfsFeed, GbfsStationInformation, GbfsStationStatus } from './feeds.js'
 import type { BikeStation, NearbyStation } from './schemas.js'
+import { nearest } from '#src/geo.js'
 
 export interface BikeStations {
   /** `station_status`'s timestamp, epoch seconds. */
@@ -51,30 +52,7 @@ export function joinStations(
   return { updatedAt: status.last_updated, byId }
 }
 
-const EARTH_RADIUS_M = 6_371_000
-const rad = (deg: number): number => (deg * Math.PI) / 180
-
-/** Great-circle distance in meters. */
-export function distanceMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const a =
-    Math.sin(rad(lat2 - lat1) / 2) ** 2 +
-    Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(rad(lon2 - lon1) / 2) ** 2
-  return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a))
-}
-
 /** The `n` stations closest to a point, nearest first (ties by id, so the order is stable). */
 export function nearestStations(stations: Iterable<BikeStation>, lat: number, lon: number, n: number): NearbyStation[] {
-  if (n < 1) return []
-  // Keeps the best n seen so far, sorted, instead of sorting every station.
-  const best: [number, BikeStation][] = []
-  const before = (d: number, s: BikeStation, [bd, b]: [number, BikeStation]) => d < bd || (d === bd && s.id < b.id)
-  for (const s of stations) {
-    const d = Math.round(distanceMeters(lat, lon, s.lat, s.lon))
-    if (best.length === n && !before(d, s, best[n - 1]!)) continue
-    let i = best.length
-    while (i > 0 && before(d, s, best[i - 1]!)) i--
-    best.splice(i, 0, [d, s])
-    if (best.length > n) best.pop()
-  }
-  return best.map(([distance, s]) => ({ ...s, distance }))
+  return nearest(stations, lat, lon, n, s => s.id).map(([distance, s]) => ({ ...s, distance }))
 }

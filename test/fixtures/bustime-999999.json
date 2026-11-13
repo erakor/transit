@@ -1,13 +1,14 @@
 {
  "Siri": {
   "ServiceDelivery": {
-   "ResponseTimestamp": "2026-11-10T13:18:56.456-05:00",
+   "ResponseTimestamp": "2026-11-12T21:48:09.609-05:00",
    "StopMonitoringDelivery": [
     {
-     "ResponseTimestamp": "2026-11-10T13:18:56.456-05:00",
-     "ValidUntil": "2026-11-10T13:19:56.456-05:00",
+     "ResponseTimestamp": "2026-11-12T21:48:09.609-05:00",
      "ErrorCondition": {
-      "OtherError": { "ErrorText": "No such stop: MTA_999999." },
+      "OtherError": {
+       "ErrorText": "No such stop: MTA_999999."
+      },
       "Description": "No such stop: MTA_999999."
      }
     }

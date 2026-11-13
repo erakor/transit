@@ -93,13 +93,18 @@ The LIRR, Metro-North and NYC Ferry share one implementation, driven by the `AGE
   in `AGENCIES`, a source in `scripts/build-static.ts`, entries in `vercel.json`, and a
   `MAIN_STOP` in `scripts/smoke.ts`; the fixture recorder and the tests' fetcher follow `AGENCIES`.
 
-Buses (`/bus/arrivals`, `/preview/bus`, `/bus/alerts`) are not an agency: they are their own
-function, `api/bus.ts` (`busHandler()` in `src/routes/bus.ts`). Arrivals come from MTA Bus Time's SIRI
-StopMonitoring API, one JSON request per stop (`fetchStopMonitoring()` in `src/bus/siri.ts`, through
-`memoized()`), read by `parseStopMonitoring()` and ordered by `computeBusArrivals()` (both pure). The
+Buses (`/bus/arrivals`, `/preview/bus`, `/bus/alerts`, `/bus/vehicles`, `/bus/nearby`) are not an
+agency: they are their own function, `api/bus.ts` (`busHandler()` in `src/routes/bus.ts`). Arrivals
+come from MTA Bus Time's SIRI StopMonitoring API, one JSON request per stop (`fetchStopMonitoring()`
+in `src/bus/siri.ts`, through `memoized()`), read by `parseStopMonitoring()` and ordered by
+`computeBusArrivals()` (both pure). Positions come from SIRI VehicleMonitoring, one request per route
+(`fetchVehicleMonitoring()`, `computeBusVehicles()` in `src/bus/vehicles.ts`), and nearby stops from
+Bus Time's OneBusAway "Discovery" API on `bustime-classic.mta.info` (`src/bus/stops.ts`), which
+serves the static stop data so the function doesn't bundle it. The
 answer names the stop and destinations, so the only static data is route names and colors
 (`src/data/bus.generated.ts`, from six zips, built by `src/static/bus.ts`). The key is
-`BUSTIME_KEY` (a Vercel environment variable); without it those two routes answer 500. It goes in
+`BUSTIME_KEY` (a Vercel environment variable); without it `/bus/arrivals`, `/preview/bus`,
+`/bus/vehicles` and `/bus/nearby` answer 500 (`/bus/alerts` doesn't need it). It goes in
 the query string, so no error, log or fixture may carry the request URL. Bus stop data (about
 13,500 stops) would be the bus function's to bundle: keep it out of the others.
 
@@ -174,9 +179,21 @@ Ids, which clients store as favorites, so keep them stable:
   it is listed after the timed ones with `time: null`.
 - Names and statuses can be a string or a list of strings. Distances are `MonitoredCall` fields in
   SIRI 2 (requested with `version=2`) and `Extensions.Distances` in SIRI 1; the parser reads both.
-- test/fixtures/bustime-*.json were written by hand from Bus Time's documented format until a key
-  was available; `pnpm record-fixtures bus` replaces them with real answers (then update
-  `BUS_FIXTURE_NOW_MS` in `test/helpers.ts`, and the counts and names `test/bus.test.ts` expects).
+- The detail level decides which fields come back: StopMonitoring's `minimum` leaves out
+  `LineRef`, `FramedVehicleJourneyRef` and `StopPointName`, so the request asks for `basic`;
+  VehicleMonitoring asks for `normal`, the first level with the next stop's `StopPointRef`.
+- VehicleMonitoring with `version=2` redirects (302) to `vehicle-monitoring-v2.json`; `fetch`
+  follows it. Its `LineRef` takes the plain GTFS route id (`M15+`), operator optional.
+- Cancelled trips come only on the `/api/2/siri/` path, as `VehicleStatus: cancelled` (SIRI 2) or
+  `ArrivalStatus`/`DepartureStatus: cancelled` on the call (SIRI 1), at their `AimedArrivalTime`.
+  None was running when the fixtures were recorded, so the tests build them by hand from the
+  documented format.
+- `Bearing` counts counterclockwise from east; responses carry a compass `heading`.
+- The Discovery API answers a bad key with a 200 and a body of `null`: `parseStopsForLocation()`
+  throws on anything but `code: 200` with a stop list, so it is a 502 and not memoized.
+- test/fixtures/bustime-*.json are real answers, recorded late in the evening (`pnpm record-fixtures
+  bus`); after re-recording, update `BUS_FIXTURE_NOW_MS` in `test/helpers.ts`, and the counts and
+  names `test/bus.test.ts` expects.
 
 ### Other feed quirks handled in code
 
@@ -194,6 +211,29 @@ Ids, which clients store as favorites, so keep them stable:
 - Alert texts come in `en` and `en-html`; `computeAlerts()` returns the plain one. Planned work
   carries one active period per affected night, hundreds in all, which is why the recorded
   alert fixtures are cut down to what was in effect.
+- The MTA extends GTFS-realtime: `gtfs-realtime-NYCT.proto` (subway trips), `-MTARR.proto`
+  (railroad stop times), `-service-status.proto` (alerts). The bindings don't decode them but
+  keep their bytes in `$unknowns` (protobufjs 8, written back on encode, so recorded fixtures
+  keep them); `extension()` in `src/protowire.ts` reads them from there, and tests add them with
+  `extensionField()` and `withExtension()` (`test/feed.ts`). A broken extension reads as absent.
+- Subway trips (`src/subway/nyct.ts`): `is_assigned` is false for trips listed before a train
+  leaves the terminal. The first character of `train_id` is the trip type (`=` reroute, `/`
+  skip-stop, `$` short turn), as documented for the 1-6 lines. B Division ids start with other,
+  undocumented codes, so only those three characters are read, for every trip; anything else is
+  `change: null`. A vehicle's timestamp is when the train last moved:
+  over `STALLED_AFTER_S` (90 s) before the header, it is stalled and its predictions are frozen.
+  Trip feeds also carry "Train delayed" alerts naming trips.
+- Railroad stop times (`src/agency/mtarr.ts`): `track` on both, `trainStatus` on Metro-North only
+  (the LIRR sends it empty).
+- MTA alerts carry their status (`Delays`, `Planned - Stops Skipped`) in
+  `MercuryAlert.alert_type`, which `alertType()` in `src/mercury.ts` reads. Ranks come from the MTA's table (`ALERT_STATUSES`, documented in
+  `nymta/gtfs-documentation`); the smoke test fails on a status the table lacks.
+- Alert entity ids end in the status rank (`lmm:alert:276100:26`), planned work ids don't. An
+  alert whose parts have different statuses comes as one entity per status with the same id
+  before the rank; `computeAlerts()` drops the rank and merges them.
+- Subway alerts can name one entity per station, with `direction_id` 0 for northbound and 1 for
+  southbound (or a platform id). Other agencies' `direction_id`s have no documented meaning in
+  alerts and aren't shown.
 - Alerts can name route ids the static data lacks (Metro-North's west-of-Hudson lines): they
   show under their id.
 
@@ -203,7 +243,8 @@ Ids, which clients store as favorites, so keep them stable:
   `Authorization` header. Every authenticated response must keep `Vary: x-transit-token`
   (added by `authenticated()`), or a cached 200 could be served to a request without the token.
 - Errors and `/health` are `no-store`. Success uses `LIVE_CACHE` (arrivals, vehicles),
-  `ALERTS_CACHE` or `STATIC_CACHE` (data that only changes with a deploy) from `src/http.ts`. Never set cookies on cached routes.
+  `ALERTS_CACHE`, `LOOKUP_CACHE` (upstream reference data that changes rarely, such as bus stops
+  near a point) or `STATIC_CACHE` (data that only changes with a deploy) from `src/http.ts`. Never set cookies on cached routes.
 - Times are epoch seconds; responses carry names and colors, not ids alone.
 - `/preview/...` routes answer one line of `text/plain` through `text()` in `src/http.ts` (never
   empty, never starting with `<`, well under 1 KB: alfresco reads only the first 1 KB and drops

@@ -9,14 +9,15 @@ import {
   type GbfsStationInformation,
   type GbfsStationStatus,
 } from '#src/citibike/feeds.js'
-import { distanceMeters, joinStations, nearestStations } from '#src/citibike/stations.js'
+import { joinStations, nearestStations } from '#src/citibike/stations.js'
+import { distanceMeters } from '#src/geo.js'
 import { citibikeHandler, citibikeNearbyHandler, citibikeStationHandler } from '#src/routes/citibike.js'
 import { LIVE_CACHE, providerOp } from '#src/http.js'
 import {
   auth,
   CITIBIKE_INFORMATION,
   CITIBIKE_STATUS,
-  fixture,
+  fixtureJson,
   fixtureFetcher,
   get,
   TIMES_SQ,
@@ -138,8 +139,7 @@ describe('nearestStations', () => {
   })
 
   it('matches a full sort on the recorded stations', () => {
-    const feed = <T>(name: string) =>
-      parseGbfs<T>(name, JSON.parse(new TextDecoder().decode(fixture(`citibike-${name}.json`))))
+    const feed = <T>(name: string) => parseGbfs<T>(name, fixtureJson(`citibike-${name}.json`))
     const all = [...joinStations(feed('station_information'), feed('station_status')).byId.values()]
     const sorted = all
       .map(s => ({ ...s, distance: Math.round(distanceMeters(40.75, -73.99, s.lat, s.lon)) }))
@@ -149,8 +149,7 @@ describe('nearestStations', () => {
 })
 
 describe('recorded Citi Bike feeds', () => {
-  const feed = <T>(name: string) =>
-    parseGbfs<T>(name, JSON.parse(new TextDecoder().decode(fixture(`citibike-${name}.json`))))
+  const feed = <T>(name: string) => parseGbfs<T>(name, fixtureJson(`citibike-${name}.json`))
   const joined = joinStations(feed('station_information'), feed('station_status'))
 
   it('join into stations with sane counts', () => {
