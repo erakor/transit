@@ -12,7 +12,15 @@ function group(name: string, direction: 'N' | 'S', secondsAway: number[], route 
     color: '#000000',
     textColor: '#FFFFFF',
     headsign: '',
-    arrivals: secondsAway.map((s, i) => ({ time: NOW + s, headsign: '', tripId: `${route}${direction}${i}` })),
+    arrivals: secondsAway.map((s, i) => ({
+      time: NOW + s,
+      headsign: '',
+      tripId: `${route}${direction}${i}`,
+      assigned: true,
+      change: null,
+      stalled: false,
+      delayed: false,
+    })),
   }
 }
 

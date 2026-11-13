@@ -1,5 +1,6 @@
 import { num, terminalName, type FeedMessage } from '#src/gtfsrt.js'
 import { routeInfo } from './agencies.js'
+import { railroadStopTime } from './mtarr.js'
 import type { AgencyArrival, AgencyArrivalsResult } from './schemas.js'
 import type { AgencyData, AgencyStop } from './types.js'
 
@@ -34,12 +35,14 @@ export function computeAgencyArrivals(
 
     let time: number | undefined
     let delay: number | undefined
+    let extra: { track?: string; status?: string } = {}
     const here = updates.find(u => u.stopId === stop.id)
     if (here) {
       if (here.scheduleRelationship === SKIPPED) continue
       const event = num(here.departure?.time) !== undefined ? here.departure : here.arrival
       time = num(event?.time)
       if (typeof event?.delay === 'number' && Object.hasOwn(event, 'delay')) delay = event.delay
+      extra = railroadStopTime(here)
     } else if (scheduled) {
       // Not predicted: schedule it from the last stop that is.
       const stopIds = scheduled.stops.map(([id]) => id)
@@ -59,6 +62,7 @@ export function computeAgencyArrivals(
     arrivals.push({
       time,
       ...(delay === undefined ? {} : { delay }),
+      ...extra,
       route: route.id,
       name: route.name,
       color: route.color,

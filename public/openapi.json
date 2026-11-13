@@ -2515,12 +2515,44 @@
           },
           "tripId": {
             "type": "string"
+          },
+          "assigned": {
+            "type": "boolean",
+            "description": "A train has been assigned to the trip: it is running or about to leave its terminal. The feed also lists trips due to start in the next 30 minutes before a train is assigned; those are likelier to be changed or cancelled."
+          },
+          "change": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "reroute",
+                  "skip-stop",
+                  "short-turn"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How the trip differs from its schedule, when the MTA marks it: rerouted, skipping stops, or turned short of its usual terminal. Null for a scheduled trip, and when the feed doesn't say (the B Division routes mark changes differently)."
+          },
+          "stalled": {
+            "type": "boolean",
+            "description": "The train hasn't moved for over 90 seconds. Its predictions stop with it, so `time` is too early; station countdown clocks stop counting down then."
+          },
+          "delayed": {
+            "type": "boolean",
+            "description": "The feed reports the train delayed (\"Train delayed\")."
           }
         },
         "required": [
           "time",
           "headsign",
-          "tripId"
+          "tripId",
+          "assigned",
+          "change",
+          "stalled",
+          "delayed"
         ],
         "additionalProperties": false
       },
@@ -3037,6 +3069,14 @@
             "type": "integer",
             "minimum": -9007199254740991,
             "maximum": 9007199254740991
+          },
+          "track": {
+            "description": "LIRR and Metro-North: the track it uses at this station (`2`, `2A`, `204`), when the railroad has posted it.",
+            "type": "string"
+          },
+          "status": {
+            "description": "Metro-North: the train's status at this station, as the railroad words it (`On-Time`, `Late`, `Arriving`, `Departed`, `Bus` for a bus substitute).",
+            "type": "string"
           },
           "route": {
             "type": "string",

@@ -194,10 +194,21 @@ Ids, which clients store as favorites, so keep them stable:
 - Alert texts come in `en` and `en-html`; `computeAlerts()` returns the plain one. Planned work
   carries one active period per affected night, hundreds in all, which is why the recorded
   alert fixtures are cut down to what was in effect.
-- MTA alerts carry their status (`Delays`, `Planned - Stops Skipped`) in the MTA's extension,
-  `MercuryAlert.alert_type`. The bindings don't decode it but keep its bytes in `$unknowns`
-  (protobufjs 8, written back on encode, so recorded fixtures keep it); `alertType()` in
-  `src/mercury.ts` reads them. Ranks come from the MTA's table (`ALERT_STATUSES`, documented in
+- The MTA extends GTFS-realtime: `gtfs-realtime-NYCT.proto` (subway trips), `-MTARR.proto`
+  (railroad stop times), `-service-status.proto` (alerts). The bindings don't decode them but
+  keep their bytes in `$unknowns` (protobufjs 8, written back on encode, so recorded fixtures
+  keep them); `extension()` in `src/protowire.ts` reads them from there, and tests add them with
+  `extensionField()` and `withExtension()` (`test/feed.ts`). A broken extension reads as absent.
+- Subway trips (`src/subway/nyct.ts`): `is_assigned` is false for trips listed before a train
+  leaves the terminal. The first character of `train_id` is the trip type (`=` reroute, `/`
+  skip-stop, `$` short turn) on the 1-6 lines only; B Division ids start with another code, so
+  only the documented characters are read. A vehicle's timestamp is when the train last moved:
+  over `STALLED_AFTER_S` (90 s) before the header, it is stalled and its predictions are frozen.
+  Trip feeds also carry "Train delayed" alerts naming trips.
+- Railroad stop times (`src/agency/mtarr.ts`): `track` on both, `trainStatus` on Metro-North only
+  (the LIRR sends it empty).
+- MTA alerts carry their status (`Delays`, `Planned - Stops Skipped`) in
+  `MercuryAlert.alert_type`, which `alertType()` in `src/mercury.ts` reads. Ranks come from the MTA's table (`ALERT_STATUSES`, documented in
   `nymta/gtfs-documentation`); the smoke test fails on a status the table lacks.
 - Alert entity ids end in the status rank (`lmm:alert:276100:26`), planned work ids don't. An
   alert whose parts have different statuses comes as one entity per status with the same id

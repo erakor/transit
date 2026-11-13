@@ -36,8 +36,10 @@ Next trains per route and direction.
       "route": "A", "name": "A", "color": "#0062CF", "textColor": "#FFFFFF",
       "direction": "N", "headsign": "Inwood-207 St",
       "arrivals": [
-        { "time": 1794233022, "headsign": "Inwood-207 St", "tripId": "046300_A..N18R" },
-        { "time": 1794233173, "headsign": "Inwood-207 St", "tripId": "048700_A..N20X002" }
+        { "time": 1794233022, "headsign": "Inwood-207 St", "tripId": "046300_A..N18R",
+          "assigned": true, "change": null, "stalled": false, "delayed": false },
+        { "time": 1794233173, "headsign": "Inwood-207 St", "tripId": "048700_A..N20X002",
+          "assigned": false, "change": null, "stalled": false, "delayed": false }
       ]
     }
   ]
@@ -49,6 +51,16 @@ Next trains per route and direction.
 - `name` is the rider-facing route name (`S` for the shuttles, whose `route` is `GS`, `FS` or `H`).
   Diamond express trips keep their own route id (`6X`, `7X`, `FX`).
 - Groups are in MTA route order, then `N` before `S`.
+- `assigned` is false for a trip no train has been assigned to yet. The feeds list trips due to
+  leave their terminal in the next 30 minutes before that; the MTA says those are likelier to be
+  changed or cancelled, so a client may show them as tentative.
+- `stalled` is true when the train hasn't moved for over 90 seconds. Its predictions stop with
+  it, so `time` is too early (station countdown clocks stop counting down then). `delayed` is
+  true when the feed reports the train delayed.
+- `change` is how the trip differs from its schedule, when the MTA marks it: `reroute`,
+  `skip-stop` or `short-turn` (it ends before its usual terminal; `headsign` still names where it
+  ends). Otherwise null. The 1-6 lines mark these; the B Division ones mark changes another way,
+  so theirs are null.
 - `updatedAt` is the oldest feed timestamp used.
 - If some upstream feeds failed, the response is still 200 with what was available and an
   `unavailableFeeds` array; if all of them failed it is 502.
@@ -259,7 +271,7 @@ departure board. `limit` defaults to 10, max 30.
   "station": { "id": "102", "name": "Jamaica" },
   "updatedAt": 1794322787,
   "arrivals": [
-    { "time": 1794323029, "delay": 109, "route": "10", "name": "Port Jefferson Branch",
+    { "time": 1794323029, "delay": 109, "track": "2", "route": "10", "name": "Port Jefferson Branch",
       "color": "#006EC7", "textColor": "#FFFFFF", "headsign": "Huntington", "tripId": "GO203_26_1518_1" }
   ]
 }
@@ -270,8 +282,10 @@ departure board. `limit` defaults to 10, max 30.
   ferry doesn't).
 - `headsign` is the trip's last stop. A trip that ends at the requested station is listed too,
   with the station's own name as `headsign`.
-- Track numbers are not included: the railroads publish them in a feed extension this service
-  doesn't decode.
+- `track` is the track the train uses at the station (`2`, `2A`, `204`), present once the
+  railroad posts it. `status` is Metro-North's status for the train there, as it words it
+  (`On-Time`, `Late`, `Arriving`, `Departed`, `Bus` for a bus substitute); the LIRR doesn't send
+  one. The ferry has neither.
 - **Ferry times past the next stop are estimates.** NYC Ferry's feed predicts only each boat's
   next stop. Later stops are that prediction plus the scheduled running time from there, so the
   boat's current delay carries down the line. Boats not yet assigned to a trip don't appear.
@@ -504,6 +518,7 @@ src/bus/             buses: Bus Time (SIRI) fetching and parsing, arrivals
 src/gtfsrt.ts        GTFS-realtime plumbing shared by every provider: fetch, decode, memo, helpers
 src/alerts.ts        alerts in effect, from any GTFS-realtime alerts feed
 src/mercury.ts       the MTA's alert statuses and their extension to GTFS-realtime
+src/protowire.ts     reads the MTA's GTFS-realtime extensions, which the bindings keep undecoded
 src/preview.ts       the "next departure per destination" line shared by PATH and the agencies
 src/stops/           station resolution and name search
 src/static/          static GTFS preprocessing (pure) and its types
@@ -605,9 +620,6 @@ wrapped in `authenticated(...)`, and the `LIVE_CACHE` or `STATIC_CACHE` headers 
 - **Bus positions**: `/bus/vehicles?route=`, from Bus Time's vehicle monitoring.
 - **NJ Transit**: rail and bus arrivals. Source: NJ Transit's GTFS-realtime feeds, which need a
   developer account.
-- **Track numbers**: LIRR and Metro-North put them in an MTA extension to GTFS-realtime
-  (`gtfs-realtime-MTARR.proto`). `gtfs-realtime-bindings` keeps its bytes undecoded, as it does
-  for the alert extension `src/mercury.ts` reads.
 - **Stop search across systems**: extend `/stops/search` to PATH, LIRR, Metro-North and ferry
   stations (today each has its own list) and Citi Bike stations.
 
