@@ -2622,7 +2622,7 @@
             "items": {
               "$ref": "#/components/schemas/Alert"
             },
-            "description": "In effect now: current events first, then planned work; newest first."
+            "description": "In effect now: current events first, then planned work; by priority, then newest first."
           },
           "stop": {
             "description": "The station `stop` resolved to, when given.",
@@ -3201,7 +3201,7 @@
             "items": {
               "$ref": "#/components/schemas/Alert"
             },
-            "description": "In effect now: current events first, then planned work; newest first."
+            "description": "In effect now: current events first, then planned work; by priority, then newest first."
           },
           "station": {
             "description": "The station, when `station` was given.",
@@ -3249,7 +3249,7 @@
             "items": {
               "$ref": "#/components/schemas/Alert"
             },
-            "description": "In effect now: current events first, then planned work; newest first."
+            "description": "In effect now: current events first, then planned work; by priority, then newest first."
           },
           "stop": {
             "description": "The stop, when `stop` was given.",
@@ -3580,7 +3580,7 @@
             "items": {
               "$ref": "#/components/schemas/Alert"
             },
-            "description": "In effect now: current events first, then planned work; newest first."
+            "description": "In effect now: current events first, then planned work; by priority, then newest first."
           }
         },
         "required": [
@@ -3593,11 +3593,32 @@
         "type": "object",
         "properties": {
           "id": {
-            "type": "string"
+            "type": "string",
+            "description": "The MTA's alert id, without the status rank it appends to its entity ids, so it stays the same when the status changes."
           },
           "planned": {
             "type": "boolean",
             "description": "Scheduled work rather than something that just happened."
+          },
+          "category": {
+            "description": "The MTA's status for the alert, such as `Delays`, `Part Suspended` or `Planned - Stops Skipped`: one of the 35 names in the MTA's status table. Null when the feed has none (NYC Ferry).",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 35
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The status's rank in the MTA's table, from 1 (`No Scheduled Service`) to 35 (`Suspended`); higher is more serious. Null with `category`."
           },
           "header": {
             "type": "string",
@@ -3623,11 +3644,27 @@
                 },
                 "name": {
                   "type": "string"
+                },
+                "direction": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "N",
+                        "S"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Subway only: the one direction the alert affects there, the MTA's northbound (`N`) or southbound (`S`) platform. Null when it affects both or the feed doesn't say."
                 }
               },
               "required": [
                 "id",
-                "name"
+                "name",
+                "direction"
               ],
               "additionalProperties": false
             },
@@ -3665,6 +3702,8 @@
         "required": [
           "id",
           "planned",
+          "category",
+          "priority",
           "header",
           "description",
           "routes",

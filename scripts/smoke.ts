@@ -10,7 +10,8 @@
  * doesn't know, stale data, or Journal Square with no trains. For LIRR, Metro-North and NYC
  * Ferry: stale or empty feeds, stop or route ids missing from the static data, ferry trips missing
  * from the static schedule, a main stop with no departures, or no vehicle positions. For alerts:
- * a feed that no longer decodes or has gone a day without an update. For Citi Bike: a feed that
+ * a feed that no longer decodes or has gone a day without an update, alerts without a status,
+ * statuses missing from the MTA's table, or a status rank in an id that disagrees with the type. For Citi Bike: a feed that
  * changed shape, stale status, no bikes, e-bikes or free docks anywhere, or no station within
  * 500 m of Times Sq. For buses, when BUSTIME_KEY is set: a Bus Time answer that changed shape or
  * is stale, routes missing from the static bus data, no bus on its way to 1 Av/E 14 St, or an
@@ -20,6 +21,7 @@ import { AGENCIES } from '#src/agency/agencies.js'
 import { computeAgencyArrivals } from '#src/agency/arrivals.js'
 import { computeAgencyVehicles } from '#src/agency/vehicles.js'
 import { computeAlerts } from '#src/alerts.js'
+import { alertType, splitAlertId, statusName, statusRank } from '#src/mercury.js'
 import { fetchStopMonitoring } from '#src/bus/siri.js'
 import { fetchGbfs } from '#src/citibike/feeds.js'
 import { joinStations, nearestStations } from '#src/citibike/stations.js'
@@ -230,6 +232,18 @@ for (const name of alertFeeds) {
   if (Math.abs(nowS - (updatedAt ?? 0)) > 86_400)
     fail(`${label}: header timestamp ${updatedAt} is ${nowS - (updatedAt ?? 0)}s old`)
   if (feed.entity.some(e => !e.alert)) fail(`${label}: entities that are not alerts`)
+  // Every MTA alert carries its status in the extension, and alert ids its rank. NYC Ferry's
+  // (a full URL) carry neither.
+  if (name.startsWith('https://')) continue
+  const types = feed.entity.filter(e => e.alert).map(e => ({ id: e.id, type: alertType(e.alert!) }))
+  const untyped = types.filter(t => !t.type).length
+  if (untyped) fail(`${label}: ${untyped} alerts without an alert_type`)
+  const unknown = [...new Set(types.map(t => t.type).filter(t => t && !statusRank(t)))]
+  if (unknown.length) fail(`${label}: statuses missing from ALERT_STATUSES: ${unknown.join(', ')}`)
+  for (const { id, type } of types) {
+    const { rank } = splitAlertId(id)
+    if (rank && type && statusName(rank) !== type) fail(`${label}: ${id} ranks as ${statusName(rank)}, typed ${type}`)
+  }
 }
 
 const base = process.env.TRANSIT_BASE_URL?.replace(/\/$/, '')

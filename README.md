@@ -160,22 +160,24 @@ caching and `no trains soon` line as `/preview/subway`.
 
 ### `GET /subway/alerts`, optionally `?route=<id>` or `?stop=<id>`
 
-The service alerts in effect right now: incidents first, then planned work, newest first.
+The service alerts in effect right now: incidents first, then planned work; the most serious
+first, then the newest.
 
 - `route`: a subway route id (`A`, `6X`, `GS`). `stop`: the same ids as `/subway/arrivals`; it
   keeps alerts that name one of the station's stops, and route-wide alerts for routes that stop
-  there. Both can be combined. With neither, every subway alert in effect.
+  there. A platform id (`127N`) leaves out alerts for the other direction only. Both can be
+  combined. With neither, every subway alert in effect.
 
 ```json
 {
   "updatedAt": 1794322719,
   "alerts": [
     {
-      "id": "lmm:alert:275694:26", "planned": false,
+      "id": "lmm:alert:275694", "planned": false, "category": "Delays", "priority": 26,
       "header": "Downtown [A][B][C][D] trains are running with delays while we address a signal malfunction near 135 St.",
       "description": "For skipped stops, take an uptown [B][C] train.",
       "routes": [{ "id": "A", "name": "A", "color": "#0062CF", "textColor": "#FFFFFF" }],
-      "stops": [],
+      "stops": [{ "id": "A15", "name": "125 St", "direction": "S" }],
       "start": 1794320575, "end": null
     }
   ]
@@ -186,9 +188,18 @@ The service alerts in effect right now: incidents first, then planned work, newe
   is `""` when there is none. `planned` is true for scheduled work.
 - `start` and `end` are the period in effect now; planned work lists one period per affected
   night, and only alerts with a period covering the present are returned.
+- `category` is the MTA's status for the alert, one of 35 (`Delays`, `Part Suspended`,
+  `Planned - Stops Skipped`), from its extension to GTFS-realtime. `priority` is that status's
+  rank in the MTA's table, from 1 (`No Scheduled Service`) to 35 (`Suspended`); higher is more
+  serious. Both are null when the feed has none (NYC Ferry).
+- `id` is the MTA's alert id. The MTA appends the status rank to its entity ids
+  (`lmm:alert:275694:26`) and sends an alert whose parts have different statuses as one entity
+  per status; the service drops the rank, so the id stays the same when the status changes, and
+  merges the parts into one alert with the most serious status.
+- `stops[].direction` is `N` or `S` when the alert affects only that direction there (planned
+  work names stations and directions this way), null when it affects both. Only the subway's
+  alerts have it; the other agencies' are always null.
 - With `stop`, the response also carries the resolved `stop`, as in `/subway/arrivals`.
-- The feeds don't give a category ("Delays", "Planned - Stops Skipped") in a form this service
-  decodes, so there is none.
 - Errors: 404 (unknown route or stop), 401, 502.
 
 `/lirr/alerts`, `/mnr/alerts` and `/ferry/alerts` answer the same shape, filtered with `route`
@@ -492,6 +503,7 @@ src/agency/          LIRR, Metro-North and NYC Ferry: registry, departures, vehi
 src/bus/             buses: Bus Time (SIRI) fetching and parsing, arrivals
 src/gtfsrt.ts        GTFS-realtime plumbing shared by every provider: fetch, decode, memo, helpers
 src/alerts.ts        alerts in effect, from any GTFS-realtime alerts feed
+src/mercury.ts       the MTA's alert statuses and their extension to GTFS-realtime
 src/preview.ts       the "next departure per destination" line shared by PATH and the agencies
 src/stops/           station resolution and name search
 src/static/          static GTFS preprocessing (pure) and its types
@@ -575,7 +587,8 @@ Or run `TRANSIT_BASE_URL=$BASE TRANSIT_TOKEN=$TOKEN pnpm smoke`, which does the 
   stale feeds, ids missing from the static data, a main stop with no departures or no vehicle
   positions; for Citi Bike, on feeds that are stale or no longer join; for buses (with
   `BUSTIME_KEY`), on a changed or stale Bus Time answer, unknown routes or no buses at 1 Av/E 14
-  St; and on alert feeds that stop decoding.
+  St; and on alert feeds that stop decoding, MTA alerts without a status or with one
+  missing from the MTA's table.
 
 ## Roadmap
 
@@ -592,8 +605,9 @@ wrapped in `authenticated(...)`, and the `LIVE_CACHE` or `STATIC_CACHE` headers 
 - **Bus positions**: `/bus/vehicles?route=`, from Bus Time's vehicle monitoring.
 - **NJ Transit**: rail and bus arrivals. Source: NJ Transit's GTFS-realtime feeds, which need a
   developer account.
-- **Alert categories and track numbers**: both sit in MTA extensions to GTFS-realtime that
-  `gtfs-realtime-bindings` drops; decoding them needs the MTA's `.proto` files.
+- **Track numbers**: LIRR and Metro-North put them in an MTA extension to GTFS-realtime
+  (`gtfs-realtime-MTARR.proto`). `gtfs-realtime-bindings` keeps its bytes undecoded, as it does
+  for the alert extension `src/mercury.ts` reads.
 - **Stop search across systems**: extend `/stops/search` to PATH, LIRR, Metro-North and ferry
   stations (today each has its own list) and Citi Bike stations.
 

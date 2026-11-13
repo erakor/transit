@@ -194,6 +194,17 @@ Ids, which clients store as favorites, so keep them stable:
 - Alert texts come in `en` and `en-html`; `computeAlerts()` returns the plain one. Planned work
   carries one active period per affected night, hundreds in all, which is why the recorded
   alert fixtures are cut down to what was in effect.
+- MTA alerts carry their status (`Delays`, `Planned - Stops Skipped`) in the MTA's extension,
+  `MercuryAlert.alert_type`. The bindings don't decode it but keep its bytes in `$unknowns`
+  (protobufjs 8, written back on encode, so recorded fixtures keep it); `alertType()` in
+  `src/mercury.ts` reads them. Ranks come from the MTA's table (`ALERT_STATUSES`, documented in
+  `nymta/gtfs-documentation`); the smoke test fails on a status the table lacks.
+- Alert entity ids end in the status rank (`lmm:alert:276100:26`), planned work ids don't. An
+  alert whose parts have different statuses comes as one entity per status with the same id
+  before the rank; `computeAlerts()` drops the rank and merges them.
+- Subway alerts can name one entity per station, with `direction_id` 0 for northbound and 1 for
+  southbound (or a platform id). Other agencies' `direction_id`s have no documented meaning in
+  alerts and aren't shown.
 - Alerts can name route ids the static data lacks (Metro-North's west-of-Hudson lines): they
   show under their id.
 

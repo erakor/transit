@@ -480,15 +480,18 @@ describe('agency routes', () => {
     const all = await r.json()
     expect(all.alerts.length).toBeGreaterThan(0)
     expect(Object.keys(all.alerts[0]).sort()).toEqual([
+      'category',
       'description',
       'end',
       'header',
       'id',
       'planned',
+      'priority',
       'routes',
       'start',
       'stops',
     ])
+    expect(all.alerts[0].category).toEqual(expect.any(String))
 
     const routeId: string = all.alerts.find((a: { routes: unknown[] }) => a.routes.length > 0).routes[0].id
     const byRoute = await (await call(`/lirr/alerts?route=${routeId}`).res).json()
