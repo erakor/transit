@@ -183,6 +183,8 @@ describe('MTA alert statuses', () => {
     // Other unknown fields are skipped, unreadable bytes give nothing.
     expect(alertType({ $unknowns: [mercuryAlert('Other', 1002), mercuryAlert('Delays')] })).toBe('Delays')
     expect(alertType({ $unknowns: [new Uint8Array([0xca, 0x3e, 0x40, 0x01])] })).toBeUndefined()
+    // An unreadable field next to it doesn't hide the extension.
+    expect(alertType({ $unknowns: [new Uint8Array([0xcb, 0x3e]), mercuryAlert('Delays')] })).toBe('Delays')
     expect(alertType({})).toBeUndefined()
   })
 

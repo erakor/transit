@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { busRoute, computeBusArrivals, findBusRoute } from '#src/bus/arrivals.js'
+import { busRoute, busRouteId, computeBusArrivals } from '#src/bus/arrivals.js'
 import {
   parseStopMonitoring,
   parseVehicleMonitoring,
@@ -11,7 +11,7 @@ import {
 import { nearestBusStops, parseStopsForLocation, stopsForLocationUrl } from '#src/bus/stops.js'
 import { compassHeading, computeBusVehicles } from '#src/bus/vehicles.js'
 import { BUS_DATA } from '#src/data/bus.generated.js'
-import { LIVE_CACHE, PREVIEW_CACHE, providerOp, STATIC_CACHE } from '#src/http.js'
+import { LIVE_CACHE, LOOKUP_CACHE, PREVIEW_CACHE, providerOp } from '#src/http.js'
 import { busHandler } from '#src/routes/bus.js'
 import { buildBusData } from '#src/static/bus.js'
 import {
@@ -318,9 +318,10 @@ describe('bus vehicles', () => {
   })
 
   it('finds routes by id or by the name on the bus', () => {
-    expect(findBusRoute(BUS_DATA.routes, 'm15-sbs')).toBe(BUS_DATA.routes['M15+'])
-    expect(findBusRoute(BUS_DATA.routes, ' bx12 ')).toBe(BUS_DATA.routes.BX12)
-    expect(findBusRoute(BUS_DATA.routes, 'M999')).toBeUndefined()
+    expect(busRouteId('m15-sbs')).toBe('M15+')
+    expect(busRouteId(' bx12')).toBe('BX12')
+    // `M15+` sent unencoded decodes as `M15 `: still the Select Bus Service route.
+    expect(busRouteId('M15 ')).toBe('M15+')
   })
 
   it('asks for one route, SIRI 2, with the key', () => {
@@ -359,6 +360,9 @@ describe('nearby bus stops', () => {
       ['401193', 'SE', 117, ['L92', 'M14A-SBS', 'M14D-SBS']],
     ])
     expect(near[1]!.routes[0]).toEqual(BUS_DATA.routes['M15+'])
+    // Stops past the radius are left out: the answer covers a rounded point.
+    const within = nearestBusStops(stops(), BUS_STOP_POINT.lat, BUS_STOP_POINT.lon, BUS_DATA.routes, 4, 110)
+    expect(within.map(s => s.id)).toEqual([BUS_STOP, '405322', '404029'])
   })
 
   it('rejects answers that are not a stop list, as a bad key gets', () => {
@@ -369,7 +373,14 @@ describe('nearby bus stops', () => {
   it('asks around a rounded point, with the key', () => {
     const url = new URL(stopsForLocationUrl(40.7321223, -73.9819456, 500, 'k&y'))
     expect(url.hostname).toBe('bustime-classic.mta.info')
-    expect(Object.fromEntries(url.searchParams)).toEqual({ lat: '40.7321', lon: '-73.9819', radius: '500', key: 'k&y' })
+    // Rounded to about 100 m, the radius grown to cover it, and past the API's default cap of 100 stops.
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      lat: '40.732',
+      lon: '-73.982',
+      radius: '600',
+      maxCount: '250',
+      key: 'k&y',
+    })
   })
 })
 
@@ -478,6 +489,9 @@ describe('bus routes', () => {
     expect(await (await handler(get(`/preview/bus?stop=${BUS_STOP}`, auth))).text()).toBe('X · M15 9 min\n')
     const arrivals = (await (await handler(get(`/bus/arrivals?stop=${BUS_STOP}`, auth))).json()).arrivals
     expect(arrivals.map((a: { cancelled: boolean }) => a.cancelled)).toEqual([true, false])
+    // A cancelled trip doesn't take the place of a bus that will come.
+    const one = (await (await handler(get(`/bus/arrivals?stop=${BUS_STOP}&limit=1`, auth))).json()).arrivals
+    expect(one.map((a: { cancelled: boolean }) => a.cancelled)).toEqual([true, false])
   })
 
   it('answers the buses of a route, live-cached', async () => {
@@ -494,11 +508,24 @@ describe('bus routes', () => {
     expect((await call('/api/bus?op=vehicles&route=M15%2B').res).status).toBe(200)
   })
 
-  it("answers 404 for a route Bus Time doesn't run", async () => {
-    const fetcher = async () => Response.json(json('bustime-vehicles-ZZZ.json'))
-    const r = await busHandler({ fetcher, now: () => BUS_FIXTURE_NOW_MS })(get('/bus/vehicles?route=M15', auth))
-    expect(r.status).toBe(404)
-    expect(await r.json()).toEqual({ error: 'unknown route M15' })
+  it("answers 404 for a route Bus Time doesn't run, and asks it about routes the static data lacks", async () => {
+    const answer = (name: string) => async () => Response.json(json(name))
+    // Each asks at its own time, past the 15 s memo of the one before.
+    const vehicles = (name: string, nowMs: number) =>
+      busHandler({ fetcher: answer(name), now: () => nowMs })(get('/bus/vehicles?route=M999', auth))
+    const missing = await vehicles('bustime-vehicles-ZZZ.json', BUS_FIXTURE_NOW_MS)
+    expect(missing.status).toBe(404)
+    expect(await missing.json()).toEqual({ error: 'unknown route M999' })
+    // A route newer than the static data: Bus Time runs it, and it shows under its id, in gray.
+    const fresh = await vehicles(`bustime-vehicles-${BUS_ROUTE}.json`, BUS_FIXTURE_NOW_MS + 60_000)
+    expect(fresh.status).toBe(200)
+    expect((await fresh.json()).route).toEqual({ id: 'M999', name: 'M999', color: '#808183', textColor: '#FFFFFF' })
+  })
+
+  it('reads an unencoded + as the Select Bus Service route', async () => {
+    const { res, fetcher } = call('/bus/vehicles?route=M15+')
+    expect((await (await res).json()).route.id).toBe('M15+')
+    expect(fetcher.calls).toEqual(['bustime-vehicles-M15+.json'])
   })
 
   it('answers the stops near a point, cached like static data', async () => {
@@ -506,7 +533,7 @@ describe('bus routes', () => {
     const { res, fetcher } = call(`/bus/nearby?lat=${lat}&lon=${lon}&limit=3`)
     const r = await res
     expect(r.status).toBe(200)
-    expect(r.headers.get('cache-control')).toBe(STATIC_CACHE)
+    expect(r.headers.get('cache-control')).toBe(LOOKUP_CACHE)
     const body = await r.json()
     expect(body.stops.map((s: { id: string }) => s.id)).toEqual([BUS_STOP, '405322', '404029'])
     expect(fetcher.calls).toEqual(['bustime-stops.json'])
@@ -525,7 +552,6 @@ describe('bus routes', () => {
 
   it.each([
     ['/bus/vehicles', 400, 'route is required'],
-    ['/bus/vehicles?route=M999', 404, 'unknown route M999'],
     ['/bus/nearby?lon=-73.98', 400, 'lat is required'],
     ['/bus/nearby?lat=91&lon=-73.98', 400, 'lat must be a number between -90 and 90'],
   ])('rejects %s with %i, asking nobody', async (path, status, error) => {

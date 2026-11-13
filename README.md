@@ -416,7 +416,7 @@ defaults to 10, max 25.
 - `id` is the code `/bus/arrivals` takes. `direction` is the compass direction buses travel
   there (`NE`), which tells apart the two stops on either side of a street. `distance` is in
   meters, in a straight line.
-- Cached like static data (an hour on the CDN): stops change with the quarterly schedules.
+- Cached for 10 minutes on the CDN: stops change with the quarterly schedules.
 - Errors: 400 (missing or out of range `lat`, `lon`, bad `limit`), 401, 502, 500.
 
 ### `GET /citibike/nearby?lat=<lat>&lon=<lon>&n=<n>`
@@ -498,6 +498,7 @@ update clients, remove the old one. If it's unset, authenticated routes answer 5
 | `/bus/arrivals` | `public, s-maxage=20, stale-while-revalidate=40` |
 | `/subway/alerts`, `/<agency>/alerts`, `/bus/alerts` | `public, s-maxage=60, stale-while-revalidate=120` |
 | `/citibike/station`, `/citibike/nearby` | `public, s-maxage=20, stale-while-revalidate=40` |
+| `/bus/nearby` | `public, s-maxage=600, stale-while-revalidate=3600` (bus stops change rarely, upstream) |
 | `/stops/search`, `/path/stations`, `/<agency>/stations` | `public, s-maxage=3600, stale-while-revalidate=86400` (static data only changes with a deploy, and Vercel purges the CDN cache on each production deploy) |
 | `/health`, errors | `no-store` |
 

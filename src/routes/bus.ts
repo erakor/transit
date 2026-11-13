@@ -1,4 +1,4 @@
-import { busRoute, busRouteId, computeBusArrivals, findBusRoute } from '#src/bus/arrivals.js'
+import { busRoute, busRouteId, computeBusArrivals } from '#src/bus/arrivals.js'
 import {
   BusAlertsQuery,
   BusArrivalsQuery,
@@ -22,7 +22,7 @@ import {
   json,
   LIVE_CACHE,
   PREVIEW_CACHE,
-  STATIC_CACHE,
+  LOOKUP_CACHE,
   text,
 } from '#src/http.js'
 import { destinationsLine } from '#src/preview.js'
@@ -109,7 +109,7 @@ export function busAlertsHandler({ fetcher, now = () => Date.now() }: BusDeps = 
   return authenticated(async (_request, url) => {
     const parsed = parseQuery(BusAlertsQuery, url)
     if (!parsed.ok) return parsed.response
-    const routeParam = parsed.query.route && busRouteId(parsed.query.route)
+    const routeParam = parsed.query.route && busRouteId(url.searchParams.get('route') ?? '')
     const nowMs = now()
     const feed = await tryFetchFeed(BUS_ALERTS_FEED, { fetcher, now: nowMs })
     if (!feed) return errorResponse(502, 'MTA alerts unavailable')
@@ -128,8 +128,10 @@ export function busVehiclesHandler(deps: BusDeps = {}) {
   return authenticated(async (_request, url) => {
     const parsed = parseQuery(BusVehiclesQuery, url)
     if (!parsed.ok) return parsed.response
-    const route = findBusRoute(BUS_DATA.routes, parsed.query.route)
-    if (!route) return errorResponse(404, `unknown route ${parsed.query.route}`)
+    // A route the static data lacks (new since its last refresh) is still asked for; Bus Time
+    // says whether it exists, and it shows under its id, in gray.
+    const id = busRouteId(url.searchParams.get('route') ?? '')
+    const route = busRoute(BUS_DATA.routes, id)
     const key = requireKey(deps)
     if (key instanceof Response) return key
     const answer = await tryLoad(`bustime route ${route.id}`, () =>
@@ -137,7 +139,6 @@ export function busVehiclesHandler(deps: BusDeps = {}) {
     )
     if (!answer) return errorResponse(502, 'Bus Time unavailable')
     if (answer.error) {
-      // A route in the static data that Bus Time doesn't run (yet, or any more).
       if (answer.notFound) return errorResponse(404, `unknown route ${route.id}`)
       console.error(`bustime route ${route.id}: ${answer.error}`)
       return errorResponse(502, 'Bus Time unavailable')
@@ -160,9 +161,9 @@ export function busNearbyHandler(deps: BusDeps = {}) {
       fetchStopsForLocation(lat, lon, NEARBY_RADIUS_M, key, { fetcher, now: now() })
     )
     if (!stops) return errorResponse(502, 'Bus Time unavailable')
-    const body: BusNearbyResponse = { stops: nearestBusStops(stops, lat, lon, BUS_DATA.routes, limit) }
-    // Stops change with the quarterly schedules.
-    return json(body, { cache: STATIC_CACHE })
+    const body: BusNearbyResponse = { stops: nearestBusStops(stops, lat, lon, BUS_DATA.routes, limit, NEARBY_RADIUS_M) }
+    // Stops change with the quarterly schedules, upstream and without a deploy.
+    return json(body, { cache: LOOKUP_CACHE })
   })
 }
 

@@ -103,7 +103,8 @@ Bus Time's OneBusAway "Discovery" API on `bustime-classic.mta.info` (`src/bus/st
 serves the static stop data so the function doesn't bundle it. The
 answer names the stop and destinations, so the only static data is route names and colors
 (`src/data/bus.generated.ts`, from six zips, built by `src/static/bus.ts`). The key is
-`BUSTIME_KEY` (a Vercel environment variable); without it those two routes answer 500. It goes in
+`BUSTIME_KEY` (a Vercel environment variable); without it `/bus/arrivals`, `/preview/bus`,
+`/bus/vehicles` and `/bus/nearby` answer 500 (`/bus/alerts` doesn't need it). It goes in
 the query string, so no error, log or fixture may carry the request URL. Bus stop data (about
 13,500 stops) would be the bus function's to bundle: keep it out of the others.
 
@@ -242,7 +243,8 @@ Ids, which clients store as favorites, so keep them stable:
   `Authorization` header. Every authenticated response must keep `Vary: x-transit-token`
   (added by `authenticated()`), or a cached 200 could be served to a request without the token.
 - Errors and `/health` are `no-store`. Success uses `LIVE_CACHE` (arrivals, vehicles),
-  `ALERTS_CACHE` or `STATIC_CACHE` (data that only changes with a deploy) from `src/http.ts`. Never set cookies on cached routes.
+  `ALERTS_CACHE`, `LOOKUP_CACHE` (upstream reference data that changes rarely, such as bus stops
+  near a point) or `STATIC_CACHE` (data that only changes with a deploy) from `src/http.ts`. Never set cookies on cached routes.
 - Times are epoch seconds; responses carry names and colors, not ids alone.
 - `/preview/...` routes answer one line of `text/plain` through `text()` in `src/http.ts` (never
   empty, never starting with `<`, well under 1 KB: alfresco reads only the first 1 KB and drops

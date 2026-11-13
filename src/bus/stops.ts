@@ -16,12 +16,28 @@ const BASE = 'https://bustime-classic.mta.info/api/where/stops-for-location.json
 /** Stops change with the quarterly schedules: a lookup is kept 10 minutes. */
 const STOPS_TTL_MS = 10 * 60_000
 
-/** Points are rounded to 4 decimals (about 10 m), so nearby asks share a request and its memo. */
-const rounded = (deg: number): string => deg.toFixed(4)
+/**
+ * Points are rounded to 3 decimals (about 100 m), so nearby asks share a request and its memo;
+ * the request's radius grows by `ROUNDING_MARGIN_M` to still cover the point's own radius.
+ */
+const rounded = (deg: number): string => deg.toFixed(3)
+const ROUNDING_MARGIN_M = 100
 
-/** The request: a radius in meters around a rounded point. */
+/**
+ * The most stops one answer holds. The API's default, 100, is reached within 800 m of Times Sq,
+ * and past it the answer is an arbitrary subset (`limitExceeded`), not the nearest stops.
+ */
+const MAX_COUNT = 250
+
+/** The request: the stops within `radiusM` of a point, around the rounded point. */
 export function stopsForLocationUrl(lat: number, lon: number, radiusM: number, key: string): string {
-  const query = new URLSearchParams({ lat: rounded(lat), lon: rounded(lon), radius: String(radiusM), key })
+  const query = new URLSearchParams({
+    lat: rounded(lat),
+    lon: rounded(lon),
+    radius: String(radiusM + ROUNDING_MARGIN_M),
+    maxCount: String(MAX_COUNT),
+    key,
+  })
   return `${BASE}?${query}`
 }
 
@@ -92,15 +108,21 @@ export function fetchStopsForLocation(
   return fetchBusTime(memoKey, url, 'stops', parseStopsForLocation, options, STOPS_TTL_MS)
 }
 
-/** The `limit` stops nearest the point, nearest first (ties by code), with route names and colors. Pure. */
+/**
+ * The `limit` stops nearest the point within `radiusM`, nearest first (ties by code), with route
+ * names and colors. Pure.
+ */
 export function nearestBusStops(
   stops: BusStopInfo[],
   lat: number,
   lon: number,
   routes: Record<string, RouteDisplay>,
-  limit: number
+  limit: number,
+  radiusM = Infinity
 ): NearbyBusStop[] {
-  return nearest(stops, lat, lon, limit, s => s.code).map(([distance, s]) => ({
+  // The answer covers a rounded point, so it can hold stops just past the radius.
+  const within = nearest(stops, lat, lon, limit, s => s.code).filter(([distance]) => distance <= radiusM)
+  return within.map(([distance, s]) => ({
     id: s.code,
     name: s.name,
     direction: s.direction,

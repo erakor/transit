@@ -58,13 +58,14 @@ function readFields(bytes: Uint8Array): Fields {
 export function extension(message: object | null | undefined, field: number): Fields | undefined {
   const unknowns = (message as { $unknowns?: Uint8Array[] } | null | undefined)?.$unknowns
   if (!unknowns) return undefined
-  try {
-    for (const bytes of unknowns) {
+  for (const bytes of unknowns) {
+    // Each entry is read on its own: another extension that can't be read doesn't hide this one.
+    try {
       const value = readFields(bytes).get(field)?.[0]
       if (value instanceof Uint8Array) return readFields(value)
+    } catch {
+      continue
     }
-  } catch {
-    return undefined
   }
   return undefined
 }
