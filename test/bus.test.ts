@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { busRoute, computeBusArrivals } from '#src/bus/arrivals.js'
+import { busRoute, computeBusArrivals, findBusRoute } from '#src/bus/arrivals.js'
 import {
   parseStopMonitoring,
   parseVehicleMonitoring,
@@ -9,7 +9,7 @@ import {
   type StopMonitoring,
 } from '#src/bus/siri.js'
 import { nearestBusStops, parseStopsForLocation, stopsForLocationUrl } from '#src/bus/stops.js'
-import { compassHeading, computeBusVehicles, findBusRoute } from '#src/bus/vehicles.js'
+import { compassHeading, computeBusVehicles } from '#src/bus/vehicles.js'
 import { BUS_DATA } from '#src/data/bus.generated.js'
 import { LIVE_CACHE, PREVIEW_CACHE, providerOp, STATIC_CACHE } from '#src/http.js'
 import { busHandler } from '#src/routes/bus.js'
@@ -21,8 +21,8 @@ import {
   BUS_ROUTE,
   BUS_STOP,
   BUS_STOP_POINT,
-  fixture,
   fixtureFetcher,
+  fixtureJson,
   FIXTURE_NOW_MS,
   get,
   useRouteTestSetup,
@@ -31,7 +31,7 @@ import {
 useRouteTestSetup()
 
 const NOW = Math.floor(BUS_FIXTURE_NOW_MS / 1000)
-const json = (name: string): unknown => JSON.parse(new TextDecoder().decode(fixture(name)))
+const json = fixtureJson
 const recorded = () => parseStopMonitoring(json(`bustime-${BUS_STOP}.json`))
 /** 13:30 on the day of the hand-built answers, as their times say it. */
 const HALF_PAST = Date.parse('2026-11-10T13:30:00-05:00') / 1000
@@ -178,7 +178,7 @@ describe('parseStopMonitoring', () => {
 
   it('returns an error condition as the error', () => {
     const answer = parseStopMonitoring(json('bustime-999999.json'))
-    expect(answer).toEqual({ updatedAt: NOW, error: 'No such stop: MTA_999999.', visits: [] })
+    expect(answer).toEqual({ updatedAt: NOW, error: 'No such stop: MTA_999999.', notFound: true, visits: [] })
   })
 
   it('throws on a body that is not SIRI', () => {
@@ -311,6 +311,7 @@ describe('bus vehicles', () => {
   it('returns an unknown route as the error', () => {
     expect(parseVehicleMonitoring(json('bustime-vehicles-ZZZ.json'))).toMatchObject({
       error: expect.stringContaining('No such route'),
+      notFound: true,
       vehicles: [],
     })
     expect(() => parseVehicleMonitoring({ Siri: { ServiceDelivery: {} } })).toThrow('not a SIRI')
@@ -557,6 +558,15 @@ describe('bus routes', () => {
       .flatMap((a: { routes: { id: string; name: string }[] }) => a.routes)
       .find((r: { id: string }) => r.id.endsWith('+'))
     expect(sbs.name).toBe(sbs.id.replace('+', '-SBS').replace(/^BX/, 'Bx'))
+    // And can be asked for either way.
+    const byName = await (
+      await call(`/bus/alerts?route=${sbs.id.replace('+', '-SBS')}`, [], undefined, FIXTURE_NOW_MS).res
+    ).json()
+    const byId = await (
+      await call(`/bus/alerts?route=${encodeURIComponent(sbs.id)}`, [], undefined, FIXTURE_NOW_MS).res
+    ).json()
+    expect(byName.alerts.length).toBeGreaterThan(0)
+    expect(byName).toEqual(byId)
   })
 
   it('/bus/alerts is 502 when its feed fails', async () => {

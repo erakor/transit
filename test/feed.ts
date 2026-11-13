@@ -44,7 +44,7 @@ export function feedFrom(timestamp: number, entity: (Record<string, unknown> & {
   entity.forEach(({ alertType }, i) => {
     const alert = msg.entity[i]!.alert
     // protobufjs writes `$unknowns` back as they are, as it does for the live feeds' extension.
-    if (alert && alertType) Object.assign(alert, { $unknowns: [mercuryAlert(alertType)] })
+    if (alert && alertType) withExtension(alert, mercuryAlert(alertType))
   })
   return transit_realtime.FeedMessage.decode(encodeFeed(msg))
 }

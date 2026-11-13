@@ -39,7 +39,6 @@ export function computeArrivals(
       const tripId = tu.trip?.tripId ?? entity.id
       const updates = tu.stopTimeUpdate ?? []
       const headsign = terminalName(updates, id => index.stopName(id))
-      const { assigned, change } = nyctTrip(tu.trip)
       for (const stu of updates) {
         const stopId = stu.stopId ?? ''
         if (!platforms.has(stopId)) continue
@@ -65,12 +64,12 @@ export function computeArrivals(
           }
           groups.set(key, g)
         }
+        // Read here, for the few trips that stop at the station, rather than for every trip in the feed.
         g.arrivals.push({
           time,
           headsign,
           tripId,
-          assigned,
-          change,
+          ...nyctTrip(tu.trip),
           stalled: stalled.has(tripId),
           delayed: delayed.has(tripId),
         })

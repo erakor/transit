@@ -7,7 +7,7 @@
  * SIRI 1 shape the API answers without `version=2`, under `MonitoredCall.Extensions.Distances`;
  * the parser reads either.
  */
-import { memoized, type Fetcher } from '#src/gtfsrt.js'
+import { memoized, type FetchOptions } from '#src/gtfsrt.js'
 
 /** The `/api/2/` path also lists cancelled trips, marked as such; `/api/siri/` leaves them out. */
 const BASE = 'https://bustime.mta.info/api/2/siri/stop-monitoring.json'
@@ -112,6 +112,8 @@ export interface StopMonitoring {
   updatedAt: number | null
   /** Set when the API answered an error instead of visits (`No such stop: MTA_999999.`). */
   error?: string
+  /** The error says there is no such stop. */
+  notFound?: boolean
   visits: BusVisit[]
 }
 
@@ -145,10 +147,8 @@ export function parseStopMonitoring(body: unknown): StopMonitoring {
   if (!delivery || !Array.isArray(delivery.StopMonitoringDelivery))
     throw new Error('bustime: not a SIRI StopMonitoring answer')
   const updatedAt = epoch(delivery.ResponseTimestamp) ?? null
-  const errors = delivery.StopMonitoringDelivery.map(d => d.ErrorCondition).filter(e => e !== undefined)
-  if (errors.length) {
-    return { updatedAt, error: errorText(errors[0]!), visits: [] }
-  }
+  const error = delivery.StopMonitoringDelivery.map(d => d.ErrorCondition).find(e => e !== undefined)
+  if (error) return { updatedAt, ...errorResult(error), visits: [] }
   const visits: BusVisit[] = []
   for (const d of delivery.StopMonitoringDelivery) {
     for (const visit of d.MonitoredStopVisit ?? []) {
@@ -163,11 +163,7 @@ export function parseStopMonitoring(body: unknown): StopMonitoring {
         /^cancell?ed$/i.test(v ?? '')
       )
       visits.push({
-        routeId,
-        publishedName: first(j.PublishedLineName),
-        destination: first(j.DestinationName),
-        tripId: j.FramedVehicleJourneyRef?.DatedVehicleJourneyRef ?? '',
-        vehicle: stripOperator(j.VehicleRef),
+        ...journeyFields(j, routeId),
         // A cancelled trip has no prediction: it is listed at its scheduled time.
         time: epoch(
           call.ExpectedArrivalTime ?? call.ExpectedDepartureTime ?? (cancelled ? call.AimedArrivalTime : undefined)
@@ -209,11 +205,26 @@ export interface VehicleMonitoring {
   updatedAt: number | null
   /** Set when the API answered an error (`No such route: MTA NYCT_ZZZ.`). */
   error?: string
+  /** The error says there is no such route. */
+  notFound?: boolean
   vehicles: BusPosition[]
 }
 
-function errorText(e: NonNullable<SiriDelivery['ErrorCondition']>): string {
-  return (e.OtherError?.ErrorText || e.Description || 'error').trim()
+/** An `ErrorCondition`: its text, and whether it says the stop or route doesn't exist (`No such stop: MTA_999999.`). */
+function errorResult(e: NonNullable<SiriDelivery['ErrorCondition']>): { error: string; notFound: boolean } {
+  const error = (e.OtherError?.ErrorText || e.Description || 'error').trim()
+  return { error, notFound: /^no such (stop|route)\b/i.test(error) }
+}
+
+/** What a stop visit and a vehicle share about the bus and its trip. */
+function journeyFields(j: SiriJourney, routeId: string) {
+  return {
+    routeId,
+    publishedName: first(j.PublishedLineName),
+    destination: first(j.DestinationName),
+    tripId: j.FramedVehicleJourneyRef?.DatedVehicleJourneyRef ?? '',
+    vehicle: stripOperator(j.VehicleRef),
+  }
 }
 
 /**
@@ -226,7 +237,7 @@ export function parseVehicleMonitoring(body: unknown): VehicleMonitoring {
     throw new Error('bustime: not a SIRI VehicleMonitoring answer')
   const updatedAt = epoch(delivery.ResponseTimestamp) ?? null
   const error = delivery.VehicleMonitoringDelivery.map(d => d.ErrorCondition).find(e => e !== undefined)
-  if (error) return { updatedAt, error: errorText(error), vehicles: [] }
+  if (error) return { updatedAt, ...errorResult(error), vehicles: [] }
   const vehicles: BusPosition[] = []
   for (const d of delivery.VehicleMonitoringDelivery) {
     for (const activity of d.VehicleActivity ?? []) {
@@ -237,11 +248,7 @@ export function parseVehicleMonitoring(body: unknown): VehicleMonitoring {
       if (!j || !routeId || typeof lat !== 'number' || typeof lon !== 'number') continue
       const call = j.MonitoredCall ?? {}
       vehicles.push({
-        routeId,
-        publishedName: first(j.PublishedLineName),
-        destination: first(j.DestinationName),
-        tripId: j.FramedVehicleJourneyRef?.DatedVehicleJourneyRef ?? '',
-        vehicle: stripOperator(j.VehicleRef),
+        ...journeyFields(j, routeId),
         lat,
         lon,
         bearing: typeof j.Bearing === 'number' && Number.isFinite(j.Bearing) ? j.Bearing : undefined,
@@ -258,33 +265,37 @@ export function parseVehicleMonitoring(body: unknown): VehicleMonitoring {
 }
 
 /**
- * One route's VehicleMonitoring answer, through the 15 s memo. Errors never carry the URL, which
- * holds the key.
+ * A Bus Time JSON answer, parsed, through the memo (15 s unless `ttlMs` says otherwise). The URL
+ * holds the key, so errors name the request by `label` and never carry the URL.
  */
-export function fetchVehicleMonitoring(
-  route: string,
-  key: string,
-  { fetcher = fetch, now = Date.now(), timeoutMs = 8_000 }: { fetcher?: Fetcher; now?: number; timeoutMs?: number } = {}
-): Promise<VehicleMonitoring> {
-  return memoized(`bustime-vehicles:${route}`, now, async () => {
-    const res = await fetcher(vehicleMonitoringUrl(route, key), { signal: AbortSignal.timeout(timeoutMs) })
-    if (!res.ok) throw new Error(`bustime route ${route}: HTTP ${res.status}`)
-    return parseVehicleMonitoring(await res.json())
-  })
+export function fetchBusTime<T>(
+  memoKey: string,
+  url: string,
+  label: string,
+  parse: (body: unknown) => T,
+  { fetcher = fetch, now = Date.now(), timeoutMs = 8_000 }: FetchOptions = {},
+  ttlMs?: number
+): Promise<T> {
+  return memoized(
+    memoKey,
+    now,
+    async () => {
+      const res = await fetcher(url, { signal: AbortSignal.timeout(timeoutMs) })
+      if (!res.ok) throw new Error(`bustime ${label}: HTTP ${res.status}`)
+      return parse(await res.json())
+    },
+    ttlMs
+  )
 }
 
-/**
- * One stop's StopMonitoring answer, through the 15 s memo. Errors never carry the URL, which holds
- * the key.
- */
-export function fetchStopMonitoring(
-  stop: string,
-  key: string,
-  { fetcher = fetch, now = Date.now(), timeoutMs = 8_000 }: { fetcher?: Fetcher; now?: number; timeoutMs?: number } = {}
-): Promise<StopMonitoring> {
-  return memoized(`bustime:${stop}`, now, async () => {
-    const res = await fetcher(stopMonitoringUrl(stop, key), { signal: AbortSignal.timeout(timeoutMs) })
-    if (!res.ok) throw new Error(`bustime stop ${stop}: HTTP ${res.status}`)
-    return parseStopMonitoring(await res.json())
-  })
+/** One route's VehicleMonitoring answer. */
+export function fetchVehicleMonitoring(route: string, key: string, options?: FetchOptions): Promise<VehicleMonitoring> {
+  const url = vehicleMonitoringUrl(route, key)
+  return fetchBusTime(`bustime-vehicles:${route}`, url, `route ${route}`, parseVehicleMonitoring, options)
+}
+
+/** One stop's StopMonitoring answer. */
+export function fetchStopMonitoring(stop: string, key: string, options?: FetchOptions): Promise<StopMonitoring> {
+  const url = stopMonitoringUrl(stop, key)
+  return fetchBusTime(`bustime:${stop}`, url, `stop ${stop}`, parseStopMonitoring, options)
 }

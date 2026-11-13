@@ -45,6 +45,11 @@ export function fixture(name: string): Uint8Array<ArrayBuffer> {
   return new Uint8Array(readFileSync(fileURLToPath(new URL(`./fixtures/${name}`, import.meta.url))))
 }
 
+/** A JSON fixture, parsed. */
+export function fixtureJson(name: string): unknown {
+  return JSON.parse(new TextDecoder().decode(fixture(name)))
+}
+
 /**
  * Serves test/fixtures/<feed>.pb for GTFS-realtime feed URLs, and the JSON fixtures (PATH, Citi
  * Bike, Bus Time) for the others, and records which feeds were requested. Feeds in `fail`, which tests may add to,

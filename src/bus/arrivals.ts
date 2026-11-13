@@ -11,6 +11,16 @@ export function busRoute(routes: Record<string, RouteDisplay>, id: string, shown
   return routes[id] ?? routes[id.toUpperCase()] ?? { ...fallbackRoute(id), name: shownAs || id }
 }
 
+/** A route id as riders may type it: any case, and `M15-SBS` for the Select Bus Service route `M15+`. */
+export function busRouteId(raw: string): string {
+  return raw.trim().toUpperCase().replace(/-SBS$/, '+')
+}
+
+/** A route of the static data, by id as riders may type it; undefined when there is none. */
+export function findBusRoute(routes: Record<string, RouteDisplay>, raw: string): RouteDisplay | undefined {
+  return routes[busRouteId(raw)]
+}
+
 /**
  * The buses on their way to `stop`, in one list: predicted ones soonest first, then those Bus Time
  * can't time yet (at their terminal), nearest first. Cancelled trips are listed at their scheduled

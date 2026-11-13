@@ -4,21 +4,24 @@
  * bundle the 13,500 stops. Same key as SIRI, and the key is in the query string, so no error
  * carries the URL.
  */
-import { distanceMeters } from '#src/geo.js'
-import { memoized, type Fetcher } from '#src/gtfsrt.js'
+import { nearest } from '#src/geo.js'
+import type { FetchOptions } from '#src/gtfsrt.js'
 import type { RouteDisplay } from '#src/schema.js'
 import { busRoute } from './arrivals.js'
 import type { NearbyBusStop } from './schemas.js'
-import { stripOperator } from './siri.js'
+import { fetchBusTime, STOP_CODE, stripOperator } from './siri.js'
 
 const BASE = 'https://bustime-classic.mta.info/api/where/stops-for-location.json'
 
 /** Stops change with the quarterly schedules: a lookup is kept 10 minutes. */
 const STOPS_TTL_MS = 10 * 60_000
 
-/** The request: a radius in meters around a point rounded to 4 decimals (about 10 m), so nearby asks share it. */
+/** Points are rounded to 4 decimals (about 10 m), so nearby asks share a request and its memo. */
+const rounded = (deg: number): string => deg.toFixed(4)
+
+/** The request: a radius in meters around a rounded point. */
 export function stopsForLocationUrl(lat: number, lon: number, radiusM: number, key: string): string {
-  const query = new URLSearchParams({ lat: lat.toFixed(4), lon: lon.toFixed(4), radius: String(radiusM), key })
+  const query = new URLSearchParams({ lat: rounded(lat), lon: rounded(lon), radius: String(radiusM), key })
   return `${BASE}?${query}`
 }
 
@@ -63,7 +66,7 @@ export function parseStopsForLocation(body: unknown): BusStopInfo[] {
   const stops: BusStopInfo[] = []
   for (const s of b.data.stops) {
     const code = (s.code || stripOperator(s.id)).trim()
-    if (!/^\d{6}$/.test(code) || typeof s.lat !== 'number' || typeof s.lon !== 'number') continue
+    if (!STOP_CODE.test(code) || typeof s.lat !== 'number' || typeof s.lon !== 'number') continue
     stops.push({
       code,
       name: (s.name ?? '').trim(),
@@ -82,19 +85,11 @@ export function fetchStopsForLocation(
   lon: number,
   radiusM: number,
   key: string,
-  { fetcher = fetch, now = Date.now(), timeoutMs = 8_000 }: { fetcher?: Fetcher; now?: number; timeoutMs?: number } = {}
+  options?: FetchOptions
 ): Promise<BusStopInfo[]> {
   const url = stopsForLocationUrl(lat, lon, radiusM, key)
-  return memoized(
-    `bustime-stops:${lat.toFixed(4)},${lon.toFixed(4)},${radiusM}`,
-    now,
-    async () => {
-      const res = await fetcher(url, { signal: AbortSignal.timeout(timeoutMs) })
-      if (!res.ok) throw new Error(`bustime stops: HTTP ${res.status}`)
-      return parseStopsForLocation(await res.json())
-    },
-    STOPS_TTL_MS
-  )
+  const memoKey = `bustime-stops:${rounded(lat)},${rounded(lon)},${radiusM}`
+  return fetchBusTime(memoKey, url, 'stops', parseStopsForLocation, options, STOPS_TTL_MS)
 }
 
 /** The `limit` stops nearest the point, nearest first (ties by code), with route names and colors. Pure. */
@@ -105,19 +100,15 @@ export function nearestBusStops(
   routes: Record<string, RouteDisplay>,
   limit: number
 ): NearbyBusStop[] {
-  return stops
-    .map(s => ({ s, d: distanceMeters(lat, lon, s.lat, s.lon) }))
-    .sort((a, b) => a.d - b.d || a.s.code.localeCompare(b.s.code))
-    .slice(0, limit)
-    .map(({ s, d }) => ({
-      id: s.code,
-      name: s.name,
-      direction: s.direction,
-      lat: s.lat,
-      lon: s.lon,
-      distance: Math.round(d),
-      routes: s.routeIds
-        .map(id => busRoute(routes, id))
-        .sort((a, b) => a.name.localeCompare(b.name, 'en', { numeric: true })),
-    }))
+  return nearest(stops, lat, lon, limit, s => s.code).map(([distance, s]) => ({
+    id: s.code,
+    name: s.name,
+    direction: s.direction,
+    lat: s.lat,
+    lon: s.lon,
+    distance,
+    routes: s.routeIds
+      .map(id => busRoute(routes, id))
+      .sort((a, b) => a.name.localeCompare(b.name, 'en', { numeric: true })),
+  }))
 }

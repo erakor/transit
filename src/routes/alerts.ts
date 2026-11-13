@@ -16,8 +16,8 @@ const parentStop = (stopId: string) => stopId.replace(/[NS]$/, '')
  * `direction_id`, which the MTA documents as 0 for northbound and 1 for southbound.
  */
 function subwayDirection(stopId: string, directionId: number | undefined): 'N' | 'S' | null {
-  const platform = /[NS]$/.exec(stopId)?.[0]
-  if (platform === 'N' || platform === 'S') return platform
+  const platform = /[NS]$/.exec(stopId)?.[0] as 'N' | 'S' | undefined
+  if (platform) return platform
   return directionId === 0 ? 'N' : directionId === 1 ? 'S' : null
 }
 

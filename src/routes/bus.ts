@@ -1,4 +1,4 @@
-import { busRoute, computeBusArrivals } from '#src/bus/arrivals.js'
+import { busRoute, busRouteId, computeBusArrivals, findBusRoute } from '#src/bus/arrivals.js'
 import {
   BusAlertsQuery,
   BusArrivalsQuery,
@@ -10,7 +10,7 @@ import {
 } from '#src/bus/schemas.js'
 import { fetchStopMonitoring, fetchVehicleMonitoring, type StopMonitoring } from '#src/bus/siri.js'
 import { fetchStopsForLocation, nearestBusStops } from '#src/bus/stops.js'
-import { computeBusVehicles, findBusRoute } from '#src/bus/vehicles.js'
+import { computeBusVehicles } from '#src/bus/vehicles.js'
 import { BUS_DATA } from '#src/data/bus.generated.js'
 import { computeAlerts } from '#src/alerts.js'
 import { tryFetchFeed, tryLoad, type Fetcher } from '#src/gtfsrt.js'
@@ -61,7 +61,7 @@ async function loadStop(stop: string, deps: BusDeps, nowMs: number): Promise<Sto
   const answer = await tryLoad(`bustime stop ${stop}`, () => fetchStopMonitoring(stop, key, { fetcher, now: nowMs }))
   if (!answer) return errorResponse(502, 'Bus Time unavailable')
   if (answer.error) {
-    if (/no such stop/i.test(answer.error)) return errorResponse(404, `unknown stop ${stop}`)
+    if (answer.notFound) return errorResponse(404, `unknown stop ${stop}`)
     console.error(`bustime stop ${stop}: ${answer.error}`)
     return errorResponse(502, 'Bus Time unavailable')
   }
@@ -109,7 +109,7 @@ export function busAlertsHandler({ fetcher, now = () => Date.now() }: BusDeps = 
   return authenticated(async (_request, url) => {
     const parsed = parseQuery(BusAlertsQuery, url)
     if (!parsed.ok) return parsed.response
-    const routeParam = parsed.query.route?.toUpperCase()
+    const routeParam = parsed.query.route && busRouteId(parsed.query.route)
     const nowMs = now()
     const feed = await tryFetchFeed(BUS_ALERTS_FEED, { fetcher, now: nowMs })
     if (!feed) return errorResponse(502, 'MTA alerts unavailable')
@@ -138,7 +138,7 @@ export function busVehiclesHandler(deps: BusDeps = {}) {
     if (!answer) return errorResponse(502, 'Bus Time unavailable')
     if (answer.error) {
       // A route in the static data that Bus Time doesn't run (yet, or any more).
-      if (/no such route/i.test(answer.error)) return errorResponse(404, `unknown route ${route.id}`)
+      if (answer.notFound) return errorResponse(404, `unknown route ${route.id}`)
       console.error(`bustime route ${route.id}: ${answer.error}`)
       return errorResponse(502, 'Bus Time unavailable')
     }

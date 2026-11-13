@@ -10,8 +10,8 @@
  * doesn't know, stale data, or Journal Square with no trains. For LIRR, Metro-North and NYC
  * Ferry: stale or empty feeds, stop or route ids missing from the static data, ferry trips missing
  * from the static schedule, a main stop with no departures, or no vehicle positions. For alerts:
- * a feed that no longer decodes or has gone a day without an update, alerts without a status,
- * statuses missing from the MTA's table, or a status rank in an id that disagrees with the type. For Citi Bike: a feed that
+ * a feed that no longer decodes or has gone a day without an update, alerts without a status, or
+ * statuses missing from the MTA's table. For Citi Bike: a feed that
  * changed shape, stale status, no bikes, e-bikes or free docks anywhere, or no station within
  * 500 m of Times Sq. For buses, when BUSTIME_KEY is set: a Bus Time answer that changed shape or
  * is stale, routes missing from the static bus data, no bus on its way to 1 Av/E 14 St, an
@@ -22,7 +22,7 @@ import { AGENCIES } from '#src/agency/agencies.js'
 import { computeAgencyArrivals } from '#src/agency/arrivals.js'
 import { computeAgencyVehicles } from '#src/agency/vehicles.js'
 import { computeAlerts } from '#src/alerts.js'
-import { alertType, splitAlertId, statusName, statusRank } from '#src/mercury.js'
+import { alertType, statusRank } from '#src/mercury.js'
 import { fetchStopMonitoring, fetchVehicleMonitoring } from '#src/bus/siri.js'
 import { fetchStopsForLocation } from '#src/bus/stops.js'
 import { fetchGbfs } from '#src/citibike/feeds.js'
@@ -216,9 +216,8 @@ else {
       fail(`bus stop ${BUS_STOP}: response timestamp ${stop!.updatedAt}`)
     if (stop!.visits.length === 0) fail(`bus stop ${BUS_STOP}: no buses on their way`)
     if (unknownRoutes.length) fail(`bus: routes missing from the static data: ${unknownRoutes.join(',')}`)
-    // src/routes/bus.ts answers 404 on this text.
-    if (!/no such stop/i.test(unknown!.error ?? ''))
-      fail(`bus: unknown stop answered ${JSON.stringify(unknown!.error)}`)
+    // src/routes/bus.ts answers 404 when the parser reads the error as not found.
+    if (!unknown!.notFound) fail(`bus: unknown stop answered ${JSON.stringify(unknown!.error)}`)
 
     // Vehicles: the M15 runs around the clock. Bus Time takes the plain route id as its line ref.
     const [m15, noRoute] = await Promise.all(
@@ -229,9 +228,8 @@ else {
     if (m15!.vehicles.length === 0) fail('bus vehicles M15: no buses')
     if (m15!.vehicles.some(v => !v.stopId || v.recordedAt === undefined))
       fail('bus vehicles M15: buses without a next stop or a time')
-    // src/routes/bus.ts answers 404 on this text.
-    if (!/no such route/i.test(noRoute!.error ?? ''))
-      fail(`bus: unknown route answered ${JSON.stringify(noRoute!.error)}`)
+    // src/routes/bus.ts answers 404 when the parser reads the error as not found.
+    if (!noRoute!.notFound) fail(`bus: unknown route answered ${JSON.stringify(noRoute!.error)}`)
 
     // Nearby stops, from the Discovery API.
     const { lat, lon } = BUS_STOP_POINT
@@ -255,18 +253,13 @@ for (const name of alertFeeds) {
   if (Math.abs(nowS - (updatedAt ?? 0)) > 86_400)
     fail(`${label}: header timestamp ${updatedAt} is ${nowS - (updatedAt ?? 0)}s old`)
   if (feed.entity.some(e => !e.alert)) fail(`${label}: entities that are not alerts`)
-  // Every MTA alert carries its status in the extension, and alert ids its rank. NYC Ferry's
-  // (a full URL) carry neither.
+  // Every MTA alert carries its status in the extension; NYC Ferry's (a full URL) don't.
   if (name.startsWith('https://')) continue
-  const types = feed.entity.filter(e => e.alert).map(e => ({ id: e.id, type: alertType(e.alert!) }))
-  const untyped = types.filter(t => !t.type).length
+  const types = feed.entity.flatMap(e => (e.alert ? [alertType(e.alert)] : []))
+  const untyped = types.filter(t => !t).length
   if (untyped) fail(`${label}: ${untyped} alerts without an alert_type`)
-  const unknown = [...new Set(types.map(t => t.type).filter(t => t && !statusRank(t)))]
+  const unknown = [...new Set(types.filter(t => t && !statusRank(t)))]
   if (unknown.length) fail(`${label}: statuses missing from ALERT_STATUSES: ${unknown.join(', ')}`)
-  for (const { id, type } of types) {
-    const { rank } = splitAlertId(id)
-    if (rank && type && statusName(rank) !== type) fail(`${label}: ${id} ranks as ${statusName(rank)}, typed ${type}`)
-  }
 }
 
 const base = process.env.TRANSIT_BASE_URL?.replace(/\/$/, '')

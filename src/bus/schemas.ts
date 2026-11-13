@@ -65,12 +65,12 @@ export const BusArrivalsResponse = z.strictObject({
   }),
 })
 
-export const BusAlertsQuery = z.object({
-  route: optionalParam('route', 'Only alerts about this bus route id (`M15`, `B44+`). Case insensitive.'),
-})
-
 const ROUTE_ID_DESCRIPTION =
   'A bus route id (`M15`, `Q06`, `BX12`). Select Bus Service routes end in `+` (`M15+`, sent as `M15%2B`) or can be written `M15-SBS`. Case insensitive.'
+
+export const BusAlertsQuery = z.object({
+  route: optionalParam('route', `Only alerts about this route. ${ROUTE_ID_DESCRIPTION}`),
+})
 
 export const BusVehiclesQuery = z.object({ route: requiredParam('route', ROUTE_ID_DESCRIPTION) })
 

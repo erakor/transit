@@ -1,4 +1,3 @@
-import type { RouteDisplay } from '#src/schema.js'
 import type { BusVehicle } from './schemas.js'
 import type { VehicleMonitoring } from './siri.js'
 
@@ -27,10 +26,4 @@ export function computeBusVehicles(answer: VehicleMonitoring): BusVehicle[] {
       tripId: v.tripId,
     }))
     .sort((a, b) => a.headsign.localeCompare(b.headsign) || a.id.localeCompare(b.id, 'en', { numeric: true }))
-}
-
-/** A route id as riders may type it: any case, and `M15-SBS` for the Select Bus Service route `M15+`. */
-export function findBusRoute(routes: Record<string, RouteDisplay>, raw: string): RouteDisplay | undefined {
-  const id = raw.trim().toUpperCase().replace(/-SBS$/, '+')
-  return routes[id]
 }

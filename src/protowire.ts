@@ -12,7 +12,7 @@ export type Fields = Map<number, (number | Uint8Array)[]>
 const utf8 = new TextDecoder()
 
 /** The fields of one encoded message. Fixed-width fields are skipped. Throws on bytes it can't read. */
-export function readFields(bytes: Uint8Array): Fields {
+function readFields(bytes: Uint8Array): Fields {
   const fields: Fields = new Map()
   let pos = 0
   const varint = (): number => {

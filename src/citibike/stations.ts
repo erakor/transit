@@ -1,6 +1,6 @@
 import type { GbfsFeed, GbfsStationInformation, GbfsStationStatus } from './feeds.js'
 import type { BikeStation, NearbyStation } from './schemas.js'
-import { distanceMeters } from '#src/geo.js'
+import { nearest } from '#src/geo.js'
 
 export interface BikeStations {
   /** `station_status`'s timestamp, epoch seconds. */
@@ -54,17 +54,5 @@ export function joinStations(
 
 /** The `n` stations closest to a point, nearest first (ties by id, so the order is stable). */
 export function nearestStations(stations: Iterable<BikeStation>, lat: number, lon: number, n: number): NearbyStation[] {
-  if (n < 1) return []
-  // Keeps the best n seen so far, sorted, instead of sorting every station.
-  const best: [number, BikeStation][] = []
-  const before = (d: number, s: BikeStation, [bd, b]: [number, BikeStation]) => d < bd || (d === bd && s.id < b.id)
-  for (const s of stations) {
-    const d = Math.round(distanceMeters(lat, lon, s.lat, s.lon))
-    if (best.length === n && !before(d, s, best[n - 1]!)) continue
-    let i = best.length
-    while (i > 0 && before(d, s, best[i - 1]!)) i--
-    best.splice(i, 0, [d, s])
-    if (best.length > n) best.pop()
-  }
-  return best.map(([distance, s]) => ({ ...s, distance }))
+  return nearest(stations, lat, lon, n, s => s.id).map(([distance, s]) => ({ ...s, distance }))
 }

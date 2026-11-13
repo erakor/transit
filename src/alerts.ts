@@ -62,6 +62,7 @@ export function computeAlerts(feed: FeedMessage, { now, match, route, stop }: Al
     if (!header) continue
 
     const { id, rank } = splitAlertId(entity.id)
+    // The extension names the status; an alert without it falls back on the rank in its id.
     const category = alertType(a) ?? (rank ? statusName(rank) : undefined) ?? null
     const routeIds = [...new Set(informed.map(routeOf).filter(Boolean))]
     const stops: AlertStop[] = []
@@ -75,7 +76,7 @@ export function computeAlerts(feed: FeedMessage, { now, match, route, stop }: Al
       id,
       planned: entity.id.includes('planned_work'),
       category,
-      priority: rank ?? (category ? statusRank(category) : undefined) ?? null,
+      priority: (category ? statusRank(category) : undefined) ?? null,
       header,
       description: plain(a.descriptionText),
       routes: routeIds.map(id => route?.(id) ?? fallbackRoute(id)),
@@ -98,13 +99,13 @@ export function computeAlerts(feed: FeedMessage, { now, match, route, stop }: Al
 
 /** One alert from its parts: the most serious one's status, every part's routes and stops. */
 function merge(parts: Alert[]): Alert {
-  const [first] = [...parts].sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
+  const first = parts.reduce((best, p) => ((p.priority ?? 0) > (best.priority ?? 0) ? p : best))
   const routes = new Map<string, RouteDisplay>()
   for (const p of parts) for (const r of p.routes) if (!routes.has(r.id)) routes.set(r.id, r)
   const starts = parts.map(p => p.start)
   const ends = parts.map(p => p.end)
   return {
-    ...first!,
+    ...first,
     routes: [...routes.values()],
     stops: mergeStops(parts.flatMap(p => p.stops)),
     start: starts.includes(null) ? null : Math.min(...(starts as number[])),

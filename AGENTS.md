@@ -217,8 +217,9 @@ Ids, which clients store as favorites, so keep them stable:
   `extensionField()` and `withExtension()` (`test/feed.ts`). A broken extension reads as absent.
 - Subway trips (`src/subway/nyct.ts`): `is_assigned` is false for trips listed before a train
   leaves the terminal. The first character of `train_id` is the trip type (`=` reroute, `/`
-  skip-stop, `$` short turn) on the 1-6 lines only; B Division ids start with another code, so
-  only the documented characters are read. A vehicle's timestamp is when the train last moved:
+  skip-stop, `$` short turn), as documented for the 1-6 lines. B Division ids start with other,
+  undocumented codes, so only those three characters are read, for every trip; anything else is
+  `change: null`. A vehicle's timestamp is when the train last moved:
   over `STALLED_AFTER_S` (90 s) before the header, it is stalled and its predictions are frozen.
   Trip feeds also carry "Train delayed" alerts naming trips.
 - Railroad stop times (`src/agency/mtarr.ts`): `track` on both, `trainStatus` on Metro-North only
