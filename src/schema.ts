@@ -7,7 +7,8 @@
  * comments so they end up in those docs too.
  */
 import * as z from 'zod'
-import { ERROR_CODES, errorResponse } from './http.js'
+import { ERROR_CODES } from './errors.js'
+import { errorResponse } from './http.js'
 
 /** Times in responses: whole seconds since the Unix epoch. */
 export const EpochSeconds = z.int().nonnegative().meta({ description: 'Epoch seconds.' })

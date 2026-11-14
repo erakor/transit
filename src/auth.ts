@@ -1,5 +1,5 @@
 import { createHash, timingSafeEqual } from 'node:crypto'
-import type { ErrorCode } from './http.js'
+import type { ErrorCode } from './errors.js'
 
 /**
  * Clients send the token as `X-Transit-Token: <token>`.

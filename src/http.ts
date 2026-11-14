@@ -1,4 +1,5 @@
 import { checkToken, TOKEN_HEADER } from './auth.js'
+import { ERROR_STATUS, type ErrorCode } from './errors.js'
 
 /** Live data: the CDN serves a copy for 20 s, then a stale one for up to 40 s while it refreshes. */
 export const LIVE_CACHE = 'public, s-maxage=20, stale-while-revalidate=40'
@@ -46,24 +47,8 @@ export function text(
   })
 }
 
-/** Stable, machine-readable error codes and the HTTP status each goes with. */
-export const ERROR_STATUS = {
-  invalid_parameter: 400,
-  missing_token: 401,
-  invalid_token: 401,
-  unknown_stop: 404,
-  unknown_station: 404,
-  unknown_route: 404,
-  not_found: 404,
-  internal_error: 500,
-  upstream_unavailable: 502,
-  not_configured: 503,
-} as const
-export type ErrorCode = keyof typeof ERROR_STATUS
-export const ERROR_CODES = Object.keys(ERROR_STATUS) as [ErrorCode, ...ErrorCode[]]
-
 /** Seconds a client should wait before retrying a 502 or 503; matches the 15 s feed memo. */
-export const RETRY_AFTER_SECONDS = 15
+const RETRY_AFTER_SECONDS = 15
 
 export function errorResponse(code: ErrorCode, error: string, vary?: string): Response {
   const status = ERROR_STATUS[code]
