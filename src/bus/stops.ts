@@ -5,7 +5,7 @@
  * carries the URL.
  */
 import { nearest } from '#src/geo.js'
-import type { FetchOptions } from '#src/gtfsrt.js'
+import type { FetchOptions } from '#src/memo.js'
 import type { RouteDisplay } from '#src/schema.js'
 import { busRoute } from './arrivals.js'
 import type { NearbyBusStop } from './schemas.js'

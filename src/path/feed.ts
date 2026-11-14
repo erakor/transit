@@ -1,4 +1,4 @@
-import { memoized, type FetchOptions } from '#src/gtfsrt.js'
+import { memoized, type FetchOptions } from '#src/memo.js'
 import { colorsKey } from './stations.js'
 
 /**

@@ -3,7 +3,7 @@ import { joinStations, nearestStations, type BikeStations } from '#src/citibike/
 import { NearbyQuery, StationQuery, type NearbyResponse, type StationResponse } from '#src/citibike/schemas.js'
 import { authenticated, byOp, errorResponse, json, LIVE_CACHE } from '#src/http.js'
 import { parseQuery } from '#src/schema.js'
-import { tryLoad, type Fetcher } from '#src/gtfsrt.js'
+import { tryLoad, type Fetcher } from '#src/memo.js'
 
 export interface CitibikeDeps {
   fetcher?: Fetcher

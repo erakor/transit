@@ -1,11 +1,10 @@
 /** GTFS-realtime plumbing shared by every provider: fetching, decoding and reading feeds. */
 import GtfsRealtimeBindings from 'gtfs-realtime-bindings'
+import { memoized, tryLoad, type FetchOptions } from './memo.js'
 import type { RouteDisplay, VehicleStatus } from './schema.js'
 
 const { transit_realtime } = GtfsRealtimeBindings
 export type FeedMessage = GtfsRealtimeBindings.transit_realtime.FeedMessage
-
-export type Fetcher = (url: string, init: RequestInit) => Promise<Response>
 
 const MTA = 'https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/'
 
@@ -22,40 +21,6 @@ export function decodeFeed(bytes: Uint8Array): FeedMessage {
   return transit_realtime.FeedMessage.decode(bytes)
 }
 
-/**
- * Upstream answers kept in the function instance's memory for a few seconds. This sits behind
- * the CDN cache: it absorbs requests the CDN can't (cache misses for different stops in the
- * same window, concurrent misses) and coalesces concurrent fetches of the same feed.
- */
-const MEMO_MS = 15_000
-const memo = new Map<string, { at: number; ttlMs: number; value: Promise<unknown> }>()
-
-/** `load()`, or its earlier result for `key` if it is under `ttlMs` old. A failed load is not kept. */
-export function memoized<T>(key: string, now: number, load: () => Promise<T>, ttlMs = MEMO_MS): Promise<T> {
-  const hit = memo.get(key)
-  if (hit && now - hit.at < ttlMs) return hit.value as Promise<T>
-  // A miss is a good time to let go of feeds nobody asked for lately.
-  for (const [k, entry] of memo) if (now - entry.at >= entry.ttlMs) memo.delete(k)
-  const value = load()
-  memo.set(key, { at: now, ttlMs, value })
-  value.catch(() => {
-    if (memo.get(key)?.value === value) memo.delete(key)
-  })
-  return value
-}
-
-/** For tests. */
-export function clearFeedMemo(): void {
-  memo.clear()
-}
-
-export interface FetchOptions {
-  fetcher?: Fetcher
-  /** Epoch milliseconds. */
-  now?: number
-  timeoutMs?: number
-}
-
 export function fetchFeed(
   feed: string,
   { fetcher = fetch, now = Date.now(), timeoutMs = 8_000 }: FetchOptions = {}
@@ -65,16 +30,6 @@ export function fetchFeed(
     if (!res.ok) throw new Error(`feed ${feed}: HTTP ${res.status}`)
     return decodeFeed(new Uint8Array(await res.arrayBuffer()))
   })
-}
-
-/** `load()`, or undefined (logged under `label`) when it fails: for routes that answer 502 then. */
-export async function tryLoad<T>(label: string, load: () => Promise<T>): Promise<T | undefined> {
-  try {
-    return await load()
-  } catch (err) {
-    console.error(`${label} failed:`, err)
-    return undefined
-  }
 }
 
 /** `fetchFeed`, or undefined (logged) when the upstream fails: for routes that answer 502 then. */

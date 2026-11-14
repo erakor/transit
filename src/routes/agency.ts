@@ -3,7 +3,8 @@ import { computeAgencyArrivals } from '#src/agency/arrivals.js'
 import { computeAgencyVehicles } from '#src/agency/vehicles.js'
 import { AgencyVehiclesQuery, STOP_SCHEMAS } from '#src/agency/schemas.js'
 import { computeAlerts } from '#src/alerts.js'
-import { tryFetchFeed, type FeedMessage, type Fetcher } from '#src/gtfsrt.js'
+import { tryFetchFeed, type FeedMessage } from '#src/gtfsrt.js'
+import { type Fetcher } from '#src/memo.js'
 import {
   ALERTS_CACHE,
   authenticated,

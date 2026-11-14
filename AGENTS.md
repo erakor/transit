@@ -60,7 +60,7 @@ PATH (`/path/arrivals`, `/path/stations`, `/preview/path`) has the same shape wi
 in one function (`api/path.ts`, behind rewrites like the agencies'): `src/routes/path.ts`
 resolves the station (`src/path/stations.ts`, a hand-written table: 13 stations and 5 routes, no
 generated data), `fetchPathFeed()` (`src/path/feed.ts`) fetches the one
-JSON document through the same 15 s memo (`memoized()`) and normalizes it with `parsePathFeed()`, and
+JSON document through the same 15 s memo (`memoized()`, `src/memo.ts`) and normalizes it with `parsePathFeed()`, and
 `computePathArrivals()` (`src/path/arrivals.ts`, pure) groups trains by route and direction.
 
 The LIRR, Metro-North and NYC Ferry share one implementation, driven by the `AGENCIES` table in
@@ -82,8 +82,9 @@ The LIRR, Metro-North and NYC Ferry share one implementation, driven by the `AGE
   also behind `/subway/alerts`) are pure too.
 - `src/gtfsrt.ts` holds what every GTFS-realtime provider shares: `fetchFeed()` (a subway feed
   name, an MTA `group/feed` name, or a full URL), `tryFetchFeed()` for routes that answer 502 on
-  failure, the memo, `num()`, `terminalName()`, `fallbackRoute()`. Provider folders import from
-  it, not from each other.
+  failure, `num()`, `terminalName()`, `fallbackRoute()`. Provider folders import from
+  it, not from each other. The memo (`memoized()`, `tryLoad()`, the `Fetcher` types) is in
+  `src/memo.ts`, which imports nothing: PATH and Citi Bike use it without loading the protobuf bindings.
 - Each function bundles what it imports: `src/routes/agency.ts` must not import the subway's
   station index (155 KiB of data), and subway routes must not import `src/agency/agencies.ts`.
   `test/bundles.test.ts` walks each function's imports, indirect ones included, and fails when a

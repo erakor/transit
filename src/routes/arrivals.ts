@@ -2,7 +2,7 @@ import { authenticated, errorResponse, json, LIVE_CACHE } from '#src/http.js'
 import { parseQuery } from '#src/schema.js'
 import { ArrivalsQuery, type ArrivalsResponse } from '#src/subway/schemas.js'
 import { stationIndex, type StationIndex } from '#src/stops/stations.js'
-import type { Fetcher } from '#src/gtfsrt.js'
+import type { Fetcher } from '#src/memo.js'
 import { loadArrivals } from '#src/subway/load.js'
 
 /** Shorter CDN window when some feeds failed, so a full answer comes back soon. */

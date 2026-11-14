@@ -5,7 +5,7 @@ import { pathPreviewLine } from '#src/path/preview.js'
 import { PathArrivalsQuery, PathPreviewQuery, type PathStationsResponse } from '#src/path/schemas.js'
 import { parseQuery } from '#src/schema.js'
 import { PATH_STATIONS, pathStation, routesOf, searchPathStations } from '#src/path/stations.js'
-import type { Fetcher } from '#src/gtfsrt.js'
+import type { Fetcher } from '#src/memo.js'
 
 export interface PathDeps {
   fetcher?: Fetcher

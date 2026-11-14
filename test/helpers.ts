@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { afterEach, beforeEach, vi } from 'vitest'
 import { AGENCIES } from '#src/agency/agencies.js'
-import { clearFeedMemo, type Fetcher } from '#src/gtfsrt.js'
+import { clearFeedMemo, type Fetcher } from '#src/memo.js'
 
 const TOKEN = 'test-token'
 /** The Bus Time key route tests run with: errors and logs must never show it. */
