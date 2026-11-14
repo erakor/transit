@@ -30,6 +30,17 @@ export default defineConfig([
       '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true, argsIgnorePattern: '^_' }],
     },
   },
+  // Promise mistakes the compiler allows. Only these rules need type information, so only they pay for it.
+  {
+    files: ['**/*.ts'],
+    languageOptions: { parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname } },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+      '@typescript-eslint/return-await': ['error', 'in-try-catch'],
+      '@typescript-eslint/only-throw-error': 'error',
+    },
+  },
   restrict(['**/*.ts'], ALIAS),
   // Inside src/, WITHIN_SRC covers ALIAS too.
   restrict(['src/**/*.ts'], WITHIN_SRC),
