@@ -9,6 +9,7 @@ import { subwayAlertsHandler } from '#src/routes/alerts.js'
 import { subwayVehiclesHandler } from '#src/routes/vehicles.js'
 import { pathArrivalsHandler, pathPreviewHandler, pathStationsHandler } from '#src/routes/path.js'
 import { LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from '#src/http.js'
+import { stationIndex } from '#src/stops/stations.js'
 import { SUBWAY_DATA } from '#src/data/subway.generated.js'
 import { ErrorBody } from '#src/schema.js'
 import { ArrivalsResponse } from '#src/subway/schemas.js'
@@ -111,6 +112,12 @@ describe.each([
   })
 })
 
+describe('StationIndex.resolve', () => {
+  it('reads spaces as the + of a station id', () => {
+    expect(stationIndex().resolve(TIMES_SQ.replaceAll('+', ' '))?.id).toBe(TIMES_SQ)
+  })
+})
+
 describe('/subway/arrivals', () => {
   it('returns pre-joined arrivals for a station complex with live cache headers', async () => {
     const { GET, fetcher } = arrivals()
@@ -124,6 +131,14 @@ describe('/subway/arrivals', () => {
     expect(body.groups.length).toBeGreaterThan(4)
     for (const g of body.groups) expect(g.arrivals.length).toBeLessThanOrEqual(2)
     expect(body.unavailableFeeds).toBeUndefined()
+  })
+
+  it('accepts a station id whose + was not percent-encoded', async () => {
+    const { GET } = arrivals()
+    const raw = await GET(get(`/subway/arrivals?stop=${TIMES_SQ}`, auth))
+    const encoded = await GET(get(`/subway/arrivals?stop=${encodeURIComponent(TIMES_SQ)}`, auth))
+    expect(raw.status).toBe(200)
+    expect((await raw.json()).stop.id).toBe((await encoded.json()).stop.id)
   })
 
   it('accepts a plain stop id and only fetches the feeds it needs', async () => {

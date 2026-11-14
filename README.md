@@ -24,7 +24,7 @@ Next trains per route and direction.
 
 - `stop`: a station id from `/stops/search` (for a complex, its stop ids joined with `+`, such as
   `127+725+902+A27+R16`), a single GTFS stop id (`127`), or one platform (`127N`, `127S`).
-  Case insensitive. Remember to URL-encode `+` as `%2B`.
+  Case insensitive. `+` may be sent as `%2B` or unencoded.
 - `limit`: trains per route and direction, default 3, max 10.
 
 ```json
