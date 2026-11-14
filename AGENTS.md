@@ -49,7 +49,8 @@ Request flow for `/subway/arrivals`:
    stop id or platform id) to platform ids and the routes scheduled there.
 4. `feedsForRoutes()` picks the GTFS-realtime feeds for those routes (`FEEDS` in
    `src/subway/feeds.ts`); `fetchFeed()` (`src/gtfsrt.ts`) fetches them in parallel through a
-   15 s per-instance memo.
+   15 s per-instance memo (a failed fetch is remembered for 5 s, so an outage
+   costs one timeout per window, not one per request).
 5. `computeArrivals()` (`src/subway/arrivals.ts`, pure) groups stop time updates by route and
    direction. It takes decoded feeds and `now`, so tests drive it without the network.
 
@@ -84,7 +85,7 @@ The LIRR, Metro-North and NYC Ferry share one implementation, driven by the `AGE
   name, an MTA `group/feed` name, or a full URL), `tryFetchFeed()` for routes that answer 502 on
   failure, `num()`, `terminalName()`, `fallbackRoute()`. Provider folders import from
   it, not from each other. The memo (`memoized()`, `tryLoad()`, the `Fetcher` types) is in
-  `src/memo.ts`, which imports nothing: PATH and Citi Bike use it without loading the protobuf bindings.
+  `src/memo.ts`, which imports nothing (a failed load is kept for `FAIL_MS`, 5 s, then retried; errors stay `no-store`): PATH and Citi Bike use it without loading the protobuf bindings.
 - Each function bundles what it imports: `src/routes/agency.ts` must not import the subway's
   station index (155 KiB of data), and subway routes must not import `src/agency/agencies.ts`.
   `test/bundles.test.ts` walks each function's imports, indirect ones included, and fails when a
@@ -191,7 +192,7 @@ Ids, which clients store as favorites, so keep them stable:
   documented format.
 - `Bearing` counts counterclockwise from east; responses carry a compass `heading`.
 - The Discovery API answers a bad key with a 200 and a body of `null`: `parseStopsForLocation()`
-  throws on anything but `code: 200` with a stop list, so it is a 502 and not memoized.
+  throws on anything but `code: 200` with a stop list, so it is a 502, remembered only for the 5 s failure window.
 - test/fixtures/bustime-*.json are real answers, recorded late in the evening (`pnpm record-fixtures
   bus`); after re-recording, update `BUS_FIXTURE_NOW_MS` in `test/helpers.ts`, and the counts and
   names `test/bus.test.ts` expects.
