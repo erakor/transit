@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
+import type { ErrorCode } from '#src/errors.js'
 import { afterEach, beforeEach, vi } from 'vitest'
 import { AGENCIES } from '#src/agency/agencies.js'
 import { clearFeedMemo, type Fetcher } from '#src/gtfsrt.js'
@@ -93,3 +94,13 @@ export const CITIBIKE_STATUS = 'citibike-station_status.json'
 
 /** Times Sq: the centre of the recorded Citi Bike stations, and of the smoke test's nearby query. */
 export const TIMES_SQ = { lat: 40.7559, lon: -73.9871 }
+
+/** The `code` an error answer should carry, from its status and message (kept apart from the implementation on purpose). */
+export function expectedErrorCode(status: number, error: string): ErrorCode {
+  if (status === 400) return 'invalid_parameter'
+  if (status === 502) return 'upstream_unavailable'
+  if (error === 'not found') return 'not_found'
+  const unknown = /^(?:unknown|no matching) (route|stop|station)\b/.exec(error)
+  if (unknown) return `unknown_${unknown[1]}` as ErrorCode
+  throw new Error(`no expected code for ${status} ${error}`)
+}

@@ -1,5 +1,6 @@
 /** GTFS-realtime plumbing shared by every provider: fetching, decoding and reading feeds. */
 import GtfsRealtimeBindings from 'gtfs-realtime-bindings'
+import { FEED_MEMO_MS } from './errors.js'
 import type { RouteDisplay, VehicleStatus } from './schema.js'
 
 const { transit_realtime } = GtfsRealtimeBindings
@@ -27,7 +28,7 @@ export function decodeFeed(bytes: Uint8Array): FeedMessage {
  * the CDN cache: it absorbs requests the CDN can't (cache misses for different stops in the
  * same window, concurrent misses) and coalesces concurrent fetches of the same feed.
  */
-const MEMO_MS = 15_000
+const MEMO_MS = FEED_MEMO_MS
 const memo = new Map<string, { at: number; ttlMs: number; value: Promise<unknown> }>()
 
 /** `load()`, or its earlier result for `key` if it is under `ttlMs` old. A failed load is not kept. */

@@ -7,6 +7,7 @@
  * comments so they end up in those docs too.
  */
 import * as z from 'zod'
+import { ERROR_CODES } from './errors.js'
 import { errorResponse } from './http.js'
 
 /** Times in responses: whole seconds since the Unix epoch. */
@@ -16,7 +17,10 @@ export const EpochSeconds = z.int().nonnegative().meta({ description: 'Epoch sec
 export const HexColor = z.string().regex(/^#[0-9A-F]{6}$/)
 
 /** The body of every 4xx and 5xx answer. */
-export const ErrorBody = z.strictObject({ error: z.string() })
+export const ErrorBody = z.strictObject({
+  error: z.string().meta({ description: 'Human-readable message; the wording may change.' }),
+  code: z.enum(ERROR_CODES).meta({ description: 'Stable machine-readable error code.' }),
+})
 
 export const Latitude = z.number().min(-90).max(90)
 export const Longitude = z.number().min(-180).max(180)
@@ -235,5 +239,5 @@ export function parseQuery<S extends z.ZodType>(
   for (const key in raw) if (raw[key] === '') delete raw[key]
   const parsed = schema.safeParse(raw)
   if (parsed.success) return { ok: true, query: parsed.data }
-  return { ok: false, response: errorResponse(400, parsed.error.issues[0]?.message ?? 'invalid query') }
+  return { ok: false, response: errorResponse('invalid_parameter', parsed.error.issues[0]?.message ?? 'invalid query') }
 }

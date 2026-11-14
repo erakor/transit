@@ -39,12 +39,12 @@ export interface BusDeps {
 
 const envKey = () => process.env.BUSTIME_KEY?.trim() || undefined
 
-/** The key, or the 500 to answer without one. */
+/** The key, or the 503 to answer without one. */
 function requireKey({ busKey = envKey }: BusDeps): string | Response {
   const key = busKey()
   if (key) return key
   console.error('BUSTIME_KEY is not set')
-  return errorResponse(500, 'bus data not configured')
+  return errorResponse('not_configured', 'bus data not configured')
 }
 
 /** How far `/bus/nearby` looks, in meters. */
@@ -59,11 +59,11 @@ async function loadStop(stop: string, deps: BusDeps, nowMs: number): Promise<Sto
   if (key instanceof Response) return key
   const { fetcher } = deps
   const answer = await tryLoad(`bustime stop ${stop}`, () => fetchStopMonitoring(stop, key, { fetcher, now: nowMs }))
-  if (!answer) return errorResponse(502, 'Bus Time unavailable')
+  if (!answer) return errorResponse('upstream_unavailable', 'Bus Time unavailable')
   if (answer.error) {
-    if (answer.notFound) return errorResponse(404, `unknown stop ${stop}`)
+    if (answer.notFound) return errorResponse('unknown_stop', `unknown stop ${stop}`)
     console.error(`bustime stop ${stop}: ${answer.error}`)
-    return errorResponse(502, 'Bus Time unavailable')
+    return errorResponse('upstream_unavailable', 'Bus Time unavailable')
   }
   return answer
 }
@@ -112,7 +112,7 @@ export function busAlertsHandler({ fetcher, now = () => Date.now() }: BusDeps = 
     const routeParam = parsed.query.route && busRouteId(url.searchParams.get('route') ?? '')
     const nowMs = now()
     const feed = await tryFetchFeed(BUS_ALERTS_FEED, { fetcher, now: nowMs })
-    if (!feed) return errorResponse(502, 'MTA alerts unavailable')
+    if (!feed) return errorResponse('upstream_unavailable', 'MTA alerts unavailable')
     const result = computeAlerts(feed, {
       now: Math.floor(nowMs / 1000),
       match: routeParam ? r => r.toUpperCase() === routeParam : undefined,
@@ -137,11 +137,11 @@ export function busVehiclesHandler(deps: BusDeps = {}) {
     const answer = await tryLoad(`bustime route ${route.id}`, () =>
       fetchVehicleMonitoring(route.id, key, { fetcher, now: now() })
     )
-    if (!answer) return errorResponse(502, 'Bus Time unavailable')
+    if (!answer) return errorResponse('upstream_unavailable', 'Bus Time unavailable')
     if (answer.error) {
-      if (answer.notFound) return errorResponse(404, `unknown route ${route.id}`)
+      if (answer.notFound) return errorResponse('unknown_route', `unknown route ${route.id}`)
       console.error(`bustime route ${route.id}: ${answer.error}`)
-      return errorResponse(502, 'Bus Time unavailable')
+      return errorResponse('upstream_unavailable', 'Bus Time unavailable')
     }
     const body: BusVehiclesResponse = { route, updatedAt: answer.updatedAt, vehicles: computeBusVehicles(answer) }
     return json(body, { cache: LIVE_CACHE })
@@ -160,7 +160,7 @@ export function busNearbyHandler(deps: BusDeps = {}) {
     const stops = await tryLoad('bustime stops', () =>
       fetchStopsForLocation(lat, lon, NEARBY_RADIUS_M, key, { fetcher, now: now() })
     )
-    if (!stops) return errorResponse(502, 'Bus Time unavailable')
+    if (!stops) return errorResponse('upstream_unavailable', 'Bus Time unavailable')
     const body: BusNearbyResponse = { stops: nearestBusStops(stops, lat, lon, BUS_DATA.routes, limit, NEARBY_RADIUS_M) }
     // Stops change with the quarterly schedules, upstream and without a deploy.
     return json(body, { cache: LOOKUP_CACHE })

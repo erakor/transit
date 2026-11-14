@@ -200,7 +200,7 @@ describe.each([
     expect(res.status).toBe(401)
     expect(res.headers.get('cache-control')).toBe('no-store')
     expect(res.headers.get('vary')).toBe('x-transit-token')
-    expect(await res.json()).toEqual({ error: 'missing token' })
+    expect(await res.json()).toEqual({ error: 'missing token', code: 'missing_token' })
     expect((await handler()(get(path + query, { 'x-transit-token': 'nope' }))).status).toBe(401)
   })
 
@@ -221,7 +221,7 @@ describe.each([
     expect(res.status).toBe(502)
     expect(res.headers.get('cache-control')).toBe('no-store')
     expect(res.headers.get('vary')).toBe('x-transit-token')
-    expect(await res.json()).toEqual({ error: 'Citi Bike feeds unavailable' })
+    expect(await res.json()).toEqual({ error: 'Citi Bike feeds unavailable', code: 'upstream_unavailable' })
   })
 })
 
@@ -255,7 +255,7 @@ describe('/citibike/station', () => {
       const res = await GET(get(`/citibike/station?id=${id}`, auth))
       expect(res.status).toBe(404)
       expect(res.headers.get('cache-control')).toBe('no-store')
-      expect(await res.json()).toEqual({ error: `unknown station ${id}` })
+      expect(await res.json()).toEqual({ error: `unknown station ${id}`, code: 'unknown_station' })
     }
   })
 })
@@ -307,7 +307,7 @@ describe('/citibike/nearby', () => {
   ])('is 400 for %s', async (query, error) => {
     const res = await handler()(get(`/citibike/nearby${query}`, auth))
     expect(res.status).toBe(400)
-    expect(await res.json()).toEqual({ error })
+    expect(await res.json()).toEqual({ error, code: 'invalid_parameter' })
   })
 })
 

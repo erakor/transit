@@ -24,7 +24,8 @@ export class StationIndex {
    * id ("127"), or a platform id ("127N"). Returns undefined for anything unknown.
    */
   resolve(raw: string): ResolvedStop | undefined {
-    const id = raw.trim().toUpperCase()
+    // A `+` that was not percent-encoded reaches us as a space; station ids never contain one.
+    const id = raw.trim().replace(/\s/g, '+').toUpperCase()
     const station = this.byId.get(id)
     if (station) {
       return {
