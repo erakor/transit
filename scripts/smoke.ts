@@ -137,7 +137,8 @@ try {
 // Jamaica, Grand Central, Wall St/Pier 11.
 const MAIN_STOP: Record<string, string> = { lirr: '102', mnr: '1', ferry: '87' }
 for (const agency of agencies) {
-  const { data, id } = agency
+  const { id } = agency
+  const data = await agency.data()
   const feed = feedOrFail(id, agency.tripsFeed)
   const positions = agency.vehiclesFeed ? feedOrFail(id, agency.vehiclesFeed) : feed
   if (!feed || !positions) continue
@@ -350,7 +351,7 @@ if (base) {
     )
   }
 
-  await expectPreview(`/preview/mnr?station=${MAIN_STOP.mnr}`, AGENCIES.mnr!.data.stops[MAIN_STOP.mnr!]!.name)
+  await expectPreview(`/preview/mnr?station=${MAIN_STOP.mnr}`, (await AGENCIES.mnr!.data()).stops[MAIN_STOP.mnr!]!.name)
 }
 
 if (problems.length) {
