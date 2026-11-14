@@ -1,7 +1,8 @@
 import { SUBWAY_DATA } from '#src/data/subway.generated.js'
 import { authenticated, json, STATIC_CACHE } from '#src/http.js'
-import { parseQuery } from '#src/schema.js'
-import { SearchQuery, type SearchResponse } from '#src/subway/schemas.js'
+import { parseQuery } from '#src/query.js'
+import { SearchQuery } from '#src/subway/queries.js'
+import type { SearchResponse } from '#src/subway/schemas.js'
 import { StopSearch } from '#src/stops/search.js'
 import type { SubwayData } from '#src/static/types.js'
 

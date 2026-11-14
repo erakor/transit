@@ -1,8 +1,10 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import * as z from 'zod'
 import { VEHICLE_STATUS } from '#src/gtfsrt.js'
-import { coordinateParam, countParam, optionalParam, parseQuery, requiredParam, VehicleStatus } from '#src/schema.js'
-import { ArrivalsQuery, ArrivalsResponse } from '#src/subway/schemas.js'
+import { coordinateParam, countParam, optionalParam, parseQuery, requiredParam } from '#src/query.js'
+import { VehicleStatus } from '#src/schema.js'
+import { ArrivalsQuery } from '#src/subway/queries.js'
+import { ArrivalsResponse } from '#src/subway/schemas.js'
 
 const Query = z.object({ name: requiredParam('name', 'A name.'), n: countParam('n', 3, 10, 'How many.') })
 const parse = (qs: string) => parseQuery(Query, new URL(`https://x.test/${qs}`))

@@ -2,8 +2,9 @@ import { authenticated, byOp, errorResponse, json, LIVE_CACHE, PREVIEW_CACHE, ST
 import { computePathArrivals } from '#src/path/arrivals.js'
 import { fetchPathFeed, type PathFeed } from '#src/path/feed.js'
 import { pathPreviewLine } from '#src/path/preview.js'
-import { PathArrivalsQuery, PathPreviewQuery, type PathStationsResponse } from '#src/path/schemas.js'
-import { parseQuery } from '#src/schema.js'
+import { PathArrivalsQuery, PathPreviewQuery } from '#src/path/queries.js'
+import type { PathStationsResponse } from '#src/path/schemas.js'
+import { parseQuery } from '#src/query.js'
 import { PATH_STATIONS, pathStation, routesOf, searchPathStations } from '#src/path/stations.js'
 import type { Fetcher } from '#src/memo.js'
 

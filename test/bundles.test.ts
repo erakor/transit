@@ -19,6 +19,14 @@ const ALLOWED: Record<string, (fn: string) => boolean> = {
   'src/agency/agencies.ts': fn => fn === 'api/agency.ts',
   // The protobuf bindings: only functions that decode GTFS-realtime feeds. PATH and Citi Bike read JSON.
   'gtfs-realtime-bindings': fn => !/^api\/(path|citibike)\.ts$/.test(fn),
+  // Response schemas: built at import time, and only the docs generator and the tests use them. Routes import their
+  // request schemas from `queries.ts` and the response types with `import type`.
+  'src/schema.ts': () => false,
+  'src/agency/schemas.ts': () => false,
+  'src/bus/schemas.ts': () => false,
+  'src/citibike/schemas.ts': () => false,
+  'src/path/schemas.ts': () => false,
+  'src/subway/schemas.ts': () => false,
   // The docs generator runs at build time only.
   'src/openapi.ts': () => false,
 }

@@ -253,8 +253,11 @@ Ids, which clients store as favorites, so keep them stable:
   HTML), with `PREVIEW_CACHE`, whose `max-age` is how long the client keeps the line. Their
   errors stay JSON and `no-store`. The line's format is built by a pure function with its own
   tests (`src/subway/preview.ts`, and `src/preview.ts` for PATH and the agencies).
-- Every route has request and response schemas (zod): `schemas.ts` in each provider folder, and
-  the shared pieces (routes, alerts, `/health`, parameter helpers) in `src/schema.ts`. The schema
+- Every route has request and response schemas (zod), in two modules so functions bundle only what
+  they run: `queries.ts` in each provider folder (request schemas, with the parameter helpers and
+  `parseQuery()` in `src/query.ts`) and `schemas.ts` (responses, with the shared pieces: routes,
+  alerts, `/health`, in `src/schema.ts`). Routes import queries at runtime and response types with
+  `import type`, so no function bundles a response schema (`test/bundles.test.ts`). The schema
   is the definition: types are `z.infer`red from it, it reads the query (`parseQuery()`, which
   keeps the error messages clients see), and the tests check real responses against it
   (`test/responses.test.ts` sends a request to every documented route and fails for a route
@@ -265,7 +268,7 @@ Ids, which clients store as favorites, so keep them stable:
   maximum length, 100 for search text), `countParam()` and `coordinateParam()`, which keep the
   API's messages (`stop is required`, `q is too long`). Rules across parameters (`q or stop is
   required`) are a `.refine()` on the query object. Agency schemas name the stop `station` or
-  `stop` (`STOP_SCHEMAS` in `src/agency/schemas.ts`) and their queries hand it to the handler as
+  `stop` (`STOP_QUERIES` in `src/agency/queries.ts`, `STOP_SCHEMAS` for the responses) and their queries hand it to the handler as
   `stop`. Descriptions go in `.meta()`: they become the API docs. Each route has an entry in
   `ROUTES` (`src/openapi.ts`; the agency routes come from `AGENCIES`), each response schema a name
   in `NAMED`; `pnpm build:openapi` then rewrites `public/openapi.json`, which `/docs` renders

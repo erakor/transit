@@ -1,6 +1,6 @@
 import { authenticated, errorResponse, json, LIVE_CACHE } from '#src/http.js'
-import { parseQuery } from '#src/schema.js'
-import { VehiclesQuery } from '#src/subway/schemas.js'
+import { parseQuery } from '#src/query.js'
+import { VehiclesQuery } from '#src/subway/queries.js'
 import { stationIndex } from '#src/stops/stations.js'
 import { tryFetchFeed } from '#src/gtfsrt.js'
 import { feedsForRoutes } from '#src/subway/feeds.js'

@@ -5,9 +5,8 @@ import {
   BusNearbyQuery,
   BusPreviewQuery,
   BusVehiclesQuery,
-  type BusNearbyResponse,
-  type BusVehiclesResponse,
-} from '#src/bus/schemas.js'
+} from '#src/bus/queries.js'
+import type { BusNearbyResponse, BusVehiclesResponse } from '#src/bus/schemas.js'
 import { fetchStopMonitoring, fetchVehicleMonitoring, type StopMonitoring } from '#src/bus/siri.js'
 import { fetchStopsForLocation, nearestBusStops } from '#src/bus/stops.js'
 import { computeBusVehicles } from '#src/bus/vehicles.js'
@@ -27,7 +26,7 @@ import {
   text,
 } from '#src/http.js'
 import { destinationsLine } from '#src/preview.js'
-import { parseQuery } from '#src/schema.js'
+import { parseQuery } from '#src/query.js'
 
 export const BUS_ALERTS_FEED = 'camsys/bus-alerts'
 

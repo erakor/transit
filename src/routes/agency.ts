@@ -1,7 +1,7 @@
 import { AGENCIES, findStop, routeInfo, searchStops, type Agency } from '#src/agency/agencies.js'
 import { computeAgencyArrivals } from '#src/agency/arrivals.js'
 import { computeAgencyVehicles } from '#src/agency/vehicles.js'
-import { AgencyVehiclesQuery, STOP_SCHEMAS } from '#src/agency/schemas.js'
+import { AgencyVehiclesQuery, STOP_QUERIES } from '#src/agency/queries.js'
 import { computeAlerts } from '#src/alerts.js'
 import { tryFetchFeed, type FeedMessage } from '#src/gtfsrt.js'
 import { type Fetcher } from '#src/memo.js'
@@ -16,7 +16,7 @@ import {
   text,
 } from '#src/http.js'
 import { destinationsLine } from '#src/preview.js'
-import { parseQuery } from '#src/schema.js'
+import { parseQuery } from '#src/query.js'
 
 export interface AgencyDeps {
   fetcher?: Fetcher
@@ -73,7 +73,7 @@ function unavailable(agency: Agency): Response {
 const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
   /** GET /<agency>/arrivals?station=<id>&limit=<default 10, max 30> (`stop` for the ferry). */
   async arrivals({ agency, url, now, load }) {
-    const parsed = parseQuery(STOP_SCHEMAS[agency.stopParam].ArrivalsQuery, url)
+    const parsed = parseQuery(STOP_QUERIES[agency.stopParam].ArrivalsQuery, url)
     if (!parsed.ok) return parsed.response
     const { stop: param, limit } = parsed.query
     const stop = findStop(agency.data, param)
@@ -86,7 +86,7 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
 
   /** GET /<agency>/alerts, optionally `?route=<id>` or `?station=<id>`: the alerts in effect now. */
   async alerts({ agency, url, now, load }) {
-    const parsed = parseQuery(STOP_SCHEMAS[agency.stopParam].AlertsQuery, url)
+    const parsed = parseQuery(STOP_QUERIES[agency.stopParam].AlertsQuery, url)
     if (!parsed.ok) return parsed.response
     const routeParam = parsed.query.route?.toLowerCase()
     const stopParam = parsed.query.stop
@@ -134,7 +134,7 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
 
   /** GET /preview/<agency>?q=<name> or ?station=<id>: one plain-text line, next departure per destination. */
   async preview({ agency, url, now, load }) {
-    const parsed = parseQuery(STOP_SCHEMAS[agency.stopParam].PreviewQuery, url)
+    const parsed = parseQuery(STOP_QUERIES[agency.stopParam].PreviewQuery, url)
     if (!parsed.ok) return parsed.response
     const { id } = parsed.query
     const stop = id !== undefined ? findStop(agency.data, id) : searchStops(agency.data, parsed.query.q)[0]
@@ -158,7 +158,7 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
 
 /** GET /<agency>/stations (`/ferry/stops`): all of them by name, or `?q=<name>&limit=<default 10, max 25>`. */
 function list({ agency, url }: Context): Response {
-  const parsed = parseQuery(STOP_SCHEMAS[agency.stopParam].StopsQuery, url)
+  const parsed = parseQuery(STOP_QUERIES[agency.stopParam].StopsQuery, url)
   if (!parsed.ok) return parsed.response
   const { q, limit } = parsed.query
   const stops = q

@@ -1,21 +1,6 @@
-/** Request and response schemas for the PATH routes, and the types inferred from them. */
+/** Response schemas for the PATH routes (the requests are in `queries.ts`), and the types inferred from them. */
 import * as z from 'zod'
-import {
-  countParam,
-  EpochSeconds,
-  previewQuery,
-  requiredParam,
-  RouteDisplay,
-  RouteFields,
-  StopRef,
-} from '#src/schema.js'
-
-const STATION_DESCRIPTION = 'A station id from /path/stations (`WTC`, `HOB`, `09S`). Case insensitive.'
-
-export const PathArrivalsQuery = z.object({
-  station: requiredParam('station', STATION_DESCRIPTION),
-  limit: countParam('limit', 3, 10, 'Trains per route and direction.'),
-})
+import { EpochSeconds, RouteDisplay, RouteFields, StopRef } from '#src/schema.js'
 
 export const PathArrival = z.strictObject({
   time: EpochSeconds.meta({
@@ -54,12 +39,6 @@ export const PathStationsResponse = z.strictObject({
     })
   ),
 })
-
-export const PathPreviewQuery = previewQuery(
-  'station',
-  'A station name (`hoboken`, `wtc`, `journal sq`): the best match is used.',
-  STATION_DESCRIPTION
-)
 
 export type PathRouteDirectionArrivals = z.infer<typeof PathRouteDirectionArrivals>
 export type PathArrivalsResponse = z.infer<typeof PathArrivalsResponse>

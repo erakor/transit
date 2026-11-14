@@ -1,8 +1,9 @@
 import { fetchGbfs } from '#src/citibike/feeds.js'
 import { joinStations, nearestStations, type BikeStations } from '#src/citibike/stations.js'
-import { NearbyQuery, StationQuery, type NearbyResponse, type StationResponse } from '#src/citibike/schemas.js'
+import { NearbyQuery, StationQuery } from '#src/citibike/queries.js'
+import type { NearbyResponse, StationResponse } from '#src/citibike/schemas.js'
 import { authenticated, byOp, errorResponse, json, LIVE_CACHE } from '#src/http.js'
-import { parseQuery } from '#src/schema.js'
+import { parseQuery } from '#src/query.js'
 import { tryLoad, type Fetcher } from '#src/memo.js'
 
 export interface CitibikeDeps {

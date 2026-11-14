@@ -3,7 +3,7 @@ import { LIRR_DATA } from '#src/data/lirr.generated.js'
 import { MNR_DATA } from '#src/data/mnr.generated.js'
 import { fallbackRoute } from '#src/gtfsrt.js'
 import { rankByName, tokenize, type NameEntry } from '#src/stops/search.js'
-import type { StopParam } from './schemas.js'
+import type { StopParam } from './queries.js'
 import type { AgencyData, AgencyRoute, AgencyStop } from './types.js'
 
 /**
