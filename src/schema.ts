@@ -8,6 +8,7 @@
  * comments so they end up in those docs too.
  */
 import * as z from 'zod'
+import { ERROR_CODES } from './errors.js'
 
 /** Times in responses: whole seconds since the Unix epoch. */
 export const EpochSeconds = z.int().nonnegative().meta({ description: 'Epoch seconds.' })
@@ -16,7 +17,10 @@ export const EpochSeconds = z.int().nonnegative().meta({ description: 'Epoch sec
 export const HexColor = z.string().regex(/^#[0-9A-F]{6}$/)
 
 /** The body of every 4xx and 5xx answer. */
-export const ErrorBody = z.strictObject({ error: z.string() })
+export const ErrorBody = z.strictObject({
+  error: z.string().meta({ description: 'Human-readable message; the wording may change.' }),
+  code: z.enum(ERROR_CODES).meta({ description: 'Stable machine-readable error code.' }),
+})
 
 export const Latitude = z.number().min(-90).max(90)
 export const Longitude = z.number().min(-180).max(180)

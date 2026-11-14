@@ -42,7 +42,7 @@ describe('parseQuery', () => {
     if (r.ok) throw new Error('expected a failure')
     expect(r.response.status).toBe(400)
     expect(r.response.headers.get('cache-control')).toBe('no-store')
-    expect(await r.response.json()).toEqual({ error })
+    expect(await r.response.json()).toEqual({ error, code: 'invalid_parameter' })
   })
 })
 

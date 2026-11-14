@@ -24,11 +24,11 @@ export function arrivalsHandler({ fetcher, now = () => Date.now(), index = stati
 
     const idx = index()
     const stop = idx.resolve(stopParam)
-    if (!stop) return errorResponse(404, `unknown stop ${stopParam}`)
+    if (!stop) return errorResponse('unknown_stop', `unknown stop ${stopParam}`)
 
     const nowMs = now()
     const loaded = await loadArrivals(stop, idx, { fetcher, nowMs, limit })
-    if (!loaded) return errorResponse(502, 'MTA feeds unavailable')
+    if (!loaded) return errorResponse('upstream_unavailable', 'MTA feeds unavailable')
     const { result, failed } = loaded
     const body: ArrivalsResponse = failed.length ? { ...result, unavailableFeeds: failed } : result
     return json(body, { cache: failed.length ? PARTIAL_CACHE : LIVE_CACHE })

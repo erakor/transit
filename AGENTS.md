@@ -85,7 +85,7 @@ The LIRR, Metro-North and NYC Ferry share one implementation, driven by the `AGE
   name, an MTA `group/feed` name, or a full URL), `tryFetchFeed()` for routes that answer 502 on
   failure, `num()`, `terminalName()`, `fallbackRoute()`. Provider folders import from
   it, not from each other. The memo (`memoized()`, `tryLoad()`, the `Fetcher` types) is in
-  `src/memo.ts`, which imports nothing (a failed load is kept for `FAIL_MS`, 5 s, then retried; errors stay `no-store`): PATH and Citi Bike use it without loading the protobuf bindings.
+  `src/memo.ts`, which imports only `src/errors.ts` (a failed load is kept for `FAIL_MS`, 5 s, then retried; errors stay `no-store`): PATH and Citi Bike use it without loading the protobuf bindings.
 - Each function bundles what it imports: `src/routes/agency.ts` must not import the subway's
   station index (155 KiB of data), and subway routes must not import `src/agency/agencies.ts`.
   `test/bundles.test.ts` walks each function's imports, indirect ones included, and fails when a
@@ -241,6 +241,11 @@ Ids, which clients store as favorites, so keep them stable:
 
 ## Conventions that are easy to break
 
+- A change to the contract (a new field, route, error code or status) bumps `version` in
+  `package.json`, which the OpenAPI document reports; run `pnpm build:openapi`. The README's
+  "Compatibility" section says what may change: additions only.
+- Errors go through `errorResponse(code, message)` with a code from `ERROR_STATUS` in
+  `src/errors.ts`; the status follows from the code.
 - Auth is `X-Transit-Token`, not `Authorization`: Vercel's CDN never caches requests with an
   `Authorization` header. Every authenticated response must keep `Vary: x-transit-token`
   (added by `authenticated()`), or a cached 200 could be served to a request without the token.
@@ -285,6 +290,17 @@ Ids, which clients store as favorites, so keep them stable:
   by `packageManager`. Vercel picks a pnpm version from the lockfile format rather than
   `packageManager`, so `installCommand` in `vercel.json` pins the same version: bump both together.
   Node 26 ships without Corepack; CI installs pnpm with `pnpm/action-setup`, which reads `packageManager`.
+  Dependabot (`.github/dependabot.yml`) bumps `packageManager` but never `installCommand`: a PR that
+  touches one must also change the other by hand.
+- Workflow actions are pinned to a full commit SHA with the release in a trailing `# vX.Y.Z` comment
+  (Dependabot's `github-actions` ecosystem updates both). Workflows set `permissions` (read-only unless
+  they push), `timeout-minutes` and `concurrency`.
+- ESLint also runs the promise rules that need type information (`no-floating-promises`,
+  `no-misused-promises`, `return-await` in try/catch, `only-throw-error`; `eslint.config.js`): `await`,
+  `.catch()` or `void` every promise. They are the only typed rules, to keep lint fast.
+- Read an upstream body with `readLimited()` or `readLimitedJson()` (`src/memo.ts`), not `res.json()` or `res.arrayBuffer()`: it
+  throws past 32 MiB (the largest live body is under 1 MB) without naming the URL, which can carry a key.
+- `vercel.json` sends `X-Content-Type-Options: nosniff` on every response.
 - pnpm refuses to install when a dependency's build script hasn't been approved. Approvals live in
   `allowBuilds` in `pnpm-workspace.yaml` (`pnpm approve-builds <pkg>` edits it).
 - On Node 26, `fetch` can use HTTP/2, where `statusText` is empty: check `res.status` only.

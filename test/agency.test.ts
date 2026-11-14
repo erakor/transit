@@ -10,7 +10,7 @@ import { buildAgencyData } from '#src/static/agency.js'
 import { decodeFeed, VEHICLE_MAX_AGE_S } from '#src/gtfsrt.js'
 import { clearFeedMemo } from '#src/memo.js'
 import { extensionField, feedFrom, withExtension } from './feed.js'
-import { auth, fixture, fixtureFetcher, FIXTURE_NOW_MS, get, useRouteTestSetup } from './helpers.js'
+import { auth, fixture, fixtureFetcher, FIXTURE_NOW_MS, get, useRouteTestSetup, expectedErrorCode } from './helpers.js'
 
 const NOW = 1_800_000_000
 const FIXTURE_NOW = Math.floor(FIXTURE_NOW_MS / 1000)
@@ -413,7 +413,7 @@ describe('agency routes', () => {
     const r = await call(path).res
     expect(r.status).toBe(status)
     expect(r.headers.get('cache-control')).toBe('no-store')
-    expect(await r.json()).toEqual({ error })
+    expect(await r.json()).toEqual({ error, code: expectedErrorCode(status, error) })
   })
 
   it.each([
@@ -424,7 +424,7 @@ describe('agency routes', () => {
   ])('%s is 502 when its feed fails', async (path, feed, error) => {
     const r = await call(path, [feed]).res
     expect(r.status).toBe(502)
-    expect(await r.json()).toEqual({ error })
+    expect(await r.json()).toEqual({ error, code: 'upstream_unavailable' })
   })
 
   it('lists every station by name, or the ones matching q', async () => {

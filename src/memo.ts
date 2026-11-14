@@ -1,7 +1,8 @@
 /**
- * Fetching through a short in-memory memo, and the helpers every provider's route shares with it. No imports, so
- * functions that don't decode GTFS-realtime feeds (PATH, Citi Bike) can use it without loading the protobuf bindings.
+ * Fetching through a short in-memory memo, the capped body readers, and the helpers every provider's route shares. Imports only `errors.ts`'s
+ * constants, so functions that don't decode GTFS-realtime feeds (PATH, Citi Bike) can use it without loading the protobuf bindings.
  */
+import { FEED_MEMO_MS } from './errors.js'
 
 export type Fetcher = (url: string, init: RequestInit) => Promise<Response>
 
@@ -17,7 +18,7 @@ export interface FetchOptions {
  * the CDN cache: it absorbs requests the CDN can't (cache misses for different stops in the
  * same window, concurrent misses) and coalesces concurrent fetches of the same feed.
  */
-const MEMO_MS = 15_000
+const MEMO_MS = FEED_MEMO_MS
 /** How long a failed load is remembered: during an outage, requests fail at once instead of each waiting out the timeout. */
 export const FAIL_MS = 5_000
 const memo = new Map<string, { expiresAt: number; value: Promise<unknown> }>()
@@ -41,6 +42,52 @@ export function memoized<T>(key: string, now: number, load: () => Promise<T>, tt
     if (memo.get(key) === entry) entry.expiresAt = now + (Date.now() - started) + Math.min(ttlMs, FAIL_MS)
   })
   return value
+}
+
+/** Most bytes read from one upstream answer: the largest live feed is under 1 MB, so this is for a misbehaving upstream. */
+const MAX_BODY_BYTES = 32 * 1024 * 1024
+
+/**
+ * The body of `res`, or a throw once it passes `maxBytes`: early on a `Content-Length` over the cap,
+ * else while streaming (the header can be absent or wrong), cancelling the rest. The message never
+ * names the request URL, which can carry a key.
+ */
+export async function readLimited(res: Response, maxBytes = MAX_BODY_BYTES): Promise<Uint8Array> {
+  const tooBig = () => new Error(`upstream body over ${maxBytes} bytes`)
+  const declared = Number(res.headers.get('content-length'))
+  if (declared > maxBytes) {
+    await res.body?.cancel()
+    throw tooBig()
+  }
+  if (!res.body) return new Uint8Array(0)
+  const chunks: Uint8Array[] = []
+  let total = 0
+  const reader = res.body.getReader()
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    total += value.byteLength
+    if (total > maxBytes) {
+      await reader.cancel()
+      throw tooBig()
+    }
+    chunks.push(value)
+  }
+  if (chunks.length === 1) return chunks[0]!
+  const bytes = new Uint8Array(total)
+  let at = 0
+  for (const chunk of chunks) {
+    bytes.set(chunk, at)
+    at += chunk.byteLength
+  }
+  return bytes
+}
+
+const utf8 = new TextDecoder()
+
+/** `readLimited()`, parsed as JSON: what `res.json()` was, with the size cap. */
+export async function readLimitedJson(res: Response, maxBytes?: number): Promise<unknown> {
+  return JSON.parse(utf8.decode(await readLimited(res, maxBytes)))
 }
 
 /** For tests. */

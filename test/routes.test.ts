@@ -21,6 +21,7 @@ import {
   get,
   PATH_FIXTURE_NOW_MS,
   useRouteTestSetup,
+  expectedErrorCode,
 } from './helpers.js'
 
 const TIMES_SQ = SUBWAY_DATA.stops['127']!.station
@@ -81,20 +82,23 @@ describe.each([
     expect(res.status).toBe(401)
     expect(res.headers.get('cache-control')).toBe('no-store')
     expect(res.headers.get('vary')).toBe('x-transit-token')
-    expect(await res.json()).toEqual({ error: 'missing token' })
+    expect(res.headers.get('www-authenticate')).toBe('x-transit-token')
+    expect(await res.json()).toEqual({ error: 'missing token', code: 'missing_token' })
   })
 
   it('is 401 with a wrong token', async () => {
     const res = await handler()(get(path + query, { 'x-transit-token': 'nope' }))
     expect(res.status).toBe(401)
-    expect(await res.json()).toEqual({ error: 'invalid token' })
+    expect(await res.json()).toEqual({ error: 'invalid token', code: 'invalid_token' })
   })
 
-  it('is 500 when the server has no token configured', async () => {
+  it('is 503 when the server has no token configured', async () => {
     vi.stubEnv('TRANSIT_TOKEN', '')
     const res = await handler()(get(path + query, auth))
-    expect(res.status).toBe(500)
+    expect(res.status).toBe(503)
     expect(res.headers.get('cache-control')).toBe('no-store')
+    expect(res.headers.get('retry-after')).toBeNull()
+    expect(await res.json()).toEqual({ error: 'service unavailable', code: 'not_configured' })
   })
 
   it('returns a CDN-cacheable answer keyed by the token header', async () => {
@@ -124,6 +128,14 @@ describe('/subway/arrivals', () => {
     expect(body.groups.length).toBeGreaterThan(4)
     for (const g of body.groups) expect(g.arrivals.length).toBeLessThanOrEqual(2)
     expect(body.unavailableFeeds).toBeUndefined()
+  })
+
+  it('accepts a station id whose + was not percent-encoded', async () => {
+    const { GET } = arrivals()
+    const raw = await GET(get(`/subway/arrivals?stop=${TIMES_SQ}`, auth))
+    const encoded = await GET(get(`/subway/arrivals?stop=${encodeURIComponent(TIMES_SQ)}`, auth))
+    expect(raw.status).toBe(200)
+    expect((await raw.json()).stop.id).toBe((await encoded.json()).stop.id)
   })
 
   it('accepts a plain stop id and only fetches the feeds it needs', async () => {
@@ -159,7 +171,8 @@ describe('/subway/arrivals', () => {
     const res = await GET(get('/subway/arrivals?stop=L08', auth))
     expect(res.status).toBe(502)
     expect(res.headers.get('cache-control')).toBe('no-store')
-    ErrorBody.parse(await res.json())
+    expect(res.headers.get('retry-after')).toBe('15')
+    expect(ErrorBody.parse(await res.json()).code).toBe('upstream_unavailable')
   })
 
   it.each([
@@ -174,7 +187,7 @@ describe('/subway/arrivals', () => {
     const res = await arrivals().GET(get(`/subway/arrivals${query}`, auth))
     expect(res.status).toBe(status)
     expect(res.headers.get('cache-control')).toBe('no-store')
-    expect(ErrorBody.parse(await res.json())).toEqual({ error })
+    expect(ErrorBody.parse(await res.json())).toEqual({ error, code: expectedErrorCode(status, error) })
   })
 
   it('caps limit at 10', async () => {
@@ -270,7 +283,7 @@ describe('/preview/subway', () => {
     const res = await preview().GET(get(`/preview/subway${query}`, auth))
     expect(res.status).toBe(status)
     expect(res.headers.get('cache-control')).toBe('no-store')
-    expect(await res.json()).toEqual({ error })
+    expect(await res.json()).toEqual({ error, code: expectedErrorCode(status, error) })
   })
 
   it('is 502 when every feed fails', async () => {

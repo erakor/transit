@@ -1,4 +1,5 @@
 import { checkToken, TOKEN_HEADER } from './auth.js'
+import { ERROR_HEADERS, ERROR_STATUS, type ErrorCode } from './errors.js'
 
 /** Live data: the CDN serves a copy for 20 s, then a stale one for up to 40 s while it refreshes. */
 export const LIVE_CACHE = 'public, s-maxage=20, stale-while-revalidate=40'
@@ -6,10 +7,9 @@ export const LIVE_CACHE = 'public, s-maxage=20, stale-while-revalidate=40'
  * Data that only changes with a deploy (Vercel purges the CDN cache on each production deploy).
  */
 export const STATIC_CACHE = 'public, s-maxage=3600, stale-while-revalidate=86400'
-/** Service alerts: they change by the minute at most, and the feeds are the largest we read. */
 /** Lookups of upstream reference data that changes rarely but without a deploy (bus stops near a point). */
 export const LOOKUP_CACHE = 'public, s-maxage=600, stale-while-revalidate=3600'
-
+/** Service alerts: they change by the minute at most, and the feeds are the largest we read. */
 export const ALERTS_CACHE = 'public, s-maxage=60, stale-while-revalidate=120'
 export const NO_STORE = 'no-store'
 /**
@@ -46,8 +46,11 @@ export function text(
   })
 }
 
-export function errorResponse(status: number, error: string, vary?: string): Response {
-  return json({ error }, { status, cache: NO_STORE, vary })
+export function errorResponse(code: ErrorCode, error: string, vary?: string): Response {
+  const status = ERROR_STATUS[code]
+  const res = json({ error, code }, { status, cache: NO_STORE, vary })
+  for (const [name, value] of Object.entries(ERROR_HEADERS[code] ?? {})) res.headers.set(name, value)
+  return res
 }
 
 /**
@@ -58,15 +61,15 @@ export function authenticated(handler: (request: Request, url: URL) => Promise<R
   return async (request: Request): Promise<Response> => {
     const auth = checkToken(request.headers)
     if (!auth.ok) {
-      if (auth.status === 500) console.error('TRANSIT_TOKEN is not set')
-      return errorResponse(auth.status, auth.error, TOKEN_HEADER)
+      if (auth.code === 'not_configured') console.error('TRANSIT_TOKEN is not set')
+      return errorResponse(auth.code, auth.error, TOKEN_HEADER)
     }
     let res: Response
     try {
       res = await handler(request, new URL(request.url))
     } catch (err) {
       console.error(err)
-      res = errorResponse(500, 'internal error')
+      res = errorResponse('internal_error', 'internal error')
     }
     const vary = res.headers.get('vary')
     res.headers.set('vary', vary ? `${vary}, ${TOKEN_HEADER}` : TOKEN_HEADER)
@@ -94,7 +97,7 @@ type Handler = (request: Request) => Promise<Response>
  * 404 behind the token check too.
  */
 export function byOp(provider: string, ops: Record<string, Handler>): Handler {
-  const notFound = authenticated(() => errorResponse(404, 'not found'))
+  const notFound = authenticated(() => errorResponse('not_found', 'not found'))
   return request => {
     const op = providerOp(new URL(request.url), provider)
     return (op && Object.hasOwn(ops, op) ? ops[op]! : notFound)(request)

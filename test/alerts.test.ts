@@ -9,7 +9,7 @@ import { decodeFeed, VEHICLE_MAX_AGE_S } from '#src/gtfsrt.js'
 import { ALERT_STATUSES, alertType, splitAlertId, statusRank } from '#src/mercury.js'
 import { computeSubwayTrains } from '#src/subway/vehicles.js'
 import { encodeFeed, feedFrom, mercuryAlert } from './feed.js'
-import { auth, fixture, fixtureFetcher, FIXTURE_NOW_MS, get, useRouteTestSetup } from './helpers.js'
+import { auth, fixture, fixtureFetcher, FIXTURE_NOW_MS, get, useRouteTestSetup, expectedErrorCode } from './helpers.js'
 
 const NOW = 1_800_000_000
 const TIMES_SQ = SUBWAY_DATA.stops['127']!.station
@@ -332,14 +332,14 @@ describe('subway alerts and vehicles routes', () => {
   ])('/subway/alerts rejects %s with %i', async (path, status, error) => {
     const res = await alerts(path)
     expect(res.status).toBe(status)
-    expect(await res.json()).toEqual({ error })
+    expect(await res.json()).toEqual({ error, code: expectedErrorCode(status, error) })
   })
 
   it('/subway/alerts is 502 and uncached when the feed fails', async () => {
     const res = await alerts('/subway/alerts', async () => new Response('down', { status: 503 }))
     expect(res.status).toBe(502)
     expect(res.headers.get('cache-control')).toBe('no-store')
-    expect(await res.json()).toEqual({ error: 'MTA alerts unavailable' })
+    expect(await res.json()).toEqual({ error: 'MTA alerts unavailable', code: 'upstream_unavailable' })
   })
 
   const vehicles = (path: string, fail: string[] = []) => {
@@ -371,7 +371,7 @@ describe('subway alerts and vehicles routes', () => {
   ])('/subway/vehicles rejects %s with %i', async (path, status, error) => {
     const r = await vehicles(path).res
     expect(r.status).toBe(status)
-    expect(await r.json()).toEqual({ error })
+    expect(await r.json()).toEqual({ error, code: expectedErrorCode(status, error) })
   })
 
   it('/subway/vehicles is 502 when the feed fails', async () => {

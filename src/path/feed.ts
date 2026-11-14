@@ -1,4 +1,4 @@
-import { memoized, type FetchOptions } from '#src/memo.js'
+import { memoized, readLimitedJson, type FetchOptions } from '#src/memo.js'
 import { colorsKey } from './stations.js'
 
 /**
@@ -85,6 +85,6 @@ export function fetchPathFeed({
       signal: AbortSignal.timeout(timeoutMs),
     })
     if (!res.ok) throw new Error(`PATH feed: HTTP ${res.status}`)
-    return parsePathFeed(await res.json())
+    return parsePathFeed(await readLimitedJson(res))
   })
 }

@@ -10,6 +10,8 @@ export interface Agency {
   id: string
   name: string
   stopParam: StopParam
+  /** The error code for an unknown stop: `unknown_station` where the agency says station, else `unknown_stop`. */
+  unknownCode: 'unknown_station' | 'unknown_stop'
   /** What runs here, for the preview's "no trains soon". */
   vehicleWord: string
   /** Feed names or URLs, see `feedUrl`. */
@@ -34,6 +36,7 @@ export const AGENCIES: Record<string, Agency> = {
     id: 'lirr',
     name: 'LIRR',
     stopParam: 'station',
+    unknownCode: 'unknown_station',
     vehicleWord: 'trains',
     tripsFeed: 'lirr/gtfs-lirr',
     alertsFeed: 'camsys/lirr-alerts',
@@ -44,6 +47,7 @@ export const AGENCIES: Record<string, Agency> = {
     id: 'mnr',
     name: 'Metro-North',
     stopParam: 'station',
+    unknownCode: 'unknown_station',
     vehicleWord: 'trains',
     tripsFeed: 'mnr/gtfs-mnr',
     alertsFeed: 'camsys/mnr-alerts',
@@ -54,6 +58,7 @@ export const AGENCIES: Record<string, Agency> = {
     id: 'ferry',
     name: 'NYC Ferry',
     stopParam: 'stop',
+    unknownCode: 'unknown_stop',
     vehicleWord: 'ferries',
     tripsFeed: FERRY + 'tripupdate',
     vehiclesFeed: FERRY + 'vehicleposition',

@@ -1,6 +1,6 @@
 /** GTFS-realtime plumbing shared by every provider: fetching, decoding and reading feeds. */
 import GtfsRealtimeBindings from 'gtfs-realtime-bindings'
-import { memoized, tryLoad, type FetchOptions } from './memo.js'
+import { readLimited, memoized, tryLoad, type FetchOptions } from './memo.js'
 import type { RouteDisplay, VehicleStatus } from './schema.js'
 
 const { transit_realtime } = GtfsRealtimeBindings
@@ -28,7 +28,7 @@ export function fetchFeed(
   return memoized(feed, now, async () => {
     const res = await fetcher(feedUrl(feed), { signal: AbortSignal.timeout(timeoutMs) })
     if (!res.ok) throw new Error(`feed ${feed}: HTTP ${res.status}`)
-    return decodeFeed(new Uint8Array(await res.arrayBuffer()))
+    return decodeFeed(await readLimited(res))
   })
 }
 

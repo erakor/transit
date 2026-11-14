@@ -136,7 +136,7 @@ export function parseQuery<S extends z.ZodType>(
   for (const key in raw) if (raw[key] === '') delete raw[key]
   const parsed = schema.safeParse(raw)
   if (parsed.success) return { ok: true, query: parsed.data }
-  return { ok: false, response: errorResponse(400, parsed.error.issues[0]?.message ?? 'invalid query') }
+  return { ok: false, response: errorResponse('invalid_parameter', parsed.error.issues[0]?.message ?? 'invalid query') }
 }
 
 /**
