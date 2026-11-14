@@ -17,6 +17,16 @@ const ALLOWED: Record<string, (fn: string) => boolean> = {
   'src/data/subway.generated.ts': fn => /^api\/(subway\/|stops\/|preview\/subway\.ts)/.test(fn),
   // Every agency's static data.
   'src/agency/agencies.ts': fn => fn === 'api/agency.ts',
+  // The protobuf bindings: only functions that decode GTFS-realtime feeds. PATH and Citi Bike read JSON.
+  'gtfs-realtime-bindings': fn => !/^api\/(path|citibike)\.ts$/.test(fn),
+  // Response schemas: built at import time, and only the docs generator and the tests use them. Routes import their
+  // request schemas from `queries.ts` and the response types with `import type`.
+  'src/schema.ts': () => false,
+  'src/agency/schemas.ts': () => false,
+  'src/bus/schemas.ts': () => false,
+  'src/citibike/schemas.ts': () => false,
+  'src/path/schemas.ts': () => false,
+  'src/subway/schemas.ts': () => false,
   // The docs generator runs at build time only.
   'src/openapi.ts': () => false,
 }
@@ -28,7 +38,7 @@ const FUNCTIONS = readdirSync(join(ROOT, 'api'), { recursive: true, encoding: 'u
   .sort()
 
 /**
- * Runtime imports of a file, parsed by TypeScript: static imports and re-exports, and dynamic `import()`, which
+ * Runtime imports of a file (repo files by path, packages by name), parsed by TypeScript: static imports and re-exports, and dynamic `import()`, which
  * Vercel bundles too. `import type` and `export type` are erased (verbatimModuleSyntax), so they don't count.
  */
 const importsOf = new Map<string, string[]>()
@@ -51,7 +61,9 @@ function imports(file: string): string[] {
   visit(source)
   const files = specifiers.flatMap(s => {
     const path = s.startsWith('#src/') ? `src/${s.slice(5)}` : s.startsWith('.') ? join(dirname(file), s) : undefined
-    return path ? [path.replace(/\.js$/, '.ts')] : []
+    if (path) return [path.replace(/\.js$/, '.ts')]
+    // A package, kept by name so ALLOWED can list it; Node built-ins don't count.
+    return s.startsWith('node:') ? [] : [s]
   })
   importsOf.set(file, files)
   return files
@@ -62,6 +74,7 @@ function bundle(entry: string): Set<string> {
   const visit = (file: string) => {
     if (seen.has(file)) return
     seen.add(file)
+    if (!file.endsWith('.ts')) return // a package: not walked
     imports(file).forEach(visit)
   }
   visit(entry)

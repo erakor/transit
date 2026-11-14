@@ -1,9 +1,11 @@
 import { AGENCIES, findStop, routeInfo, searchStops, type Agency } from '#src/agency/agencies.js'
 import { computeAgencyArrivals } from '#src/agency/arrivals.js'
 import { computeAgencyVehicles } from '#src/agency/vehicles.js'
-import { AgencyVehiclesQuery, STOP_SCHEMAS } from '#src/agency/schemas.js'
+import type { AgencyData } from '#src/agency/types.js'
+import { AgencyVehiclesQuery, STOP_QUERIES } from '#src/agency/queries.js'
 import { computeAlerts } from '#src/alerts.js'
-import { tryFetchFeed, type FeedMessage, type Fetcher } from '#src/gtfsrt.js'
+import { tryFetchFeed, type FeedMessage } from '#src/gtfsrt.js'
+import type { Fetcher } from '#src/memo.js'
 import {
   ALERTS_CACHE,
   authenticated,
@@ -15,7 +17,7 @@ import {
   text,
 } from '#src/http.js'
 import { destinationsLine } from '#src/preview.js'
-import { parseQuery } from '#src/schema.js'
+import { parseQuery } from '#src/query.js'
 
 export interface AgencyDeps {
   fetcher?: Fetcher
@@ -24,6 +26,8 @@ export interface AgencyDeps {
 
 interface Context {
   agency: Agency
+  /** The agency's static data, loaded before the operation runs. */
+  data: AgencyData
   url: URL
   /** Epoch seconds. */
   now: number
@@ -61,7 +65,13 @@ export function agencyHandler({ fetcher, now = () => Date.now() }: AgencyDeps = 
     // The list is `/lirr/stations` but `/ferry/stops`, after what the agency calls a stop.
     const op = route.op === `${agency.stopParam}s` ? list : Object.hasOwn(OPS, route.op) ? OPS[route.op] : undefined
     if (!op) return errorResponse('not_found', 'not found')
-    return op({ agency, url, now: nowS, load })
+    // A dynamic import: it can fail at request time, unlike the static one it replaced.
+    const data = await agency.data().catch((err: unknown) => {
+      console.error(`${agency.id} data failed:`, err)
+      return undefined
+    })
+    if (!data) return errorResponse('internal_error', `${agency.name} data unavailable`)
+    return op({ agency, data, url, now: nowS, load })
   })
 }
 
@@ -71,25 +81,25 @@ function unavailable(agency: Agency): Response {
 
 const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
   /** GET /<agency>/arrivals?station=<id>&limit=<default 10, max 30> (`stop` for the ferry). */
-  async arrivals({ agency, url, now, load }) {
-    const parsed = parseQuery(STOP_SCHEMAS[agency.stopParam].ArrivalsQuery, url)
+  async arrivals({ agency, data, url, now, load }) {
+    const parsed = parseQuery(STOP_QUERIES[agency.stopParam].ArrivalsQuery, url)
     if (!parsed.ok) return parsed.response
     const { stop: param, limit } = parsed.query
-    const stop = findStop(agency.data, param)
+    const stop = findStop(data, param)
     if (!stop) return errorResponse(agency.unknownCode, `unknown ${agency.stopParam} ${param}`)
     const feed = await load(agency.tripsFeed)
     if (!feed) return unavailable(agency)
-    const { stop: resolved, ...rest } = computeAgencyArrivals(stop, feed, agency.data, { now, limit })
+    const { stop: resolved, ...rest } = computeAgencyArrivals(stop, feed, data, { now, limit })
     return json({ [agency.stopParam]: resolved, ...rest }, { cache: LIVE_CACHE })
   },
 
   /** GET /<agency>/alerts, optionally `?route=<id>` or `?station=<id>`: the alerts in effect now. */
-  async alerts({ agency, url, now, load }) {
-    const parsed = parseQuery(STOP_SCHEMAS[agency.stopParam].AlertsQuery, url)
+  async alerts({ agency, data, url, now, load }) {
+    const parsed = parseQuery(STOP_QUERIES[agency.stopParam].AlertsQuery, url)
     if (!parsed.ok) return parsed.response
     const routeParam = parsed.query.route?.toLowerCase()
     const stopParam = parsed.query.stop
-    const stop = stopParam ? findStop(agency.data, stopParam) : undefined
+    const stop = stopParam ? findStop(data, stopParam) : undefined
     if (stopParam && !stop) return errorResponse(agency.unknownCode, `unknown ${agency.stopParam} ${stopParam}`)
     const feed = await load(agency.alertsFeed)
     if (!feed) return errorResponse('upstream_unavailable', `${agency.name} alerts unavailable`)
@@ -101,10 +111,10 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
         // Alerts naming this stop, or a whole route that stops here.
         return s ? s === stop.id : stop.routes.includes(r)
       },
-      route: id => agency.data.routes[id],
+      route: id => data.routes[id],
       // Their `direction_id`s have no documented meaning in alerts: no direction is shown.
       stop: id => {
-        const name = agency.data.stops[id]?.name
+        const name = data.stops[id]?.name
         return name ? { id, name, direction: null } : undefined
       },
     })
@@ -114,11 +124,11 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
   },
 
   /** GET /<agency>/vehicles, optionally `?route=<id>`: where the trains or boats are. */
-  async vehicles({ agency, url, now, load }) {
+  async vehicles({ agency, data, url, now, load }) {
     const parsed = parseQuery(AgencyVehiclesQuery, url)
     if (!parsed.ok) return parsed.response
     const routeParam = parsed.query.route?.toLowerCase()
-    const route = routeParam ? Object.keys(agency.data.routes).find(id => id.toLowerCase() === routeParam) : undefined
+    const route = routeParam ? Object.keys(data.routes).find(id => id.toLowerCase() === routeParam) : undefined
     if (routeParam && !route) return errorResponse('unknown_route', `unknown route ${routeParam}`)
     // The feed with the positions is required; separate trip updates only add routes and headsigns.
     const [positions, trips] = await Promise.all([
@@ -126,17 +136,17 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
       agency.vehiclesFeed ? load(agency.tripsFeed) : undefined,
     ])
     if (!positions) return unavailable(agency)
-    return json(computeAgencyVehicles(trips ? [positions, trips] : [positions], agency.data, { now, route }), {
+    return json(computeAgencyVehicles(trips ? [positions, trips] : [positions], data, { now, route }), {
       cache: LIVE_CACHE,
     })
   },
 
   /** GET /preview/<agency>?q=<name> or ?station=<id>: one plain-text line, next departure per destination. */
-  async preview({ agency, url, now, load }) {
-    const parsed = parseQuery(STOP_SCHEMAS[agency.stopParam].PreviewQuery, url)
+  async preview({ agency, data, url, now, load }) {
+    const parsed = parseQuery(STOP_QUERIES[agency.stopParam].PreviewQuery, url)
     if (!parsed.ok) return parsed.response
     const { id } = parsed.query
-    const stop = id !== undefined ? findStop(agency.data, id) : searchStops(agency.data, parsed.query.q)[0]
+    const stop = id !== undefined ? findStop(data, id) : searchStops(data, parsed.query.q)[0]
     if (!stop)
       return errorResponse(
         agency.unknownCode,
@@ -144,7 +154,7 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
       )
     const feed = await load(agency.tripsFeed)
     if (!feed) return unavailable(agency)
-    const { arrivals } = computeAgencyArrivals(stop, feed, agency.data, { now, limit: Infinity })
+    const { arrivals } = computeAgencyArrivals(stop, feed, data, { now, limit: Infinity })
     // A trip ending here is nobody's departure.
     const departures = arrivals
       .filter(a => a.headsign !== stop.name)
@@ -156,19 +166,19 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
 }
 
 /** GET /<agency>/stations (`/ferry/stops`): all of them by name, or `?q=<name>&limit=<default 10, max 25>`. */
-function list({ agency, url }: Context): Response {
-  const parsed = parseQuery(STOP_SCHEMAS[agency.stopParam].StopsQuery, url)
+function list({ agency, data, url }: Context): Response {
+  const parsed = parseQuery(STOP_QUERIES[agency.stopParam].StopsQuery, url)
   if (!parsed.ok) return parsed.response
   const { q, limit } = parsed.query
   const stops = q
-    ? searchStops(agency.data, q).slice(0, limit)
-    : Object.values(agency.data.stops).sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id))
+    ? searchStops(data, q).slice(0, limit)
+    : Object.values(data.stops).sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id))
   const body = stops.map(s => ({
     id: s.id,
     name: s.name,
     lat: s.lat,
     lon: s.lon,
-    routes: s.routes.map(r => routeInfo(agency.data, r)),
+    routes: s.routes.map(r => routeInfo(data, r)),
   }))
   return json({ ...(q ? { query: q } : {}), [`${agency.stopParam}s`]: body }, { cache: STATIC_CACHE })
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { readLimited, readLimitedJson } from '#src/gtfsrt.js'
+import { readLimited, readLimitedJson } from '#src/memo.js'
 
 /** A body that arrives in `chunks` of `size` bytes, without a Content-Length unless given one. */
 function streamed(total: number, size: number, headers?: HeadersInit): Response {

@@ -1,34 +1,20 @@
 /**
- * Request and response schemas for the subway routes (`/subway/...`, `/stops/search` and
+ * Response schemas for the subway routes (the request schemas are in `queries.ts`) (`/subway/...`, `/stops/search` and
  * `/preview/subway`), and the types inferred from them. Response objects are `z.strictObject` so
  * the tests catch a field the schema doesn't list.
  */
 import * as z from 'zod'
 import {
   AlertsResult,
-  countParam,
   EpochSeconds,
   FeedUpdatedAt,
   Latitude,
   Longitude,
-  MAX_QUERY_LENGTH,
-  optionalParam,
-  previewQuery,
-  requiredParam,
   RouteDisplay,
   RouteFields,
   StopRef,
   VehicleStatus,
 } from '#src/schema.js'
-
-const STOP_DESCRIPTION =
-  'A station id from /stops/search (stop ids joined with `+`, such as `127+725+902+A27+R16`), ' +
-  'a GTFS stop id (`127`) or one platform (`127N`). Case insensitive.'
-
-export const ArrivalsQuery = z.object({
-  stop: requiredParam('stop', STOP_DESCRIPTION),
-  limit: countParam('limit', 3, 10, 'Trains per route and direction.'),
-})
 
 export const Arrival = z.strictObject({
   time: EpochSeconds.meta({ description: 'When the train reaches the stop (epoch seconds).' }),
@@ -79,11 +65,6 @@ export const ArrivalsResponse = ArrivalsResult.extend({
     .meta({ description: 'Present when some upstream feeds failed; their groups are missing.' }),
 })
 
-export const SearchQuery = z.object({
-  q: requiredParam('q', 'Station name, or part of one (`times sq`, `bedford`).', MAX_QUERY_LENGTH),
-  limit: countParam('limit', 10, 25, 'Stations to return.'),
-})
-
 export const SearchResult = StopRef.extend({
   id: z.string().meta({ description: 'Station id, for `stop` in the other routes. Stable: store it as a favorite.' }),
   lat: Latitude,
@@ -99,20 +80,8 @@ export const SearchResponse = z.strictObject({
   results: z.array(SearchResult).meta({ description: 'Best match first.' }),
 })
 
-export const AlertsQuery = z.object({
-  route: optionalParam('route', 'Only alerts about this route id (`A`, `6X`). Case insensitive.'),
-  stop: optionalParam(
-    'stop',
-    `Only alerts naming one of this station's stops, or a whole route that stops there. ${STOP_DESCRIPTION}`
-  ),
-})
-
 export const AlertsResponse = AlertsResult.extend({
   stop: Station.optional().meta({ description: 'The station `stop` resolved to, when given.' }),
-})
-
-export const VehiclesQuery = z.object({
-  route: requiredParam('route', 'A route id (`A`, `6X`). Case insensitive.'),
 })
 
 export const SubwayTrain = z.strictObject({
@@ -134,12 +103,6 @@ export const VehiclesResponse = z.strictObject({
     .array(SubwayTrain)
     .meta({ description: 'Northbound first, each direction in stop id order. The feeds carry no coordinates.' }),
 })
-
-export const PreviewQuery = previewQuery(
-  'stop',
-  'A station name: the best /stops/search match is used.',
-  STOP_DESCRIPTION
-)
 
 export type Arrival = z.infer<typeof Arrival>
 export type RouteDirectionArrivals = z.infer<typeof RouteDirectionArrivals>

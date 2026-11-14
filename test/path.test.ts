@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from '#src/http.js'
+import { FAIL_MS } from '#src/memo.js'
 import { BOARDING_GRACE_S, computePathArrivals } from '#src/path/arrivals.js'
 import type { PathArrivalsResponse } from '#src/path/schemas.js'
 import { parsePathFeed, PATH_FEED_URL } from '#src/path/feed.js'
@@ -315,10 +316,11 @@ describe('PATH routes', () => {
     ["JSON that isn't the feed", async () => new Response('{}')],
   ])('is 502 and uncached on %s, and retries on the next request', async (_what, bad) => {
     let fail = true
+    let now = PATH_FIXTURE_NOW_MS
     const good = fixtureFetcher()
     const GET = pathArrivalsHandler({
       fetcher: (url, init) => (fail ? bad() : good(url, init)),
-      now: () => PATH_FIXTURE_NOW_MS,
+      now: () => now,
     })
     const res = await GET(get('/path/arrivals?station=WTC', auth))
     expect(res.status).toBe(502)
@@ -329,6 +331,8 @@ describe('PATH routes', () => {
         .status
     ).toBe(502)
     fail = false
+    // The failure is remembered for FAIL_MS, then the next request tries again.
+    now += FAIL_MS + 500
     expect((await GET(get('/path/arrivals?station=WTC', auth))).status).toBe(200)
   })
 

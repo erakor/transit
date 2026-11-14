@@ -1,12 +1,13 @@
 import type { ResolvedStop, StationIndex } from '#src/stops/stations.js'
-import { fetchFeed, type Fetcher } from '#src/gtfsrt.js'
+import { fetchFeed } from '#src/gtfsrt.js'
+import type { Fetcher } from '#src/memo.js'
 import { computeArrivals } from './arrivals.js'
 import { feedsForRoutes } from './feeds.js'
 import type { ArrivalsResult } from './schemas.js'
 
 /**
  * Fetches the feeds serving `stop` and computes its arrivals. Shared by the arrivals and preview
- * routes; kept out of the route module so the preview function doesn't load zod.
+ * routes; kept out of the route module so the preview function doesn't load the response schemas.
  * `failed` names the feeds that didn't answer; undefined when every feed failed.
  */
 export async function loadArrivals(

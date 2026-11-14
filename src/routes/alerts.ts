@@ -1,8 +1,9 @@
 import { computeAlerts } from '#src/alerts.js'
 import { tryFetchFeed } from '#src/gtfsrt.js'
 import { ALERTS_CACHE, authenticated, errorResponse, json } from '#src/http.js'
-import { parseQuery } from '#src/schema.js'
-import { AlertsQuery, type AlertsResponse } from '#src/subway/schemas.js'
+import { parseQuery } from '#src/query.js'
+import { AlertsQuery } from '#src/subway/queries.js'
+import type { AlertsResponse } from '#src/subway/schemas.js'
 import { stationIndex } from '#src/stops/stations.js'
 import type { ArrivalsDeps } from './arrivals.js'
 

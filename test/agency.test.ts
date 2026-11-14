@@ -7,7 +7,8 @@ import { computeAgencyVehicles } from '#src/agency/vehicles.js'
 import { ALERTS_CACHE, LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from '#src/http.js'
 import { agencyHandler, agencyRoute } from '#src/routes/agency.js'
 import { buildAgencyData } from '#src/static/agency.js'
-import { clearFeedMemo, decodeFeed, VEHICLE_MAX_AGE_S } from '#src/gtfsrt.js'
+import { decodeFeed, VEHICLE_MAX_AGE_S } from '#src/gtfsrt.js'
+import { clearFeedMemo } from '#src/memo.js'
 import { extensionField, feedFrom, withExtension } from './feed.js'
 import { auth, fixture, fixtureFetcher, FIXTURE_NOW_MS, get, useRouteTestSetup, expectedErrorCode } from './helpers.js'
 
@@ -70,24 +71,31 @@ describe('buildAgencyData', () => {
   })
 })
 
+/** An agency's committed data, imported when a test asks for it. */
+const dataOf = (id: string) => AGENCIES[id]!.data()
+
 describe('committed agency data', () => {
-  it('looks like the real systems', () => {
-    expect(searchStops(AGENCIES.lirr!.data, 'jamaica')[0]?.name).toBe('Jamaica')
-    expect(searchStops(AGENCIES.lirr!.data, 'penn station')[0]?.name).toBe('Penn Station')
-    expect(searchStops(AGENCIES.mnr!.data, 'grand central')[0]).toMatchObject({ id: '1', name: 'Grand Central' })
-    expect(searchStops(AGENCIES.ferry!.data, 'wall st')[0]?.name).toMatch(/^Wall St/)
-    expect(Object.keys(AGENCIES.ferry!.data.trips ?? {}).length).toBeGreaterThan(100)
-    expect(AGENCIES.lirr!.data.trips).toBeUndefined()
+  it('looks like the real systems', async () => {
+    const [lirr, mnr, ferry] = await Promise.all([dataOf('lirr'), dataOf('mnr'), dataOf('ferry')])
+    expect(searchStops(lirr, 'jamaica')[0]?.name).toBe('Jamaica')
+    expect(searchStops(lirr, 'penn station')[0]?.name).toBe('Penn Station')
+    expect(searchStops(mnr, 'grand central')[0]).toMatchObject({ id: '1', name: 'Grand Central' })
+    expect(searchStops(ferry, 'wall st')[0]?.name).toMatch(/^Wall St/)
+    expect(Object.keys(ferry.trips ?? {}).length).toBeGreaterThan(100)
+    expect(lirr.trips).toBeUndefined()
     for (const a of Object.values(AGENCIES)) {
-      expect(Object.keys(a.data.stops).length, a.id).toBeGreaterThan(20)
-      for (const s of Object.values(a.data.stops))
-        for (const r of s.routes) expect(a.data.routes[r], `${a.id} ${r}`).toBeDefined()
+      const d = await dataOf(a.id)
+      expect(a.scheduled, `${a.id} scheduled`).toBe(d.trips !== undefined)
+      expect(Object.keys(d.stops).length, a.id).toBeGreaterThan(20)
+      for (const s of Object.values(d.stops))
+        for (const r of s.routes) expect(d.routes[r], `${a.id} ${r}`).toBeDefined()
     }
   })
 
-  it('finds stops by id whatever the case', () => {
-    expect(findStop(AGENCIES.mnr!.data, ' 1 ')?.name).toBe('Grand Central')
-    expect(findStop(AGENCIES.mnr!.data, 'nope')).toBeUndefined()
+  it('finds stops by id whatever the case', async () => {
+    const mnr = await dataOf('mnr')
+    expect(findStop(mnr, ' 1 ')?.name).toBe('Grand Central')
+    expect(findStop(mnr, 'nope')).toBeUndefined()
   })
 })
 
@@ -228,13 +236,14 @@ describe('computeAgencyArrivals', () => {
 
   describe.each(Object.values(AGENCIES))('on the recorded $name feed', agency => {
     const feed = decodeFeed(fixture(agency.id === 'ferry' ? 'ferry-tripupdate.pb' : `gtfs-${agency.id}.pb`))
-    it('finds upcoming departures with known routes and stops', () => {
+    it('finds upcoming departures with known routes and stops', async () => {
+      const agencyData = await agency.data()
       let total = 0
       const stopsWithService = new Set<string>()
-      for (const stop of Object.values(agency.data.stops)) {
-        const { arrivals } = computeAgencyArrivals(stop, feed, agency.data, { now: FIXTURE_NOW, limit: 30 })
+      for (const stop of Object.values(agencyData.stops)) {
+        const { arrivals } = computeAgencyArrivals(stop, feed, agencyData, { now: FIXTURE_NOW, limit: 30 })
         for (const a of arrivals) {
-          expect(agency.data.routes[a.route], `route ${a.route}`).toBeDefined()
+          expect(agencyData.routes[a.route], `route ${a.route}`).toBeDefined()
           expect(a.headsign, `trip ${a.tripId}`).not.toBe('')
           expect(a.time).toBeGreaterThanOrEqual(FIXTURE_NOW)
           expect(a.time).toBeLessThan(FIXTURE_NOW + 12 * 3600)
@@ -247,9 +256,10 @@ describe('computeAgencyArrivals', () => {
       expect(stopsWithService.size).toBeGreaterThan(10)
     })
 
-    it('places vehicles around New York', () => {
+    it('places vehicles around New York', async () => {
+      const agencyData = await agency.data()
       const feeds = agency.vehiclesFeed ? [decodeFeed(fixture('ferry-vehicleposition.pb')), feed] : [feed]
-      const { vehicles, updatedAt } = computeAgencyVehicles(feeds, agency.data, { now: FIXTURE_NOW })
+      const { vehicles, updatedAt } = computeAgencyVehicles(feeds, agencyData, { now: FIXTURE_NOW })
       expect(updatedAt).toBeGreaterThan(FIXTURE_NOW - 600)
       expect(vehicles.length).toBeGreaterThan(5)
       for (const v of vehicles) {
@@ -259,7 +269,7 @@ describe('computeAgencyArrivals', () => {
         expect(v.lon).toBeLessThan(-71.5)
         expect(v.id).not.toBe('')
       }
-      const routed = vehicles.filter(v => v.route && agency.data.routes[v.route.id])
+      const routed = vehicles.filter(v => v.route && agencyData.routes[v.route.id])
       expect(routed.length / vehicles.length).toBeGreaterThan(0.7)
     })
   })
@@ -421,7 +431,7 @@ describe('agency routes', () => {
     const all = await call('/lirr/stations').res
     expect(all.headers.get('cache-control')).toBe(STATIC_CACHE)
     const { stations } = await all.json()
-    expect(stations).toHaveLength(Object.keys(AGENCIES.lirr!.data.stops).length)
+    expect(stations).toHaveLength(Object.keys((await dataOf('lirr')).stops).length)
     expect(stations.map((s: { name: string }) => s.name)).toEqual(
       stations.map((s: { name: string }) => s.name).sort((a: string, b: string) => a.localeCompare(b))
     )

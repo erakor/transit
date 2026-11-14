@@ -1,4 +1,4 @@
-import { memoized, readLimitedJson, type Fetcher } from '#src/gtfsrt.js'
+import { memoized, readLimitedJson, type Fetcher } from '#src/memo.js'
 
 const BASE = 'https://gbfs.lyft.com/gbfs/2.3/bkn/en/'
 

@@ -1,10 +1,6 @@
-import { FERRY_DATA } from '#src/data/ferry.generated.js'
-import { LIRR_DATA } from '#src/data/lirr.generated.js'
-import { MNR_DATA } from '#src/data/mnr.generated.js'
 import { fallbackRoute } from '#src/gtfsrt.js'
 import { rankByName, tokenize, type NameEntry } from '#src/stops/search.js'
-import type { StopParam } from './schemas.js'
-import type { AgencyData, AgencyRoute, AgencyStop } from './types.js'
+import type { AgencyData, AgencyRoute, AgencyStop, StopParam } from './types.js'
 
 /**
  * An agency served by the generic handlers in src/routes/agency.ts: a static GTFS
@@ -23,7 +19,14 @@ export interface Agency {
   /** Where vehicle positions are, when not in `tripsFeed`. */
   vehiclesFeed?: string
   alertsFeed: string
-  data: AgencyData
+  /**
+   * The static data, imported on first use so a request loads one agency's: the three are large, and a function
+   * instance usually serves one of them. The module system caches the import, so every call gives the same object
+   * (`searchStops` caches on it).
+   */
+  data: () => Promise<AgencyData>
+  /** Whether `data` carries a schedule (`trips`), which the docs mention; a test checks it against the data. */
+  scheduled: boolean
 }
 
 const FERRY = 'https://nycferry.connexionz.net/rtt/public/utility/gtfsrealtime.aspx/'
@@ -37,7 +40,8 @@ export const AGENCIES: Record<string, Agency> = {
     vehicleWord: 'trains',
     tripsFeed: 'lirr/gtfs-lirr',
     alertsFeed: 'camsys/lirr-alerts',
-    data: LIRR_DATA,
+    scheduled: false,
+    data: () => import('#src/data/lirr.generated.js').then(m => m.LIRR_DATA),
   },
   mnr: {
     id: 'mnr',
@@ -47,7 +51,8 @@ export const AGENCIES: Record<string, Agency> = {
     vehicleWord: 'trains',
     tripsFeed: 'mnr/gtfs-mnr',
     alertsFeed: 'camsys/mnr-alerts',
-    data: MNR_DATA,
+    scheduled: false,
+    data: () => import('#src/data/mnr.generated.js').then(m => m.MNR_DATA),
   },
   ferry: {
     id: 'ferry',
@@ -58,7 +63,8 @@ export const AGENCIES: Record<string, Agency> = {
     tripsFeed: FERRY + 'tripupdate',
     vehiclesFeed: FERRY + 'vehicleposition',
     alertsFeed: FERRY + 'alert',
-    data: FERRY_DATA,
+    scheduled: true,
+    data: () => import('#src/data/ferry.generated.js').then(m => m.FERRY_DATA),
   },
 }
 

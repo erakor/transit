@@ -1,18 +1,8 @@
-/** Request and response schemas for the Citi Bike routes, and the types inferred from them. */
+/** Response schemas for the Citi Bike routes (the requests are in `queries.ts`), and the types inferred from them. */
 import * as z from 'zod'
-import { coordinateParam, countParam, EpochSeconds, Latitude, Longitude, requiredParam } from '#src/schema.js'
+import { EpochSeconds, Latitude, Longitude } from '#src/schema.js'
 
 const Count = z.int().nonnegative()
-
-export const StationQuery = z.object({
-  id: requiredParam('id', 'A station id from /citibike/nearby. Exact: ids are opaque strings.'),
-})
-
-export const NearbyQuery = z.object({
-  lat: coordinateParam('lat', 90, 'Latitude of the point, in decimal degrees.'),
-  lon: coordinateParam('lon', 180, 'Longitude of the point, in decimal degrees.'),
-  n: countParam('n', 5, 25, 'Stations to return.'),
-})
 
 export const BikeStation = z.strictObject({
   id: z.string().meta({ description: 'Opaque (a UUID or a long digit string). Stable: store it as a favorite.' }),

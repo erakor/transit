@@ -419,6 +419,8 @@ defaults to 10, max 25.
   there (`NE`), which tells apart the two stops on either side of a street. `distance` is in
   meters, in a straight line.
 - Cached for 10 minutes on the CDN: stops change with the quarterly schedules.
+- Round `lat` and `lon` to about 4 decimals (11 m): every distinct URL is its own CDN cache entry, and a
+  position that drifts by a meter would miss it.
 - Errors: 400 (missing or out of range `lat`, `lon`, bad `limit`), 401, 502, 503.
 
 ### `GET /citibike/nearby?lat=<lat>&lon=<lon>&n=<n>`
@@ -619,7 +621,9 @@ src/citibike/        Citi Bike: GBFS fetching, station join and nearest-station 
 src/path/            PATH stations and routes, feed fetching and parsing, arrivals, preview line
 src/agency/          LIRR, Metro-North and NYC Ferry: registry, departures, vehicle positions
 src/bus/             buses: Bus Time (SIRI, Discovery) fetching and parsing, arrivals, vehicles, stops
-src/gtfsrt.ts        GTFS-realtime plumbing shared by every provider: fetch, decode, memo, helpers
+src/gtfsrt.ts        GTFS-realtime plumbing shared by every provider: fetch, decode, helpers
+src/memo.ts          the per-instance memo and `tryLoad`, with no imports so PATH and Citi Bike skip protobuf
+src/schema.ts        response schema pieces; `src/query.ts` has the request ones (parameters, `parseQuery`)
 src/alerts.ts        alerts in effect, from any GTFS-realtime alerts feed
 src/mercury.ts       the MTA's alert statuses and their extension to GTFS-realtime
 src/protowire.ts     reads the MTA's GTFS-realtime extensions, which the bindings keep undecoded

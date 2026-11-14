@@ -49,7 +49,8 @@ Request flow for `/subway/arrivals`:
    stop id or platform id) to platform ids and the routes scheduled there.
 4. `feedsForRoutes()` picks the GTFS-realtime feeds for those routes (`FEEDS` in
    `src/subway/feeds.ts`); `fetchFeed()` (`src/gtfsrt.ts`) fetches them in parallel through a
-   15 s per-instance memo.
+   15 s per-instance memo (a failed fetch is remembered for 5 s, so an outage
+   costs one timeout per window, not one per request).
 5. `computeArrivals()` (`src/subway/arrivals.ts`, pure) groups stop time updates by route and
    direction. It takes decoded feeds and `now`, so tests drive it without the network.
 
@@ -60,7 +61,7 @@ PATH (`/path/arrivals`, `/path/stations`, `/preview/path`) has the same shape wi
 in one function (`api/path.ts`, behind rewrites like the agencies'): `src/routes/path.ts`
 resolves the station (`src/path/stations.ts`, a hand-written table: 13 stations and 5 routes, no
 generated data), `fetchPathFeed()` (`src/path/feed.ts`) fetches the one
-JSON document through the same 15 s memo (`memoized()`) and normalizes it with `parsePathFeed()`, and
+JSON document through the same 15 s memo (`memoized()`, `src/memo.ts`) and normalizes it with `parsePathFeed()`, and
 `computePathArrivals()` (`src/path/arrivals.ts`, pure) groups trains by route and direction.
 
 The LIRR, Metro-North and NYC Ferry share one implementation, driven by the `AGENCIES` table in
@@ -82,8 +83,9 @@ The LIRR, Metro-North and NYC Ferry share one implementation, driven by the `AGE
   also behind `/subway/alerts`) are pure too.
 - `src/gtfsrt.ts` holds what every GTFS-realtime provider shares: `fetchFeed()` (a subway feed
   name, an MTA `group/feed` name, or a full URL), `tryFetchFeed()` for routes that answer 502 on
-  failure, the memo, `num()`, `terminalName()`, `fallbackRoute()`. Provider folders import from
-  it, not from each other.
+  failure, `num()`, `terminalName()`, `fallbackRoute()`. Provider folders import from
+  it, not from each other. The memo (`memoized()`, `tryLoad()`, the `Fetcher` types) is in
+  `src/memo.ts`, which imports only `src/errors.ts` (a failed load is kept for `FAIL_MS`, 5 s, then retried; errors stay `no-store`): PATH and Citi Bike use it without loading the protobuf bindings.
 - Each function bundles what it imports: `src/routes/agency.ts` must not import the subway's
   station index (155 KiB of data), and subway routes must not import `src/agency/agencies.ts`.
   `test/bundles.test.ts` walks each function's imports, indirect ones included, and fails when a
@@ -190,7 +192,7 @@ Ids, which clients store as favorites, so keep them stable:
   documented format.
 - `Bearing` counts counterclockwise from east; responses carry a compass `heading`.
 - The Discovery API answers a bad key with a 200 and a body of `null`: `parseStopsForLocation()`
-  throws on anything but `code: 200` with a stop list, so it is a 502 and not memoized.
+  throws on anything but `code: 200` with a stop list, so it is a 502, remembered only for the 5 s failure window.
 - test/fixtures/bustime-*.json are real answers, recorded late in the evening (`pnpm record-fixtures
   bus`); after re-recording, update `BUS_FIXTURE_NOW_MS` in `test/helpers.ts`, and the counts and
   names `test/bus.test.ts` expects.
@@ -256,8 +258,11 @@ Ids, which clients store as favorites, so keep them stable:
   HTML), with `PREVIEW_CACHE`, whose `max-age` is how long the client keeps the line. Their
   errors stay JSON and `no-store`. The line's format is built by a pure function with its own
   tests (`src/subway/preview.ts`, and `src/preview.ts` for PATH and the agencies).
-- Every route has request and response schemas (zod): `schemas.ts` in each provider folder, and
-  the shared pieces (routes, alerts, `/health`, parameter helpers) in `src/schema.ts`. The schema
+- Every route has request and response schemas (zod), in two modules so functions bundle only what
+  they run: `queries.ts` in each provider folder (request schemas, with the parameter helpers and
+  `parseQuery()` in `src/query.ts`) and `schemas.ts` (responses, with the shared pieces: routes,
+  alerts, `/health`, in `src/schema.ts`). Routes import queries at runtime and response types with
+  `import type`, so no function bundles a response schema (`test/bundles.test.ts`). The schema
   is the definition: types are `z.infer`red from it, it reads the query (`parseQuery()`, which
   keeps the error messages clients see), and the tests check real responses against it
   (`test/responses.test.ts` sends a request to every documented route and fails for a route
@@ -268,7 +273,7 @@ Ids, which clients store as favorites, so keep them stable:
   maximum length, 100 for search text), `countParam()` and `coordinateParam()`, which keep the
   API's messages (`stop is required`, `q is too long`). Rules across parameters (`q or stop is
   required`) are a `.refine()` on the query object. Agency schemas name the stop `station` or
-  `stop` (`STOP_SCHEMAS` in `src/agency/schemas.ts`) and their queries hand it to the handler as
+  `stop` (`STOP_QUERIES` in `src/agency/queries.ts`, `STOP_SCHEMAS` for the responses) and their queries hand it to the handler as
   `stop`. Descriptions go in `.meta()`: they become the API docs. Each route has an entry in
   `ROUTES` (`src/openapi.ts`; the agency routes come from `AGENCIES`), each response schema a name
   in `NAMED`; `pnpm build:openapi` then rewrites `public/openapi.json`, which `/docs` renders
@@ -293,7 +298,7 @@ Ids, which clients store as favorites, so keep them stable:
 - ESLint also runs the promise rules that need type information (`no-floating-promises`,
   `no-misused-promises`, `return-await` in try/catch, `only-throw-error`; `eslint.config.js`): `await`,
   `.catch()` or `void` every promise. They are the only typed rules, to keep lint fast.
-- Read an upstream body with `readLimited()` or `readLimitedJson()` (`src/gtfsrt.ts`), not `res.json()` or `res.arrayBuffer()`: it
+- Read an upstream body with `readLimited()` or `readLimitedJson()` (`src/memo.ts`), not `res.json()` or `res.arrayBuffer()`: it
   throws past 32 MiB (the largest live body is under 1 MB) without naming the URL, which can carry a key.
 - `vercel.json` sends `X-Content-Type-Options: nosniff` on every response.
 - pnpm refuses to install when a dependency's build script hasn't been approved. Approvals live in

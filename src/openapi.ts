@@ -1,56 +1,42 @@
 /** The OpenAPI document, built from the route schemas. No function bundles this (test/bundles.test.ts). */
 import * as z from 'zod'
 import { AGENCIES } from '#src/agency/agencies.js'
-import {
-  AgencyArrival,
-  AgencyVehicle,
-  AgencyVehiclesQuery,
-  AgencyVehiclesResponse,
-  STOP_SCHEMAS,
-} from '#src/agency/schemas.js'
+import { AgencyVehiclesQuery, STOP_QUERIES } from '#src/agency/queries.js'
+import { AgencyArrival, AgencyVehicle, AgencyVehiclesResponse, STOP_SCHEMAS } from '#src/agency/schemas.js'
 import { TOKEN_HEADER } from '#src/auth.js'
 import {
   BusAlertsQuery,
-  BusArrival,
   BusArrivalsQuery,
-  BusArrivalsResponse,
   BusNearbyQuery,
-  BusNearbyResponse,
   BusPreviewQuery,
-  BusVehicle,
   BusVehiclesQuery,
+} from '#src/bus/queries.js'
+import {
+  BusArrival,
+  BusArrivalsResponse,
+  BusNearbyResponse,
+  BusVehicle,
   BusVehiclesResponse,
   NearbyBusStop,
 } from '#src/bus/schemas.js'
-import {
-  BikeStation,
-  NearbyQuery,
-  NearbyResponse,
-  NearbyStation,
-  StationQuery,
-  StationResponse,
-} from '#src/citibike/schemas.js'
+import { NearbyQuery, StationQuery } from '#src/citibike/queries.js'
+import { BikeStation, NearbyResponse, NearbyStation, StationResponse } from '#src/citibike/schemas.js'
+import { PathArrivalsQuery, PathPreviewQuery } from '#src/path/queries.js'
 import {
   PathArrival,
-  PathArrivalsQuery,
   PathArrivalsResponse,
-  PathPreviewQuery,
   PathRouteDirectionArrivals,
   PathStationsResponse,
 } from '#src/path/schemas.js'
 import { Alert, AlertsResult, ErrorBody, HealthResponse, RouteDisplay } from '#src/schema.js'
+import { AlertsQuery, ArrivalsQuery, PreviewQuery, SearchQuery, VehiclesQuery } from '#src/subway/queries.js'
 import {
-  AlertsQuery,
   AlertsResponse,
   Arrival,
-  ArrivalsQuery,
   ArrivalsResponse,
-  PreviewQuery,
   RouteDirectionArrivals,
-  SearchQuery,
   SearchResponse,
   SubwayTrain,
-  VehiclesQuery,
   VehiclesResponse,
 } from '#src/subway/schemas.js'
 
@@ -77,8 +63,9 @@ const PREVIEW =
 
 /** `/lirr/...`, `/mnr/...` and `/ferry/...`: the same routes, named after what the agency calls a stop. */
 function agencyRoutes(): Route[] {
-  return Object.values(AGENCIES).flatMap(({ id, name, stopParam: p, vehicleWord, data }): Route[] => {
+  return Object.values(AGENCIES).flatMap(({ id, name, stopParam: p, vehicleWord, scheduled }): Route[] => {
     const s = STOP_SCHEMAS[p]
+    const q = STOP_QUERIES[p]
     const unknown = `Unknown \`${p}\`.`
     const unavailable = `The ${name} feed failed.`
     return [
@@ -88,10 +75,10 @@ function agencyRoutes(): Route[] {
         summary: `Next departures at a ${name} ${p}`,
         description:
           'Every route and direction in one list, soonest first, like a departure board.' +
-          (data.trips
+          (scheduled
             ? ' Stops the feed does not predict are timed from the last predicted stop with the schedule.'
             : ''),
-        query: s.ArrivalsQuery,
+        query: q.ArrivalsQuery,
         response: s.ArrivalsResponse,
         errors: { 400: `Missing \`${p}\` or bad \`limit\`.`, 404: unknown, 502: unavailable },
       },
@@ -100,7 +87,7 @@ function agencyRoutes(): Route[] {
         tag: name,
         summary: `${name} ${p}s`,
         description: `All ${p}s by name, or those matching \`q\`, best first. Changes only with a deploy.`,
-        query: s.StopsQuery,
+        query: q.StopsQuery,
         response: s.StopsResponse,
         errors: { 400: '`q` too long or bad `limit`.' },
       },
@@ -109,7 +96,7 @@ function agencyRoutes(): Route[] {
         tag: name,
         summary: `${name} service alerts`,
         description: `The alerts in effect now, optionally for one route or ${p}.`,
-        query: s.AlertsQuery,
+        query: q.AlertsQuery,
         response: s.AlertsResponse,
         errors: { 404: unknown, 502: `The ${name} alerts feed failed.` },
       },
@@ -127,7 +114,7 @@ function agencyRoutes(): Route[] {
         tag: name,
         summary: `${name} departures as one line of text`,
         description: `${PREVIEW} The next departure to each destination.`,
-        query: s.PreviewQuery,
+        query: q.PreviewQuery,
         response: 'text',
         errors: {
           400: `Neither \`q\` nor \`${p}\`, or \`q\` too long.`,

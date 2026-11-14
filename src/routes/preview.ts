@@ -1,6 +1,6 @@
 import { authenticated, errorResponse, PREVIEW_CACHE, text } from '#src/http.js'
-import { parseQuery } from '#src/schema.js'
-import { PreviewQuery } from '#src/subway/schemas.js'
+import { parseQuery } from '#src/query.js'
+import { PreviewQuery } from '#src/subway/queries.js'
 import { StopSearch } from '#src/stops/search.js'
 import { stationIndex } from '#src/stops/stations.js'
 import { previewLine } from '#src/subway/preview.js'

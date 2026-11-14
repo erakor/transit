@@ -4,6 +4,9 @@ import type { RouteDisplay } from '#src/schema.js'
 
 export type AgencyRoute = RouteDisplay
 
+/** What a stop is called in the API: `/lirr/arrivals?station=`, `/ferry/arrivals?stop=`. */
+export type StopParam = 'station' | 'stop'
+
 export interface AgencyStop {
   id: string
   name: string

@@ -1,12 +1,10 @@
 /** GTFS-realtime plumbing shared by every provider: fetching, decoding and reading feeds. */
 import GtfsRealtimeBindings from 'gtfs-realtime-bindings'
-import { FEED_MEMO_MS } from './errors.js'
+import { readLimited, memoized, tryLoad, type FetchOptions } from './memo.js'
 import type { RouteDisplay, VehicleStatus } from './schema.js'
 
 const { transit_realtime } = GtfsRealtimeBindings
 export type FeedMessage = GtfsRealtimeBindings.transit_realtime.FeedMessage
-
-export type Fetcher = (url: string, init: RequestInit) => Promise<Response>
 
 const MTA = 'https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/'
 
@@ -19,88 +17,8 @@ export function feedUrl(feed: string): string {
   return MTA + encodeURIComponent(feed.includes('/') ? feed : `nyct/${feed}`)
 }
 
-/** Most bytes read from one upstream answer: the largest live feed is under 1 MB, so this is for a misbehaving upstream. */
-const MAX_BODY_BYTES = 32 * 1024 * 1024
-
-/**
- * The body of `res`, or a throw once it passes `maxBytes`: early on a `Content-Length` over the cap,
- * else while streaming (the header can be absent or wrong), cancelling the rest. The message never
- * names the request URL, which can carry a key.
- */
-export async function readLimited(res: Response, maxBytes = MAX_BODY_BYTES): Promise<Uint8Array> {
-  const tooBig = () => new Error(`upstream body over ${maxBytes} bytes`)
-  const declared = Number(res.headers.get('content-length'))
-  if (declared > maxBytes) {
-    await res.body?.cancel()
-    throw tooBig()
-  }
-  if (!res.body) return new Uint8Array(0)
-  const chunks: Uint8Array[] = []
-  let total = 0
-  const reader = res.body.getReader()
-  for (;;) {
-    const { done, value } = await reader.read()
-    if (done) break
-    total += value.byteLength
-    if (total > maxBytes) {
-      await reader.cancel()
-      throw tooBig()
-    }
-    chunks.push(value)
-  }
-  if (chunks.length === 1) return chunks[0]!
-  const bytes = new Uint8Array(total)
-  let at = 0
-  for (const chunk of chunks) {
-    bytes.set(chunk, at)
-    at += chunk.byteLength
-  }
-  return bytes
-}
-
-const utf8 = new TextDecoder()
-
-/** `readLimited()`, parsed as JSON: what `res.json()` was, with the size cap. */
-export async function readLimitedJson(res: Response, maxBytes?: number): Promise<unknown> {
-  return JSON.parse(utf8.decode(await readLimited(res, maxBytes)))
-}
-
 export function decodeFeed(bytes: Uint8Array): FeedMessage {
   return transit_realtime.FeedMessage.decode(bytes)
-}
-
-/**
- * Upstream answers kept in the function instance's memory for a few seconds. This sits behind
- * the CDN cache: it absorbs requests the CDN can't (cache misses for different stops in the
- * same window, concurrent misses) and coalesces concurrent fetches of the same feed.
- */
-const MEMO_MS = FEED_MEMO_MS
-const memo = new Map<string, { at: number; ttlMs: number; value: Promise<unknown> }>()
-
-/** `load()`, or its earlier result for `key` if it is under `ttlMs` old. A failed load is not kept. */
-export function memoized<T>(key: string, now: number, load: () => Promise<T>, ttlMs = MEMO_MS): Promise<T> {
-  const hit = memo.get(key)
-  if (hit && now - hit.at < ttlMs) return hit.value as Promise<T>
-  // A miss is a good time to let go of feeds nobody asked for lately.
-  for (const [k, entry] of memo) if (now - entry.at >= entry.ttlMs) memo.delete(k)
-  const value = load()
-  memo.set(key, { at: now, ttlMs, value })
-  value.catch(() => {
-    if (memo.get(key)?.value === value) memo.delete(key)
-  })
-  return value
-}
-
-/** For tests. */
-export function clearFeedMemo(): void {
-  memo.clear()
-}
-
-export interface FetchOptions {
-  fetcher?: Fetcher
-  /** Epoch milliseconds. */
-  now?: number
-  timeoutMs?: number
 }
 
 export function fetchFeed(
@@ -112,16 +30,6 @@ export function fetchFeed(
     if (!res.ok) throw new Error(`feed ${feed}: HTTP ${res.status}`)
     return decodeFeed(await readLimited(res))
   })
-}
-
-/** `load()`, or undefined (logged under `label`) when it fails: for routes that answer 502 then. */
-export async function tryLoad<T>(label: string, load: () => Promise<T>): Promise<T | undefined> {
-  try {
-    return await load()
-  } catch (err) {
-    console.error(`${label} failed:`, err)
-    return undefined
-  }
 }
 
 /** `fetchFeed`, or undefined (logged) when the upstream fails: for routes that answer 502 then. */
