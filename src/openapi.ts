@@ -63,7 +63,7 @@ interface Route {
   query: z.ZodType
   /** A JSON schema, or `text` for the one line of the preview routes. */
   response: z.ZodType | 'text'
-  /** Error statuses besides 401 and 500, with when each happens. */
+  /** Error statuses besides 401, 500 and 503, with when each happens. */
   errors: Record<number, string>
   /** Answers without the token (`/health`). */
   public?: true
@@ -406,7 +406,13 @@ export function buildOpenApi(version: string) {
           : json(ref(route.response), 'OK')
       const responses = {
         200: ok,
-        ...(route.public ? {} : { 401: error('Missing or wrong token.'), 500: error('Unexpected failure.') }),
+        ...(route.public
+          ? {}
+          : {
+              401: error('Missing or wrong token.'),
+              500: error('Unexpected failure.'),
+              503: error('The server is not configured (no token, or no Bus Time key). Retry later.'),
+            }),
         ...Object.fromEntries(Object.entries(route.errors).map(([status, why]) => [status, error(why)])),
       }
       const { path, tag, summary, description } = route

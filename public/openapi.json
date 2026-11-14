@@ -2,7 +2,7 @@
   "openapi": "3.1.1",
   "info": {
     "title": "transit",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Normalized JSON over the NYC transit feeds: the MTA subway, LIRR, Metro-North and buses, PATH, NYC Ferry and Citi Bike. Times are epoch seconds. Every route but `/health` needs the token."
   },
   "servers": [
@@ -107,6 +107,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -176,6 +186,16 @@
           },
           "500": {
             "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
             "content": {
               "application/json": {
                 "schema": {
@@ -265,6 +285,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -342,6 +372,16 @@
           },
           "502": {
             "description": "The route's feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
             "content": {
               "application/json": {
                 "schema": {
@@ -435,6 +475,16 @@
           },
           "502": {
             "description": "Every MTA feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
             "content": {
               "application/json": {
                 "schema": {
@@ -537,6 +587,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -573,6 +633,16 @@
           },
           "500": {
             "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
             "content": {
               "application/json": {
                 "schema": {
@@ -666,6 +736,16 @@
           },
           "502": {
             "description": "The PATH feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
             "content": {
               "application/json": {
                 "schema": {
@@ -768,6 +848,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -836,6 +926,16 @@
           },
           "500": {
             "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
             "content": {
               "application/json": {
                 "schema": {
@@ -925,6 +1025,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -991,6 +1101,16 @@
           },
           "502": {
             "description": "The LIRR feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1084,6 +1204,16 @@
           },
           "502": {
             "description": "The LIRR feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1186,6 +1316,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -1254,6 +1394,16 @@
           },
           "500": {
             "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1343,6 +1493,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -1409,6 +1569,16 @@
           },
           "502": {
             "description": "The Metro-North feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1502,6 +1672,16 @@
           },
           "502": {
             "description": "The Metro-North feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1604,6 +1784,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -1672,6 +1862,16 @@
           },
           "500": {
             "description": "Unexpected failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1761,6 +1961,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -1827,6 +2037,16 @@
           },
           "502": {
             "description": "The NYC Ferry feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1920,6 +2140,16 @@
           },
           "502": {
             "description": "The NYC Ferry feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2022,6 +2252,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -2106,6 +2346,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -2183,6 +2433,16 @@
           },
           "502": {
             "description": "Bus Time failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2287,6 +2547,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -2343,6 +2613,16 @@
           },
           "502": {
             "description": "The alerts feed failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2427,6 +2707,16 @@
           },
           "502": {
             "description": "The Citi Bike feeds failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2524,6 +2814,16 @@
           },
           "502": {
             "description": "The Citi Bike feeds failed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4414,11 +4714,29 @@
         "type": "object",
         "properties": {
           "error": {
-            "type": "string"
+            "type": "string",
+            "description": "Human-readable message; the wording may change."
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "invalid_parameter",
+              "missing_token",
+              "invalid_token",
+              "unknown_stop",
+              "unknown_station",
+              "unknown_route",
+              "not_found",
+              "internal_error",
+              "upstream_unavailable",
+              "not_configured"
+            ],
+            "description": "Stable machine-readable error code."
           }
         },
         "required": [
-          "error"
+          "error",
+          "code"
         ],
         "additionalProperties": false
       }

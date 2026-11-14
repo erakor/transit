@@ -46,8 +46,31 @@ export function text(
   })
 }
 
-export function errorResponse(status: number, error: string, vary?: string): Response {
-  return json({ error }, { status, cache: NO_STORE, vary })
+/** Stable, machine-readable error codes and the HTTP status each goes with. */
+export const ERROR_STATUS = {
+  invalid_parameter: 400,
+  missing_token: 401,
+  invalid_token: 401,
+  unknown_stop: 404,
+  unknown_station: 404,
+  unknown_route: 404,
+  not_found: 404,
+  internal_error: 500,
+  upstream_unavailable: 502,
+  not_configured: 503,
+} as const
+export type ErrorCode = keyof typeof ERROR_STATUS
+export const ERROR_CODES = Object.keys(ERROR_STATUS) as [ErrorCode, ...ErrorCode[]]
+
+/** Seconds a client should wait before retrying a 502 or 503; matches the 15 s feed memo. */
+export const RETRY_AFTER_SECONDS = 15
+
+export function errorResponse(code: ErrorCode, error: string, vary?: string): Response {
+  const status = ERROR_STATUS[code]
+  const res = json({ error, code }, { status, cache: NO_STORE, vary })
+  if (status === 401) res.headers.set('www-authenticate', TOKEN_HEADER)
+  if (status === 502 || status === 503) res.headers.set('retry-after', String(RETRY_AFTER_SECONDS))
+  return res
 }
 
 /**
@@ -58,15 +81,15 @@ export function authenticated(handler: (request: Request, url: URL) => Promise<R
   return async (request: Request): Promise<Response> => {
     const auth = checkToken(request.headers)
     if (!auth.ok) {
-      if (auth.status === 500) console.error('TRANSIT_TOKEN is not set')
-      return errorResponse(auth.status, auth.error, TOKEN_HEADER)
+      if (auth.code === 'not_configured') console.error('TRANSIT_TOKEN is not set')
+      return errorResponse(auth.code, auth.error, TOKEN_HEADER)
     }
     let res: Response
     try {
       res = await handler(request, new URL(request.url))
     } catch (err) {
       console.error(err)
-      res = errorResponse(500, 'internal error')
+      res = errorResponse('internal_error', 'internal error')
     }
     const vary = res.headers.get('vary')
     res.headers.set('vary', vary ? `${vary}, ${TOKEN_HEADER}` : TOKEN_HEADER)
@@ -94,7 +117,7 @@ type Handler = (request: Request) => Promise<Response>
  * 404 behind the token check too.
  */
 export function byOp(provider: string, ops: Record<string, Handler>): Handler {
-  const notFound = authenticated(() => errorResponse(404, 'not found'))
+  const notFound = authenticated(() => errorResponse('not_found', 'not found'))
   return request => {
     const op = providerOp(new URL(request.url), provider)
     return (op && Object.hasOwn(ops, op) ? ops[op]! : notFound)(request)

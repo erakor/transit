@@ -298,7 +298,7 @@ describe('PATH routes', () => {
     const res = await pathArrivalsHandler(deps())(get(`/path/arrivals${query}`, auth))
     expect(res.status).toBe(status)
     expect(res.headers.get('cache-control')).toBe('no-store')
-    expect(await res.json()).toEqual({ error })
+    expect(await res.json()).toMatchObject({ error })
   })
 
   it.each([
@@ -315,7 +315,7 @@ describe('PATH routes', () => {
     const res = await GET(get('/path/arrivals?station=WTC', auth))
     expect(res.status).toBe(502)
     expect(res.headers.get('cache-control')).toBe('no-store')
-    expect(await res.json()).toEqual({ error: 'PATH feed unavailable' })
+    expect(await res.json()).toMatchObject({ error: 'PATH feed unavailable' })
     expect(
       (await pathPreviewHandler({ fetcher: bad, now: () => PATH_FIXTURE_NOW_MS })(get('/preview/path?q=wtc', auth)))
         .status
@@ -372,6 +372,6 @@ describe('PATH routes', () => {
     const res = await pathPreviewHandler(deps())(get(`/preview/path${query}`, auth))
     expect(res.status).toBe(status)
     expect(res.headers.get('cache-control')).toBe('no-store')
-    expect(await res.json()).toEqual({ error })
+    expect(await res.json()).toMatchObject({ error })
   })
 })

@@ -332,14 +332,14 @@ describe('subway alerts and vehicles routes', () => {
   ])('/subway/alerts rejects %s with %i', async (path, status, error) => {
     const res = await alerts(path)
     expect(res.status).toBe(status)
-    expect(await res.json()).toEqual({ error })
+    expect(await res.json()).toMatchObject({ error })
   })
 
   it('/subway/alerts is 502 and uncached when the feed fails', async () => {
     const res = await alerts('/subway/alerts', async () => new Response('down', { status: 503 }))
     expect(res.status).toBe(502)
     expect(res.headers.get('cache-control')).toBe('no-store')
-    expect(await res.json()).toEqual({ error: 'MTA alerts unavailable' })
+    expect(await res.json()).toMatchObject({ error: 'MTA alerts unavailable' })
   })
 
   const vehicles = (path: string, fail: string[] = []) => {
@@ -371,7 +371,7 @@ describe('subway alerts and vehicles routes', () => {
   ])('/subway/vehicles rejects %s with %i', async (path, status, error) => {
     const r = await vehicles(path).res
     expect(r.status).toBe(status)
-    expect(await r.json()).toEqual({ error })
+    expect(await r.json()).toMatchObject({ error })
   })
 
   it('/subway/vehicles is 502 when the feed fails', async () => {

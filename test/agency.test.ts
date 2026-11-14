@@ -403,7 +403,7 @@ describe('agency routes', () => {
     const r = await call(path).res
     expect(r.status).toBe(status)
     expect(r.headers.get('cache-control')).toBe('no-store')
-    expect(await r.json()).toEqual({ error })
+    expect(await r.json()).toMatchObject({ error })
   })
 
   it.each([
@@ -414,7 +414,7 @@ describe('agency routes', () => {
   ])('%s is 502 when its feed fails', async (path, feed, error) => {
     const r = await call(path, [feed]).res
     expect(r.status).toBe(502)
-    expect(await r.json()).toEqual({ error })
+    expect(await r.json()).toMatchObject({ error })
   })
 
   it('lists every station by name, or the ones matching q', async () => {

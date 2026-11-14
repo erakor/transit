@@ -57,16 +57,16 @@ export function agencyHandler({ fetcher, now = () => Date.now() }: AgencyDeps = 
     const load = (feed: string) => tryFetchFeed(feed, { fetcher, now: nowMs })
     const nowS = Math.floor(nowMs / 1000)
     const agency = route ? AGENCIES[route.agency] : undefined
-    if (!route || !agency) return errorResponse(404, 'not found')
+    if (!route || !agency) return errorResponse('not_found', 'not found')
     // The list is `/lirr/stations` but `/ferry/stops`, after what the agency calls a stop.
     const op = route.op === `${agency.stopParam}s` ? list : Object.hasOwn(OPS, route.op) ? OPS[route.op] : undefined
-    if (!op) return errorResponse(404, 'not found')
+    if (!op) return errorResponse('not_found', 'not found')
     return op({ agency, url, now: nowS, load })
   })
 }
 
 function unavailable(agency: Agency): Response {
-  return errorResponse(502, `${agency.name} feed unavailable`)
+  return errorResponse('upstream_unavailable', `${agency.name} feed unavailable`)
 }
 
 const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
@@ -76,7 +76,7 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
     if (!parsed.ok) return parsed.response
     const { stop: param, limit } = parsed.query
     const stop = findStop(agency.data, param)
-    if (!stop) return errorResponse(404, `unknown ${agency.stopParam} ${param}`)
+    if (!stop) return errorResponse(`unknown_${agency.stopParam}`, `unknown ${agency.stopParam} ${param}`)
     const feed = await load(agency.tripsFeed)
     if (!feed) return unavailable(agency)
     const { stop: resolved, ...rest } = computeAgencyArrivals(stop, feed, agency.data, { now, limit })
@@ -90,9 +90,10 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
     const routeParam = parsed.query.route?.toLowerCase()
     const stopParam = parsed.query.stop
     const stop = stopParam ? findStop(agency.data, stopParam) : undefined
-    if (stopParam && !stop) return errorResponse(404, `unknown ${agency.stopParam} ${stopParam}`)
+    if (stopParam && !stop)
+      return errorResponse(`unknown_${agency.stopParam}`, `unknown ${agency.stopParam} ${stopParam}`)
     const feed = await load(agency.alertsFeed)
-    if (!feed) return errorResponse(502, `${agency.name} alerts unavailable`)
+    if (!feed) return errorResponse('upstream_unavailable', `${agency.name} alerts unavailable`)
     const result = computeAlerts(feed, {
       now,
       match: (r, s) => {
@@ -119,7 +120,7 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
     if (!parsed.ok) return parsed.response
     const routeParam = parsed.query.route?.toLowerCase()
     const route = routeParam ? Object.keys(agency.data.routes).find(id => id.toLowerCase() === routeParam) : undefined
-    if (routeParam && !route) return errorResponse(404, `unknown route ${routeParam}`)
+    if (routeParam && !route) return errorResponse('unknown_route', `unknown route ${routeParam}`)
     // The feed with the positions is required; separate trip updates only add routes and headsigns.
     const [positions, trips] = await Promise.all([
       load(agency.vehiclesFeed ?? agency.tripsFeed),
@@ -139,7 +140,7 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
     const stop = id !== undefined ? findStop(agency.data, id) : searchStops(agency.data, parsed.query.q)[0]
     if (!stop)
       return errorResponse(
-        404,
+        `unknown_${agency.stopParam}`,
         id !== undefined ? `unknown ${agency.stopParam} ${id}` : `no matching ${agency.stopParam}`
       )
     const feed = await load(agency.tripsFeed)

@@ -33,13 +33,13 @@ export function subwayAlertsHandler({ fetcher, now = () => Date.now(), index = s
     const routeParam = parsed.query.route?.toUpperCase()
     const stopParam = parsed.query.stop
     const idx = index()
-    if (routeParam && !idx.data.routes[routeParam]) return errorResponse(404, `unknown route ${routeParam}`)
+    if (routeParam && !idx.data.routes[routeParam]) return errorResponse('unknown_route', `unknown route ${routeParam}`)
     const stop = stopParam ? idx.resolve(stopParam) : undefined
-    if (stopParam && !stop) return errorResponse(404, `unknown stop ${stopParam}`)
+    if (stopParam && !stop) return errorResponse('unknown_stop', `unknown stop ${stopParam}`)
 
     const nowMs = now()
     const feed = await tryFetchFeed(SUBWAY_ALERTS_FEED, { fetcher, now: nowMs })
-    if (!feed) return errorResponse(502, 'MTA alerts unavailable')
+    if (!feed) return errorResponse('upstream_unavailable', 'MTA alerts unavailable')
     const stops = new Set(stop?.stops)
     // A platform asked for: its direction. Alerts for the other one don't apply there.
     const platform = stop?.platforms.length === 1 ? stop.platforms[0]!.slice(-1) : undefined

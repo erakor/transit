@@ -16,11 +16,11 @@ export function subwayVehiclesHandler({ fetcher, now = () => Date.now(), index =
     const idx = index()
     const route = idx.data.routes[routeParam]
     const feedName = feedsForRoutes([routeParam])[0]
-    if (!route || !feedName) return errorResponse(404, `unknown route ${routeParam}`)
+    if (!route || !feedName) return errorResponse('unknown_route', `unknown route ${routeParam}`)
 
     const nowMs = now()
     const feed = await tryFetchFeed(feedName, { fetcher, now: nowMs })
-    if (!feed) return errorResponse(502, 'MTA feeds unavailable')
+    if (!feed) return errorResponse('upstream_unavailable', 'MTA feeds unavailable')
     return json(computeSubwayTrains(route, feed, idx, { now: Math.floor(nowMs / 1000) }), { cache: LIVE_CACHE })
   })
 }

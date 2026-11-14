@@ -65,7 +65,7 @@ Next trains per route and direction.
 - If some upstream feeds failed, the response is still 200 with what was available and an
   `unavailableFeeds` array; if all of them failed it is 502.
 - Errors: 400 (missing `stop`, bad `limit`), 404 (unknown stop), 401 (token), 502 (MTA down).
-  Error bodies are `{ "error": "..." }`.
+  Error bodies are `{ "error": "...", "code": "..." }`; see "Errors" below.
 
 ### `GET /stops/search?q=<text>&limit=<n>`
 
@@ -357,7 +357,7 @@ or from `/bus/nearby`. `limit` defaults to 10, max 30.
   know that bus won't come. The preview leaves cancelled buses out.
 - `stop.name` comes from Bus Time and is null when no bus is on its way.
 - Errors: 400 (missing or malformed `stop`), 404 (Bus Time knows no such stop), 401, 502 (Bus
-  Time failed), 500 (`BUSTIME_KEY` not set on the server).
+  Time failed), 503 (`BUSTIME_KEY` not set on the server).
 
 ### `GET /preview/bus?stop=<code>`
 
@@ -394,7 +394,7 @@ which a query string must encode (`M15%2B`), or can be written as the bus shows 
   code `/bus/arrivals` takes. `time` is when the position was recorded.
 - Buses are listed by headsign, then bus number.
 - Errors: 400 (missing `route`), 404 (unknown route, or one Bus Time doesn't run), 401, 502,
-  500 (`BUSTIME_KEY` not set).
+  503 (`BUSTIME_KEY` not set).
 
 ### `GET /bus/nearby?lat=<lat>&lon=<lon>&limit=<n>`
 
@@ -417,7 +417,7 @@ defaults to 10, max 25.
   there (`NE`), which tells apart the two stops on either side of a street. `distance` is in
   meters, in a straight line.
 - Cached for 10 minutes on the CDN: stops change with the quarterly schedules.
-- Errors: 400 (missing or out of range `lat`, `lon`, bad `limit`), 401, 502, 500.
+- Errors: 400 (missing or out of range `lat`, `lon`, bad `limit`), 401, 502, 503.
 
 ### `GET /citibike/nearby?lat=<lat>&lon=<lon>&n=<n>`
 
@@ -468,7 +468,7 @@ Send the token in a custom header:
 X-Transit-Token: <token>
 ```
 
-A missing or wrong token is a 401.
+A missing or wrong token is a 401 with `WWW-Authenticate: X-Transit-Token`.
 
 **Why not `Authorization: Bearer`?** Vercel's CDN does not cache responses to requests that carry
 an `Authorization` header ([Vercel docs, "Cacheable response criteria"](https://vercel.com/docs/caching/cdn-cache):
@@ -482,7 +482,29 @@ The `Authorization` header is ignored: a token sent there is a 401.
 
 The server reads the token from the `TRANSIT_TOKEN` environment variable (set in Vercel only,
 never committed). It may hold several comma-separated tokens, for rotation: add the new one,
-update clients, remove the old one. If it's unset, authenticated routes answer 500.
+update clients, remove the old one. If it's unset, authenticated routes answer 503 `not_configured` (with a generic message, so an
+anonymous caller learns nothing about the setup).
+
+## Errors
+
+Every 4xx and 5xx answer is `{ "error": "<message>", "code": "<code>" }`, never cached. Branch on
+`code`; the wording of `error` may change.
+
+| `code`                 | Status | Meaning                                                          |
+| ---------------------- | ------ | ---------------------------------------------------------------- |
+| `invalid_parameter`    | 400    | A query parameter is missing, malformed or out of range.         |
+| `missing_token`        | 401    | No `X-Transit-Token` header.                                     |
+| `invalid_token`        | 401    | The token is wrong.                                              |
+| `unknown_stop`         | 404    | No such stop (subway, bus, ferry).                               |
+| `unknown_station`      | 404    | No such station (PATH, LIRR, MNR, Citi Bike), or none matches.   |
+| `unknown_route`        | 404    | No such route.                                                   |
+| `not_found`            | 404    | No such route of the API.                                        |
+| `internal_error`       | 500    | Unexpected failure.                                              |
+| `upstream_unavailable` | 502    | The MTA, PATH or Citi Bike feed failed.                          |
+| `not_configured`       | 503    | The server has no token or Bus Time key.                         |
+
+A 401 carries `WWW-Authenticate: X-Transit-Token`. A 502 or 503 carries `Retry-After: 15`, the
+length of the feed memo.
 
 ## Caching
 
@@ -599,7 +621,7 @@ To run locally against Vercel's runtime, use `vercel dev` with `TRANSIT_TOKEN` i
    Generate one with `openssl rand -base64 32`.
 3. Set `BUSTIME_KEY` the same way, to an MTA Bus Time API key (free, requested at
    `https://register.developer.obanyc.com/`). Without it `/bus/arrivals` and `/preview/bus` answer
-   500; everything else works.
+   503; everything else works.
 4. Deploy. Optionally add the repository secrets `TRANSIT_BASE_URL` (such as
    `https://transit-xyz.vercel.app`) and `TRANSIT_TOKEN` so the scheduled smoke test also checks
    the deployment, and `BUSTIME_KEY` so it checks Bus Time too.
@@ -628,7 +650,7 @@ curl -i -H "X-Transit-Token: $TOKEN" "$BASE/lirr/arrivals?station=102"  # 200, J
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/mnr/stations?q=rye"         # 200
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/preview/ferry?q=wall"       # 200, one line of text
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/bus/alerts?route=Q29"       # 200
-curl -i -H "X-Transit-Token: $TOKEN" "$BASE/bus/arrivals?stop=401687"  # 200 (500 without BUSTIME_KEY)
+curl -i -H "X-Transit-Token: $TOKEN" "$BASE/bus/arrivals?stop=401687"  # 200 (503 without BUSTIME_KEY)
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/bus/vehicles?route=M15"     # 200
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/bus/nearby?lat=40.7321&lon=-73.9819"  # 200
 curl -i -H "X-Transit-Token: $TOKEN" "$BASE/citibike/nearby?lat=40.7559&lon=-73.9871"  # 200

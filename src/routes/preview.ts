@@ -24,13 +24,13 @@ export function subwayPreviewHandler({ fetcher, now = () => Date.now(), index = 
 
     const idx = index()
     const stopId = query.id !== undefined ? query.id : (search ??= new StopSearch(idx.data)).search(query.q, 1)[0]?.id
-    if (!stopId) return errorResponse(404, 'no matching station')
+    if (!stopId) return errorResponse('unknown_station', 'no matching station')
     const stop = idx.resolve(stopId)
-    if (!stop) return errorResponse(404, `unknown stop ${stopId}`)
+    if (!stop) return errorResponse('unknown_stop', `unknown stop ${stopId}`)
 
     const nowMs = now()
     const loaded = await loadArrivals(stop, idx, { fetcher, nowMs, limit: 1 })
-    if (!loaded) return errorResponse(502, 'MTA feeds unavailable')
+    if (!loaded) return errorResponse('upstream_unavailable', 'MTA feeds unavailable')
     return text(previewLine(loaded.result, Math.floor(nowMs / 1000)), {
       cache: loaded.failed.length ? PARTIAL_PREVIEW_CACHE : PREVIEW_CACHE,
     })
