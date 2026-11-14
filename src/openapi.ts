@@ -61,16 +61,9 @@ const PREVIEW =
   'One line of `text/plain` for a launcher hint: the station, then the next trains. Errors are JSON. ' +
   '`max-age` in `Cache-Control` says how long a client may keep the line.'
 
-/** Which agencies' static data carries a schedule (`trips`). The data loads on demand, so this waits for it. */
-const SCHEDULED = new Set(
-  (await Promise.all(Object.values(AGENCIES).map(async a => ((await a.data()).trips ? a.id : undefined)))).filter(
-    id => id !== undefined
-  )
-)
-
 /** `/lirr/...`, `/mnr/...` and `/ferry/...`: the same routes, named after what the agency calls a stop. */
 function agencyRoutes(): Route[] {
-  return Object.values(AGENCIES).flatMap(({ id, name, stopParam: p, vehicleWord }): Route[] => {
+  return Object.values(AGENCIES).flatMap(({ id, name, stopParam: p, vehicleWord, scheduled }): Route[] => {
     const s = STOP_SCHEMAS[p]
     const q = STOP_QUERIES[p]
     const unknown = `Unknown \`${p}\`.`
@@ -82,7 +75,7 @@ function agencyRoutes(): Route[] {
         summary: `Next departures at a ${name} ${p}`,
         description:
           'Every route and direction in one list, soonest first, like a departure board.' +
-          (SCHEDULED.has(id)
+          (scheduled
             ? ' Stops the feed does not predict are timed from the last predicted stop with the schedule.'
             : ''),
         query: q.ArrivalsQuery,

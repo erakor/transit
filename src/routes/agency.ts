@@ -65,7 +65,13 @@ export function agencyHandler({ fetcher, now = () => Date.now() }: AgencyDeps = 
     // The list is `/lirr/stations` but `/ferry/stops`, after what the agency calls a stop.
     const op = route.op === `${agency.stopParam}s` ? list : Object.hasOwn(OPS, route.op) ? OPS[route.op] : undefined
     if (!op) return errorResponse(404, 'not found')
-    return op({ agency, data: await agency.data(), url, now: nowS, load })
+    // A dynamic import: it can fail at request time, unlike the static one it replaced.
+    const data = await agency.data().catch((err: unknown) => {
+      console.error(`${agency.id} data failed:`, err)
+      return undefined
+    })
+    if (!data) return errorResponse(500, `${agency.name} data unavailable`)
+    return op({ agency, data, url, now: nowS, load })
   })
 }
 

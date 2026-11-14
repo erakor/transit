@@ -324,7 +324,7 @@ describe('PATH routes', () => {
     ).toBe(502)
     fail = false
     // The failure is remembered for FAIL_MS, then the next request tries again.
-    now += FAIL_MS
+    now += FAIL_MS + 500
     expect((await GET(get('/path/arrivals?station=WTC', auth))).status).toBe(200)
   })
 

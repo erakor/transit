@@ -23,6 +23,8 @@ export interface Agency {
    * (`searchStops` caches on it).
    */
   data: () => Promise<AgencyData>
+  /** Whether `data` carries a schedule (`trips`), which the docs mention; a test checks it against the data. */
+  scheduled: boolean
 }
 
 const FERRY = 'https://nycferry.connexionz.net/rtt/public/utility/gtfsrealtime.aspx/'
@@ -35,6 +37,7 @@ export const AGENCIES: Record<string, Agency> = {
     vehicleWord: 'trains',
     tripsFeed: 'lirr/gtfs-lirr',
     alertsFeed: 'camsys/lirr-alerts',
+    scheduled: false,
     data: () => import('#src/data/lirr.generated.js').then(m => m.LIRR_DATA),
   },
   mnr: {
@@ -44,6 +47,7 @@ export const AGENCIES: Record<string, Agency> = {
     vehicleWord: 'trains',
     tripsFeed: 'mnr/gtfs-mnr',
     alertsFeed: 'camsys/mnr-alerts',
+    scheduled: false,
     data: () => import('#src/data/mnr.generated.js').then(m => m.MNR_DATA),
   },
   ferry: {
@@ -54,6 +58,7 @@ export const AGENCIES: Record<string, Agency> = {
     tripsFeed: FERRY + 'tripupdate',
     vehiclesFeed: FERRY + 'vehicleposition',
     alertsFeed: FERRY + 'alert',
+    scheduled: true,
     data: () => import('#src/data/ferry.generated.js').then(m => m.FERRY_DATA),
   },
 }
