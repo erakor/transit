@@ -7,7 +7,7 @@
  * SIRI 1 shape the API answers without `version=2`, under `MonitoredCall.Extensions.Distances`;
  * the parser reads either.
  */
-import { memoized, type FetchOptions } from '#src/gtfsrt.js'
+import { memoized, readLimited, type FetchOptions } from '#src/gtfsrt.js'
 
 /** The `/api/2/` path also lists cancelled trips, marked as such; `/api/siri/` leaves them out. */
 const BASE = 'https://bustime.mta.info/api/2/siri/stop-monitoring.json'
@@ -282,7 +282,7 @@ export function fetchBusTime<T>(
     async () => {
       const res = await fetcher(url, { signal: AbortSignal.timeout(timeoutMs) })
       if (!res.ok) throw new Error(`bustime ${label}: HTTP ${res.status}`)
-      return parse(await res.json())
+      return parse(JSON.parse(new TextDecoder().decode(await readLimited(res))))
     },
     ttlMs
   )

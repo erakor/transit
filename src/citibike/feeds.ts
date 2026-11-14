@@ -1,4 +1,4 @@
-import { memoized, type Fetcher } from '#src/gtfsrt.js'
+import { memoized, readLimited, type Fetcher } from '#src/gtfsrt.js'
 
 const BASE = 'https://gbfs.lyft.com/gbfs/2.3/bkn/en/'
 
@@ -86,7 +86,7 @@ export async function fetchGbfs<K extends GbfsFeedName>(
       try {
         const res = await fetcher(gbfsUrl(feed), { signal: AbortSignal.timeout(timeoutMs) })
         if (!res.ok) throw new Error(`feed ${feed}: HTTP ${res.status}`)
-        const parsed = parseGbfs<unknown>(feed, await res.json())
+        const parsed = parseGbfs<unknown>(feed, JSON.parse(new TextDecoder().decode(await readLimited(res))))
         if (staleOnError) lastGood.set(feed, { at: now, feed: parsed })
         return parsed
       } catch (err) {
