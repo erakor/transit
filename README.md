@@ -417,6 +417,8 @@ defaults to 10, max 25.
   there (`NE`), which tells apart the two stops on either side of a street. `distance` is in
   meters, in a straight line.
 - Cached for 10 minutes on the CDN: stops change with the quarterly schedules.
+- Round `lat` and `lon` to about 4 decimals (11 m): every distinct URL is its own CDN cache entry, and a
+  position that drifts by a meter would miss it.
 - Errors: 400 (missing or out of range `lat`, `lon`, bad `limit`), 401, 502, 500.
 
 ### `GET /citibike/nearby?lat=<lat>&lon=<lon>&n=<n>`
