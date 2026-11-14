@@ -7,10 +7,9 @@ export const LIVE_CACHE = 'public, s-maxage=20, stale-while-revalidate=40'
  * Data that only changes with a deploy (Vercel purges the CDN cache on each production deploy).
  */
 export const STATIC_CACHE = 'public, s-maxage=3600, stale-while-revalidate=86400'
-/** Service alerts: they change by the minute at most, and the feeds are the largest we read. */
 /** Lookups of upstream reference data that changes rarely but without a deploy (bus stops near a point). */
 export const LOOKUP_CACHE = 'public, s-maxage=600, stale-while-revalidate=3600'
-
+/** Service alerts: they change by the minute at most, and the feeds are the largest we read. */
 export const ALERTS_CACHE = 'public, s-maxage=60, stale-while-revalidate=120'
 export const NO_STORE = 'no-store'
 /**

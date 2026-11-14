@@ -285,6 +285,17 @@ Ids, which clients store as favorites, so keep them stable:
   by `packageManager`. Vercel picks a pnpm version from the lockfile format rather than
   `packageManager`, so `installCommand` in `vercel.json` pins the same version: bump both together.
   Node 26 ships without Corepack; CI installs pnpm with `pnpm/action-setup`, which reads `packageManager`.
+  Dependabot (`.github/dependabot.yml`) bumps `packageManager` but never `installCommand`: a PR that
+  touches one must also change the other by hand.
+- Workflow actions are pinned to a full commit SHA with the release in a trailing `# vX.Y.Z` comment
+  (Dependabot's `github-actions` ecosystem updates both). Workflows set `permissions` (read-only unless
+  they push), `timeout-minutes` and `concurrency`.
+- ESLint also runs the promise rules that need type information (`no-floating-promises`,
+  `no-misused-promises`, `return-await` in try/catch, `only-throw-error`; `eslint.config.js`): `await`,
+  `.catch()` or `void` every promise. They are the only typed rules, to keep lint fast.
+- Read an upstream body with `readLimited()` or `readLimitedJson()` (`src/gtfsrt.ts`), not `res.json()` or `res.arrayBuffer()`: it
+  throws past 32 MiB (the largest live body is under 1 MB) without naming the URL, which can carry a key.
+- `vercel.json` sends `X-Content-Type-Options: nosniff` on every response.
 - pnpm refuses to install when a dependency's build script hasn't been approved. Approvals live in
   `allowBuilds` in `pnpm-workspace.yaml` (`pnpm approve-builds <pkg>` edits it).
 - On Node 26, `fetch` can use HTTP/2, where `statusText` is empty: check `res.status` only.

@@ -19,6 +19,52 @@ export function feedUrl(feed: string): string {
   return MTA + encodeURIComponent(feed.includes('/') ? feed : `nyct/${feed}`)
 }
 
+/** Most bytes read from one upstream answer: the largest live feed is under 1 MB, so this is for a misbehaving upstream. */
+const MAX_BODY_BYTES = 32 * 1024 * 1024
+
+/**
+ * The body of `res`, or a throw once it passes `maxBytes`: early on a `Content-Length` over the cap,
+ * else while streaming (the header can be absent or wrong), cancelling the rest. The message never
+ * names the request URL, which can carry a key.
+ */
+export async function readLimited(res: Response, maxBytes = MAX_BODY_BYTES): Promise<Uint8Array> {
+  const tooBig = () => new Error(`upstream body over ${maxBytes} bytes`)
+  const declared = Number(res.headers.get('content-length'))
+  if (declared > maxBytes) {
+    await res.body?.cancel()
+    throw tooBig()
+  }
+  if (!res.body) return new Uint8Array(0)
+  const chunks: Uint8Array[] = []
+  let total = 0
+  const reader = res.body.getReader()
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    total += value.byteLength
+    if (total > maxBytes) {
+      await reader.cancel()
+      throw tooBig()
+    }
+    chunks.push(value)
+  }
+  if (chunks.length === 1) return chunks[0]!
+  const bytes = new Uint8Array(total)
+  let at = 0
+  for (const chunk of chunks) {
+    bytes.set(chunk, at)
+    at += chunk.byteLength
+  }
+  return bytes
+}
+
+const utf8 = new TextDecoder()
+
+/** `readLimited()`, parsed as JSON: what `res.json()` was, with the size cap. */
+export async function readLimitedJson(res: Response, maxBytes?: number): Promise<unknown> {
+  return JSON.parse(utf8.decode(await readLimited(res, maxBytes)))
+}
+
 export function decodeFeed(bytes: Uint8Array): FeedMessage {
   return transit_realtime.FeedMessage.decode(bytes)
 }
@@ -64,7 +110,7 @@ export function fetchFeed(
   return memoized(feed, now, async () => {
     const res = await fetcher(feedUrl(feed), { signal: AbortSignal.timeout(timeoutMs) })
     if (!res.ok) throw new Error(`feed ${feed}: HTTP ${res.status}`)
-    return decodeFeed(new Uint8Array(await res.arrayBuffer()))
+    return decodeFeed(await readLimited(res))
   })
 }
 
