@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { readLimited } from '#src/gtfsrt.js'
+import { readLimited, readLimitedJson } from '#src/gtfsrt.js'
 
 /** A body that arrives in `chunks` of `size` bytes, without a Content-Length unless given one. */
 function streamed(total: number, size: number, headers?: HeadersInit): Response {
@@ -53,5 +53,12 @@ describe('readLimited', () => {
     const err = await readLimited(res, 10).catch((e: unknown) => e)
     expect(err).toBeInstanceOf(Error)
     expect((err as Error).message).not.toMatch(/SECRET|bustime|https:/)
+  })
+})
+
+describe('readLimitedJson', () => {
+  it('parses a body under the cap and rejects one over it', async () => {
+    expect(await readLimitedJson(new Response('{"a":[1,2]}'), 20)).toEqual({ a: [1, 2] })
+    await expect(readLimitedJson(new Response('{"a":[1,2]}'), 5)).rejects.toThrow('over 5 bytes')
   })
 })

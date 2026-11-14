@@ -47,6 +47,7 @@ export async function readLimited(res: Response, maxBytes = MAX_BODY_BYTES): Pro
     }
     chunks.push(value)
   }
+  if (chunks.length === 1) return chunks[0]!
   const bytes = new Uint8Array(total)
   let at = 0
   for (const chunk of chunks) {
@@ -54,6 +55,13 @@ export async function readLimited(res: Response, maxBytes = MAX_BODY_BYTES): Pro
     at += chunk.byteLength
   }
   return bytes
+}
+
+const utf8 = new TextDecoder()
+
+/** `readLimited()`, parsed as JSON: what `res.json()` was, with the size cap. */
+export async function readLimitedJson(res: Response, maxBytes?: number): Promise<unknown> {
+  return JSON.parse(utf8.decode(await readLimited(res, maxBytes)))
 }
 
 export function decodeFeed(bytes: Uint8Array): FeedMessage {

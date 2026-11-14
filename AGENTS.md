@@ -288,7 +288,7 @@ Ids, which clients store as favorites, so keep them stable:
 - ESLint also runs the promise rules that need type information (`no-floating-promises`,
   `no-misused-promises`, `return-await` in try/catch, `only-throw-error`; `eslint.config.js`): `await`,
   `.catch()` or `void` every promise. They are the only typed rules, to keep lint fast.
-- Read an upstream body with `readLimited()` (`src/gtfsrt.ts`), not `res.json()` or `res.arrayBuffer()`: it
+- Read an upstream body with `readLimited()` or `readLimitedJson()` (`src/gtfsrt.ts`), not `res.json()` or `res.arrayBuffer()`: it
   throws past 32 MiB (the largest live body is under 1 MB) without naming the URL, which can carry a key.
 - `vercel.json` sends `X-Content-Type-Options: nosniff` on every response.
 - pnpm refuses to install when a dependency's build script hasn't been approved. Approvals live in

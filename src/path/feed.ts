@@ -1,4 +1,4 @@
-import { memoized, readLimited, type FetchOptions } from '#src/gtfsrt.js'
+import { memoized, readLimitedJson, type FetchOptions } from '#src/gtfsrt.js'
 import { colorsKey } from './stations.js'
 
 /**
@@ -85,6 +85,6 @@ export function fetchPathFeed({
       signal: AbortSignal.timeout(timeoutMs),
     })
     if (!res.ok) throw new Error(`PATH feed: HTTP ${res.status}`)
-    return parsePathFeed(JSON.parse(new TextDecoder().decode(await readLimited(res))))
+    return parsePathFeed(await readLimitedJson(res))
   })
 }
