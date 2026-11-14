@@ -575,7 +575,9 @@ src/citibike/        Citi Bike: GBFS fetching, station join and nearest-station 
 src/path/            PATH stations and routes, feed fetching and parsing, arrivals, preview line
 src/agency/          LIRR, Metro-North and NYC Ferry: registry, departures, vehicle positions
 src/bus/             buses: Bus Time (SIRI, Discovery) fetching and parsing, arrivals, vehicles, stops
-src/gtfsrt.ts        GTFS-realtime plumbing shared by every provider: fetch, decode, memo, helpers
+src/gtfsrt.ts        GTFS-realtime plumbing shared by every provider: fetch, decode, helpers
+src/memo.ts          the per-instance memo and `tryLoad`, with no imports so PATH and Citi Bike skip protobuf
+src/schema.ts        response schema pieces; `src/query.ts` has the request ones (parameters, `parseQuery`)
 src/alerts.ts        alerts in effect, from any GTFS-realtime alerts feed
 src/mercury.ts       the MTA's alert statuses and their extension to GTFS-realtime
 src/protowire.ts     reads the MTA's GTFS-realtime extensions, which the bindings keep undecoded

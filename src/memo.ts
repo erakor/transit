@@ -1,4 +1,7 @@
-/** Fetching through a short in-memory memo. No imports, so functions that don't decode feeds stay light. */
+/**
+ * Fetching through a short in-memory memo, and the helpers every provider's route shares with it. No imports, so
+ * functions that don't decode GTFS-realtime feeds (PATH, Citi Bike) can use it without loading the protobuf bindings.
+ */
 
 export type Fetcher = (url: string, init: RequestInit) => Promise<Response>
 

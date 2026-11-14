@@ -1,6 +1,6 @@
 import type { ResolvedStop, StationIndex } from '#src/stops/stations.js'
 import { fetchFeed } from '#src/gtfsrt.js'
-import { type Fetcher } from '#src/memo.js'
+import type { Fetcher } from '#src/memo.js'
 import { computeArrivals } from './arrivals.js'
 import { feedsForRoutes } from './feeds.js'
 import type { ArrivalsResult } from './schemas.js'

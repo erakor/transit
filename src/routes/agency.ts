@@ -1,10 +1,11 @@
 import { AGENCIES, findStop, routeInfo, searchStops, type Agency } from '#src/agency/agencies.js'
 import { computeAgencyArrivals } from '#src/agency/arrivals.js'
 import { computeAgencyVehicles } from '#src/agency/vehicles.js'
+import type { AgencyData } from '#src/agency/types.js'
 import { AgencyVehiclesQuery, STOP_QUERIES } from '#src/agency/queries.js'
 import { computeAlerts } from '#src/alerts.js'
 import { tryFetchFeed, type FeedMessage } from '#src/gtfsrt.js'
-import { type Fetcher } from '#src/memo.js'
+import type { Fetcher } from '#src/memo.js'
 import {
   ALERTS_CACHE,
   authenticated,
@@ -25,6 +26,8 @@ export interface AgencyDeps {
 
 interface Context {
   agency: Agency
+  /** The agency's static data, loaded before the operation runs. */
+  data: AgencyData
   url: URL
   /** Epoch seconds. */
   now: number
@@ -62,7 +65,7 @@ export function agencyHandler({ fetcher, now = () => Date.now() }: AgencyDeps = 
     // The list is `/lirr/stations` but `/ferry/stops`, after what the agency calls a stop.
     const op = route.op === `${agency.stopParam}s` ? list : Object.hasOwn(OPS, route.op) ? OPS[route.op] : undefined
     if (!op) return errorResponse(404, 'not found')
-    return op({ agency, url, now: nowS, load })
+    return op({ agency, data: await agency.data(), url, now: nowS, load })
   })
 }
 
@@ -72,10 +75,9 @@ function unavailable(agency: Agency): Response {
 
 const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
   /** GET /<agency>/arrivals?station=<id>&limit=<default 10, max 30> (`stop` for the ferry). */
-  async arrivals({ agency, url, now, load }) {
+  async arrivals({ agency, data, url, now, load }) {
     const parsed = parseQuery(STOP_QUERIES[agency.stopParam].ArrivalsQuery, url)
     if (!parsed.ok) return parsed.response
-    const data = await agency.data()
     const { stop: param, limit } = parsed.query
     const stop = findStop(data, param)
     if (!stop) return errorResponse(404, `unknown ${agency.stopParam} ${param}`)
@@ -86,10 +88,9 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
   },
 
   /** GET /<agency>/alerts, optionally `?route=<id>` or `?station=<id>`: the alerts in effect now. */
-  async alerts({ agency, url, now, load }) {
+  async alerts({ agency, data, url, now, load }) {
     const parsed = parseQuery(STOP_QUERIES[agency.stopParam].AlertsQuery, url)
     if (!parsed.ok) return parsed.response
-    const data = await agency.data()
     const routeParam = parsed.query.route?.toLowerCase()
     const stopParam = parsed.query.stop
     const stop = stopParam ? findStop(data, stopParam) : undefined
@@ -117,10 +118,9 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
   },
 
   /** GET /<agency>/vehicles, optionally `?route=<id>`: where the trains or boats are. */
-  async vehicles({ agency, url, now, load }) {
+  async vehicles({ agency, data, url, now, load }) {
     const parsed = parseQuery(AgencyVehiclesQuery, url)
     if (!parsed.ok) return parsed.response
-    const data = await agency.data()
     const routeParam = parsed.query.route?.toLowerCase()
     const route = routeParam ? Object.keys(data.routes).find(id => id.toLowerCase() === routeParam) : undefined
     if (routeParam && !route) return errorResponse(404, `unknown route ${routeParam}`)
@@ -136,10 +136,9 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
   },
 
   /** GET /preview/<agency>?q=<name> or ?station=<id>: one plain-text line, next departure per destination. */
-  async preview({ agency, url, now, load }) {
+  async preview({ agency, data, url, now, load }) {
     const parsed = parseQuery(STOP_QUERIES[agency.stopParam].PreviewQuery, url)
     if (!parsed.ok) return parsed.response
-    const data = await agency.data()
     const { id } = parsed.query
     const stop = id !== undefined ? findStop(data, id) : searchStops(data, parsed.query.q)[0]
     if (!stop)
@@ -161,10 +160,9 @@ const OPS: Record<string, (c: Context) => Promise<Response> | Response> = {
 }
 
 /** GET /<agency>/stations (`/ferry/stops`): all of them by name, or `?q=<name>&limit=<default 10, max 25>`. */
-async function list({ agency, url }: Context): Promise<Response> {
+function list({ agency, data, url }: Context): Response {
   const parsed = parseQuery(STOP_QUERIES[agency.stopParam].StopsQuery, url)
   if (!parsed.ok) return parsed.response
-  const data = await agency.data()
   const { q, limit } = parsed.query
   const stops = q
     ? searchStops(data, q).slice(0, limit)

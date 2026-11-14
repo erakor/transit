@@ -2,13 +2,12 @@
  * Response schemas for the routes of `src/routes/agency.ts` (`/lirr/...`, `/mnr/...`,
  * `/ferry/...` and their previews), and the types inferred from them.
  *
- * A stop is a `station` on the railroads and a `stop` on the ferry, in the query and in the
- * answer, so the schemas that name one come in both forms (`STOP_SCHEMAS`; the requests are `STOP_QUERIES` in
- * `queries.ts`).
+ * A stop is a `station` on the railroads and a `stop` on the ferry, in the answer too, so the
+ * schemas that name one come in both forms (`STOP_SCHEMAS`; the requests are `STOP_QUERIES` in `queries.ts`).
  */
 import * as z from 'zod'
 import { keyed } from '#src/query.js'
-import type { StopParam } from './queries.js'
+import type { StopParam } from './types.js'
 import {
   AlertsResult,
   EpochSeconds,

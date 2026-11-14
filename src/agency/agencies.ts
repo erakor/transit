@@ -1,7 +1,6 @@
 import { fallbackRoute } from '#src/gtfsrt.js'
 import { rankByName, tokenize, type NameEntry } from '#src/stops/search.js'
-import type { StopParam } from './queries.js'
-import type { AgencyData, AgencyRoute, AgencyStop } from './types.js'
+import type { AgencyData, AgencyRoute, AgencyStop, StopParam } from './types.js'
 
 /**
  * An agency served by the generic handlers in src/routes/agency.ts: a static GTFS
@@ -20,15 +19,10 @@ export interface Agency {
   alertsFeed: string
   /**
    * The static data, imported on first use so a request loads one agency's: the three are large, and a function
-   * instance usually serves one of them. Memoized, so every call gives the same object (`searchStops` caches on it).
+   * instance usually serves one of them. The module system caches the import, so every call gives the same object
+   * (`searchStops` caches on it).
    */
   data: () => Promise<AgencyData>
-}
-
-/** `load()` once, on the first call. */
-function once<T>(load: () => Promise<T>): () => Promise<T> {
-  let loaded: Promise<T> | undefined
-  return () => (loaded ??= load())
 }
 
 const FERRY = 'https://nycferry.connexionz.net/rtt/public/utility/gtfsrealtime.aspx/'
@@ -41,7 +35,7 @@ export const AGENCIES: Record<string, Agency> = {
     vehicleWord: 'trains',
     tripsFeed: 'lirr/gtfs-lirr',
     alertsFeed: 'camsys/lirr-alerts',
-    data: once(() => import('#src/data/lirr.generated.js').then(m => m.LIRR_DATA)),
+    data: () => import('#src/data/lirr.generated.js').then(m => m.LIRR_DATA),
   },
   mnr: {
     id: 'mnr',
@@ -50,7 +44,7 @@ export const AGENCIES: Record<string, Agency> = {
     vehicleWord: 'trains',
     tripsFeed: 'mnr/gtfs-mnr',
     alertsFeed: 'camsys/mnr-alerts',
-    data: once(() => import('#src/data/mnr.generated.js').then(m => m.MNR_DATA)),
+    data: () => import('#src/data/mnr.generated.js').then(m => m.MNR_DATA),
   },
   ferry: {
     id: 'ferry',
@@ -60,7 +54,7 @@ export const AGENCIES: Record<string, Agency> = {
     tripsFeed: FERRY + 'tripupdate',
     vehiclesFeed: FERRY + 'vehicleposition',
     alertsFeed: FERRY + 'alert',
-    data: once(() => import('#src/data/ferry.generated.js').then(m => m.FERRY_DATA)),
+    data: () => import('#src/data/ferry.generated.js').then(m => m.FERRY_DATA),
   },
 }
 
