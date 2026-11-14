@@ -76,6 +76,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -106,10 +114,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -182,6 +198,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "500": {
@@ -195,7 +219,7 @@
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -254,6 +278,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -284,10 +316,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -348,6 +388,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -378,10 +426,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -451,6 +507,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -481,10 +545,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -556,6 +628,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -586,10 +666,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -629,6 +717,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "500": {
@@ -642,7 +738,7 @@
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -712,6 +808,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -742,10 +846,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -817,6 +929,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -847,10 +967,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -922,6 +1050,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "500": {
@@ -935,7 +1071,7 @@
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -994,6 +1130,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -1024,10 +1168,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1077,6 +1229,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -1107,10 +1267,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1180,6 +1348,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -1210,10 +1386,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1285,6 +1469,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -1315,10 +1507,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1390,6 +1590,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "500": {
@@ -1403,7 +1611,7 @@
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1462,6 +1670,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -1492,10 +1708,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1545,6 +1769,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -1575,10 +1807,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1648,6 +1888,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -1678,10 +1926,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1753,6 +2009,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -1783,10 +2047,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1858,6 +2130,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "500": {
@@ -1871,7 +2151,7 @@
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1930,6 +2210,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -1960,10 +2248,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2013,6 +2309,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -2043,10 +2347,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2116,6 +2428,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -2146,10 +2466,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2221,6 +2549,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -2251,10 +2587,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2315,6 +2659,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -2345,10 +2697,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2409,6 +2769,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -2439,10 +2807,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2526,6 +2902,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "500": {
@@ -2546,10 +2930,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2599,6 +2991,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "500": {
@@ -2619,10 +3019,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2683,6 +3091,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "404": {
@@ -2713,10 +3129,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2800,6 +3224,14 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "The token header to send: x-transit-token.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "500": {
@@ -2820,10 +3252,18 @@
                   "$ref": "#/components/schemas/Error"
                 }
               }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              }
             }
           },
           "503": {
-            "description": "The server is not configured (no token, or no Bus Time key). Retry later.",
+            "description": "The server is not configured: no token or, for the bus routes, no Bus Time key.",
             "content": {
               "application/json": {
                 "schema": {

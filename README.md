@@ -503,10 +503,10 @@ Every 4xx and 5xx answer is `{ "error": "<message>", "code": "<code>" }`, never 
 | `not_found`            | 404    | No such route of the API.                                        |
 | `internal_error`       | 500    | Unexpected failure.                                              |
 | `upstream_unavailable` | 502    | The MTA, PATH or Citi Bike feed failed.                          |
-| `not_configured`       | 503    | The server has no token or Bus Time key.                         |
+| `not_configured`       | 503    | The server has no token, or for bus routes no Bus Time key.      |
 
-A 401 carries `WWW-Authenticate: X-Transit-Token`. A 502 or 503 carries `Retry-After: 15`, the
-length of the feed memo.
+A 401 carries `WWW-Authenticate: X-Transit-Token`. A 502 carries `Retry-After: 15`, the length of
+the feed memo; a 503 does not, since it lasts until an operator sets the variable.
 
 ## Compatibility
 

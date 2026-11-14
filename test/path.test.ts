@@ -6,7 +6,15 @@ import { parsePathFeed, PATH_FEED_URL } from '#src/path/feed.js'
 import { pathPreviewLine } from '#src/path/preview.js'
 import { PATH_ROUTES, PATH_STATIONS, pathStation, routeForColors, searchPathStations } from '#src/path/stations.js'
 import { pathArrivalsHandler, pathHandler, pathPreviewHandler, pathStationsHandler } from '#src/routes/path.js'
-import { auth, fixture, fixtureFetcher, get, PATH_FIXTURE_NOW_MS, useRouteTestSetup } from './helpers.js'
+import {
+  auth,
+  fixture,
+  fixtureFetcher,
+  get,
+  PATH_FIXTURE_NOW_MS,
+  useRouteTestSetup,
+  expectedErrorCode,
+} from './helpers.js'
 
 const NOW = 1_000_000
 const UPDATED = '1970-01-12T13:46:40Z' // NOW
@@ -298,7 +306,7 @@ describe('PATH routes', () => {
     const res = await pathArrivalsHandler(deps())(get(`/path/arrivals${query}`, auth))
     expect(res.status).toBe(status)
     expect(res.headers.get('cache-control')).toBe('no-store')
-    expect(await res.json()).toMatchObject({ error })
+    expect(await res.json()).toEqual({ error, code: expectedErrorCode(status, error) })
   })
 
   it.each([
@@ -315,7 +323,7 @@ describe('PATH routes', () => {
     const res = await GET(get('/path/arrivals?station=WTC', auth))
     expect(res.status).toBe(502)
     expect(res.headers.get('cache-control')).toBe('no-store')
-    expect(await res.json()).toMatchObject({ error: 'PATH feed unavailable' })
+    expect(await res.json()).toEqual({ error: 'PATH feed unavailable', code: 'upstream_unavailable' })
     expect(
       (await pathPreviewHandler({ fetcher: bad, now: () => PATH_FIXTURE_NOW_MS })(get('/preview/path?q=wtc', auth)))
         .status
@@ -372,6 +380,6 @@ describe('PATH routes', () => {
     const res = await pathPreviewHandler(deps())(get(`/preview/path${query}`, auth))
     expect(res.status).toBe(status)
     expect(res.headers.get('cache-control')).toBe('no-store')
-    expect(await res.json()).toMatchObject({ error })
+    expect(await res.json()).toEqual({ error, code: expectedErrorCode(status, error) })
   })
 })

@@ -25,7 +25,7 @@ export class StationIndex {
    */
   resolve(raw: string): ResolvedStop | undefined {
     // A `+` that was not percent-encoded reaches us as a space; station ids never contain one.
-    const id = raw.trim().replace(/\s+/g, '+').toUpperCase()
+    const id = raw.trim().replace(/\s/g, '+').toUpperCase()
     const station = this.byId.get(id)
     if (station) {
       return {

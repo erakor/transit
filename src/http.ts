@@ -1,5 +1,5 @@
 import { checkToken, TOKEN_HEADER } from './auth.js'
-import { ERROR_STATUS, type ErrorCode } from './errors.js'
+import { ERROR_HEADERS, ERROR_STATUS, type ErrorCode } from './errors.js'
 
 /** Live data: the CDN serves a copy for 20 s, then a stale one for up to 40 s while it refreshes. */
 export const LIVE_CACHE = 'public, s-maxage=20, stale-while-revalidate=40'
@@ -47,14 +47,10 @@ export function text(
   })
 }
 
-/** Seconds a client should wait before retrying a 502 or 503; matches the 15 s feed memo. */
-const RETRY_AFTER_SECONDS = 15
-
 export function errorResponse(code: ErrorCode, error: string, vary?: string): Response {
   const status = ERROR_STATUS[code]
   const res = json({ error, code }, { status, cache: NO_STORE, vary })
-  if (status === 401) res.headers.set('www-authenticate', TOKEN_HEADER)
-  if (status === 502 || status === 503) res.headers.set('retry-after', String(RETRY_AFTER_SECONDS))
+  for (const [name, value] of Object.entries(ERROR_HEADERS[code] ?? {})) res.headers.set(name, value)
   return res
 }
 

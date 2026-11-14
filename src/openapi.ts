@@ -385,7 +385,11 @@ export function buildOpenApi(version: string) {
     description,
     content: { 'application/json': { schema } },
   })
-  const error = (description: string) => json(ref(ErrorBody), description)
+  const header = (description: string) => ({ description, schema: { type: 'string' } })
+  const error = (description: string, headers?: Record<string, ReturnType<typeof header>>) => ({
+    ...json(ref(ErrorBody), description),
+    ...(headers && { headers }),
+  })
 
   const paths = Object.fromEntries(
     ROUTES.map(route => {
@@ -409,11 +413,18 @@ export function buildOpenApi(version: string) {
         ...(route.public
           ? {}
           : {
-              401: error('Missing or wrong token.'),
+              401: error('Missing or wrong token.', {
+                'WWW-Authenticate': header('The token header to send: x-transit-token.'),
+              }),
               500: error('Unexpected failure.'),
-              503: error('The server is not configured (no token, or no Bus Time key). Retry later.'),
+              503: error('The server is not configured: no token or, for the bus routes, no Bus Time key.'),
             }),
-        ...Object.fromEntries(Object.entries(route.errors).map(([status, why]) => [status, error(why)])),
+        ...Object.fromEntries(
+          Object.entries(route.errors).map(([status, why]) => [
+            status,
+            error(why, status === '502' ? { 'Retry-After': header('Seconds to wait before retrying.') } : undefined),
+          ])
+        ),
       }
       const { path, tag, summary, description } = route
       // `/subway/arrivals` -> `subwayArrivals`: names the operation in generated clients.

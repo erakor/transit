@@ -26,6 +26,7 @@ import {
   FIXTURE_NOW_MS,
   get,
   useRouteTestSetup,
+  expectedErrorCode,
 } from './helpers.js'
 
 useRouteTestSetup()
@@ -442,7 +443,7 @@ describe('bus routes', () => {
     const r = await res
     expect(r.status).toBe(status)
     expect(r.headers.get('cache-control')).toBe('no-store')
-    expect(await r.json()).toMatchObject({ error })
+    expect(await r.json()).toEqual({ error, code: expectedErrorCode(status, error) })
     if (status === 400) expect(fetcher.calls).toEqual([])
   })
 
@@ -450,7 +451,7 @@ describe('bus routes', () => {
     for (const path of [`/bus/arrivals?stop=${BUS_STOP}`, `/preview/bus?stop=${BUS_STOP}`]) {
       const r = await call(path, [`bustime-${BUS_STOP}.json`]).res
       expect(r.status).toBe(502)
-      expect(await r.json()).toMatchObject({ error: 'Bus Time unavailable' })
+      expect(await r.json()).toEqual({ error: 'Bus Time unavailable', code: 'upstream_unavailable' })
     }
     const logged = vi.mocked(console.error).mock.calls.flat().map(String).join('\n')
     expect(logged).toContain(`bustime stop ${BUS_STOP}`)
@@ -461,7 +462,7 @@ describe('bus routes', () => {
     const { res, fetcher } = call(`/bus/arrivals?stop=${BUS_STOP}`, [], () => undefined)
     const r = await res
     expect(r.status).toBe(503)
-    expect(await r.json()).toEqual({ error: 'service unavailable', code: 'not_configured' })
+    expect(await r.json()).toEqual({ error: 'bus data not configured', code: 'not_configured' })
     expect(fetcher.calls).toEqual([])
     expect(console.error).toHaveBeenCalledWith('BUSTIME_KEY is not set')
   })
@@ -515,7 +516,7 @@ describe('bus routes', () => {
       busHandler({ fetcher: answer(name), now: () => nowMs })(get('/bus/vehicles?route=M999', auth))
     const missing = await vehicles('bustime-vehicles-ZZZ.json', BUS_FIXTURE_NOW_MS)
     expect(missing.status).toBe(404)
-    expect(await missing.json()).toMatchObject({ error: 'unknown route M999' })
+    expect(await missing.json()).toEqual({ error: 'unknown route M999', code: 'unknown_route' })
     // A route newer than the static data: Bus Time runs it, and it shows under its id, in gray.
     const fresh = await vehicles(`bustime-vehicles-${BUS_ROUTE}.json`, BUS_FIXTURE_NOW_MS + 60_000)
     expect(fresh.status).toBe(200)
@@ -558,7 +559,7 @@ describe('bus routes', () => {
     const { res, fetcher } = call(path)
     const r = await res
     expect(r.status).toBe(status)
-    expect(await r.json()).toMatchObject({ error })
+    expect(await r.json()).toEqual({ error, code: expectedErrorCode(status, error) })
     expect(fetcher.calls).toEqual([])
   })
 
@@ -566,7 +567,7 @@ describe('bus routes', () => {
     for (const path of ['/bus/vehicles?route=M15', '/bus/nearby?lat=40.7&lon=-73.9']) {
       const r = await call(path, [], () => undefined).res
       expect(r.status).toBe(503)
-      expect(await r.json()).toEqual({ error: 'service unavailable', code: 'not_configured' })
+      expect(await r.json()).toEqual({ error: 'bus data not configured', code: 'not_configured' })
     }
   })
 
@@ -598,6 +599,6 @@ describe('bus routes', () => {
   it('/bus/alerts is 502 when its feed fails', async () => {
     const r = await call('/bus/alerts', ['bus-alerts'], undefined, FIXTURE_NOW_MS).res
     expect(r.status).toBe(502)
-    expect(await r.json()).toMatchObject({ error: 'MTA alerts unavailable' })
+    expect(await r.json()).toEqual({ error: 'MTA alerts unavailable', code: 'upstream_unavailable' })
   })
 })

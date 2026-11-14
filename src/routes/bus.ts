@@ -44,7 +44,7 @@ function requireKey({ busKey = envKey }: BusDeps): string | Response {
   const key = busKey()
   if (key) return key
   console.error('BUSTIME_KEY is not set')
-  return errorResponse('not_configured', 'service unavailable')
+  return errorResponse('not_configured', 'bus data not configured')
 }
 
 /** How far `/bus/nearby` looks, in meters. */

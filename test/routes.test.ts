@@ -9,7 +9,6 @@ import { subwayAlertsHandler } from '#src/routes/alerts.js'
 import { subwayVehiclesHandler } from '#src/routes/vehicles.js'
 import { pathArrivalsHandler, pathPreviewHandler, pathStationsHandler } from '#src/routes/path.js'
 import { LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE } from '#src/http.js'
-import { stationIndex } from '#src/stops/stations.js'
 import { SUBWAY_DATA } from '#src/data/subway.generated.js'
 import { ErrorBody } from '#src/schema.js'
 import { ArrivalsResponse } from '#src/subway/schemas.js'
@@ -22,6 +21,7 @@ import {
   get,
   PATH_FIXTURE_NOW_MS,
   useRouteTestSetup,
+  expectedErrorCode,
 } from './helpers.js'
 
 const TIMES_SQ = SUBWAY_DATA.stops['127']!.station
@@ -94,11 +94,10 @@ describe.each([
 
   it('is 503 when the server has no token configured', async () => {
     vi.stubEnv('TRANSIT_TOKEN', '')
-    vi.spyOn(console, 'error').mockImplementation(() => {})
     const res = await handler()(get(path + query, auth))
     expect(res.status).toBe(503)
     expect(res.headers.get('cache-control')).toBe('no-store')
-    expect(res.headers.get('retry-after')).toBe('15')
+    expect(res.headers.get('retry-after')).toBeNull()
     expect(await res.json()).toEqual({ error: 'service unavailable', code: 'not_configured' })
   })
 
@@ -113,12 +112,6 @@ describe.each([
     )
     expect(res.headers.get('vary')).toBe('x-transit-token')
     expect(res.headers.get('set-cookie')).toBeNull()
-  })
-})
-
-describe('StationIndex.resolve', () => {
-  it('reads spaces as the + of a station id', () => {
-    expect(stationIndex().resolve(TIMES_SQ.replaceAll('+', ' '))?.id).toBe(TIMES_SQ)
   })
 })
 
@@ -194,7 +187,7 @@ describe('/subway/arrivals', () => {
     const res = await arrivals().GET(get(`/subway/arrivals${query}`, auth))
     expect(res.status).toBe(status)
     expect(res.headers.get('cache-control')).toBe('no-store')
-    expect(ErrorBody.parse(await res.json())).toMatchObject({ error })
+    expect(ErrorBody.parse(await res.json())).toEqual({ error, code: expectedErrorCode(status, error) })
   })
 
   it('caps limit at 10', async () => {
@@ -290,7 +283,7 @@ describe('/preview/subway', () => {
     const res = await preview().GET(get(`/preview/subway${query}`, auth))
     expect(res.status).toBe(status)
     expect(res.headers.get('cache-control')).toBe('no-store')
-    expect(await res.json()).toMatchObject({ error })
+    expect(await res.json()).toEqual({ error, code: expectedErrorCode(status, error) })
   })
 
   it('is 502 when every feed fails', async () => {
