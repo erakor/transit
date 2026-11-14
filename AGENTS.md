@@ -239,6 +239,11 @@ Ids, which clients store as favorites, so keep them stable:
 
 ## Conventions that are easy to break
 
+- A change to the contract (a new field, route, error code or status) bumps `version` in
+  `package.json`, which the OpenAPI document reports; run `pnpm build:openapi`. The README's
+  "Compatibility" section says what may change: additions only.
+- Errors go through `errorResponse(code, message)` with a code from `ERROR_STATUS` in
+  `src/http.ts`; the status follows from the code.
 - Auth is `X-Transit-Token`, not `Authorization`: Vercel's CDN never caches requests with an
   `Authorization` header. Every authenticated response must keep `Vary: x-transit-token`
   (added by `authenticated()`), or a cached 200 could be served to a request without the token.

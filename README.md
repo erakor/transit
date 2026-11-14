@@ -71,7 +71,8 @@ Next trains per route and direction.
 
 Subway station lookup by name, case and accent insensitive. Riders' spellings work too:
 "times square", "42nd street", "jackson heights", "Port Authority" (other names in a complex
-match). `limit` defaults to 10, max 25.
+match). `limit` defaults to 10, max 25. Subway only for now; the other agencies have their own
+`/stations` and `/stops` routes.
 
 ```json
 {
@@ -247,7 +248,8 @@ a stop a `station`, the ferry a `stop`, in paths, parameters and response keys a
 #### `GET /lirr/stations`, `/mnr/stations`, `/ferry/stops`, optionally `?q=<name>&limit=<n>`
 
 Every station by name, or with `q` the ones matching it, best first, like `/stops/search`
-(`limit` defaults to 10, max 25).
+(`limit` defaults to 10, max 25, and applies only with `q`: without it the full list is returned,
+since cutting it to 10 would drop stations).
 
 ```json
 {
@@ -505,6 +507,28 @@ Every 4xx and 5xx answer is `{ "error": "<message>", "code": "<code>" }`, never 
 
 A 401 carries `WWW-Authenticate: X-Transit-Token`. A 502 or 503 carries `Retry-After: 15`, the
 length of the feed memo.
+
+## Compatibility
+
+Clients (the alfresco launcher, for one) are updated separately from this service, so the API only
+grows:
+
+- Fields and routes are added, never removed, renamed or retyped. Clients ignore fields they don't
+  know.
+- Ids that a client may store (station, stop and route ids) stay stable.
+- Error `code`s are stable; the `error` text may change.
+- Query parameters the route doesn't know are ignored, so a misspelled one (`?limt=5`) is not an
+  error: the default applies.
+- There is no CORS, on purpose: a browser client would need it, plus a preflight for the custom
+  token header.
+- A breaking change comes only with a coordinated client update, or under a new path prefix.
+- `info.version` in `public/openapi.json` (from `package.json`) goes up with every contract change:
+  a new minor for additions, a new major for a break.
+
+Known inconsistencies are documented rather than changed, because fixing them would break
+clients: `limit` on the agency station lists applies only with `q`; `/stops/search` is subway
+only; the bus arrival `distance` is text while other distances are meters; `/citibike/nearby`
+takes `n` where the rest take `limit`.
 
 ## Caching
 
