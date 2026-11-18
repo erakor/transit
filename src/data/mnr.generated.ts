@@ -1086,9 +1086,7 @@ export const MNR_DATA: AgencyData = {
    "lat": 40.8253,
    "lon": -73.9299,
    "routes": [
-    "2",
-    "1",
-    "3"
+    "1"
    ]
   },
   "651": {
