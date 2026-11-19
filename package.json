@@ -29,7 +29,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@erakor/toolchain": "github:erakor/toolchain#f1b5fee4e8d1d7a3df29460710db1808f5523d6f",
+    "@erakor/toolchain": "github:erakor/toolchain#v1.1.0",
     "@types/node": "^26.6.6",
     "fflate": "^0.8.3",
     "husky": "^9.1.7",
