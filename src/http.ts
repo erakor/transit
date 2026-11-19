@@ -20,7 +20,7 @@ export const PREVIEW_CACHE = 'public, max-age=20, s-maxage=20, stale-while-reval
 
 export function json(
   body: unknown,
-  { status = 200, cache = NO_STORE, vary }: { status?: number; cache?: string; vary?: string } = {}
+  { status = 200, cache = NO_STORE, vary }: { status?: number; cache?: string; vary?: string } = {},
 ): Response {
   const headers = new Headers({
     'content-type': 'application/json; charset=utf-8',
@@ -36,7 +36,7 @@ export function json(
  */
 export function text(
   line: string,
-  { status = 200, cache = NO_STORE }: { status?: number; cache?: string } = {}
+  { status = 200, cache = NO_STORE }: { status?: number; cache?: string } = {},
 ): Response {
   const body = line.replace(/\s+/g, ' ').trim()
   if (!body || body.startsWith('<')) throw new Error('a preview line must be non-empty text')
@@ -49,7 +49,8 @@ export function text(
 export function errorResponse(code: ErrorCode, error: string, vary?: string): Response {
   const status = ERROR_STATUS[code]
   const res = json({ error, code }, { status, cache: NO_STORE, vary })
-  for (const [name, value] of Object.entries(ERROR_HEADERS[code] ?? {})) res.headers.set(name, value)
+  for (const [name, value] of Object.entries(ERROR_HEADERS[code] ?? {}))
+    res.headers.set(name, value)
   return res
 }
 
@@ -57,7 +58,9 @@ export function errorResponse(code: ErrorCode, error: string, vary?: string): Re
  * Wraps a handler that needs the client token. Successful responses vary on the token header
  * so the CDN keys cached copies by token; errors are never cached.
  */
-export function authenticated(handler: (request: Request, url: URL) => Promise<Response> | Response) {
+export function authenticated(
+  handler: (request: Request, url: URL) => Promise<Response> | Response,
+) {
   return async (request: Request): Promise<Response> => {
     const auth = checkToken(request.headers)
     if (!auth.ok) {
@@ -98,7 +101,7 @@ type Handler = (request: Request) => Promise<Response>
  */
 export function byOp(provider: string, ops: Record<string, Handler>): Handler {
   const notFound = authenticated(() => errorResponse('not_found', 'not found'))
-  return request => {
+  return (request) => {
     const op = providerOp(new URL(request.url), provider)
     return (op && Object.hasOwn(ops, op) ? ops[op]! : notFound)(request)
   }

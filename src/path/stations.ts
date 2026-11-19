@@ -9,10 +9,34 @@ export type PathRoute = RouteDisplay
  * train finds its route: the feed's `lineColor` values, uppercased, sorted and joined with ",".
  */
 const ROUTES: (PathRoute & { feedColors: string })[] = [
-  { id: 'NWK-WTC', name: 'Newark - World Trade Center', color: '#D93A30', textColor: '#FFFFFF', feedColors: 'D93A30' },
-  { id: 'HOB-WTC', name: 'Hoboken - World Trade Center', color: '#65C100', textColor: '#FFFFFF', feedColors: '65C100' },
-  { id: 'JSQ-33', name: 'Journal Square - 33rd Street', color: '#FF9900', textColor: '#FFFFFF', feedColors: 'FF9900' },
-  { id: 'HOB-33', name: 'Hoboken - 33rd Street', color: '#4D92FB', textColor: '#FFFFFF', feedColors: '4D92FB' },
+  {
+    id: 'NWK-WTC',
+    name: 'Newark - World Trade Center',
+    color: '#D93A30',
+    textColor: '#FFFFFF',
+    feedColors: 'D93A30',
+  },
+  {
+    id: 'HOB-WTC',
+    name: 'Hoboken - World Trade Center',
+    color: '#65C100',
+    textColor: '#FFFFFF',
+    feedColors: '65C100',
+  },
+  {
+    id: 'JSQ-33',
+    name: 'Journal Square - 33rd Street',
+    color: '#FF9900',
+    textColor: '#FFFFFF',
+    feedColors: 'FF9900',
+  },
+  {
+    id: 'HOB-33',
+    name: 'Hoboken - 33rd Street',
+    color: '#4D92FB',
+    textColor: '#FFFFFF',
+    feedColors: '4D92FB',
+  },
   {
     id: 'JSQ-33-HOB',
     name: 'Journal Square - 33rd Street (via Hoboken)',
@@ -22,16 +46,18 @@ const ROUTES: (PathRoute & { feedColors: string })[] = [
   },
 ]
 
-const ROUTE_BY_COLORS = new Map(ROUTES.map(({ feedColors, ...route }): [string, PathRoute] => [feedColors, route]))
+const ROUTE_BY_COLORS = new Map(
+  ROUTES.map(({ feedColors, ...route }): [string, PathRoute] => [feedColors, route]),
+)
 export const PATH_ROUTES: readonly PathRoute[] = [...ROUTE_BY_COLORS.values()]
-const ROUTE_BY_ID = new Map(PATH_ROUTES.map(r => [r.id, r]))
+const ROUTE_BY_ID = new Map(PATH_ROUTES.map((r) => [r.id, r]))
 
 /** The feed's `lineColor` ("4d92fb,ff9900") as a lookup key ("4D92FB,FF9900"). */
 export function colorsKey(lineColor: string): string {
   return lineColor
     .toUpperCase()
     .split(',')
-    .map(c => c.trim().replace(/^#/, ''))
+    .map((c) => c.trim().replace(/^#/, ''))
     .filter(Boolean)
     .sort()
     .join(',')
@@ -44,7 +70,7 @@ export function routeForColors(key: string): PathRoute | undefined {
 
 /** Position of a route id in PATH's order; unknown routes go last. */
 export function routeOrder(id: string): number {
-  const i = PATH_ROUTES.findIndex(r => r.id === id)
+  const i = PATH_ROUTES.findIndex((r) => r.id === id)
   return i === -1 ? PATH_ROUTES.length : i
 }
 
@@ -86,7 +112,7 @@ const ALIASES: Record<string, string[]> = {
   '33S': ['Herald Square'],
 }
 
-const STATION_BY_ID = new Map(PATH_STATIONS.map(s => [s.id, s]))
+const STATION_BY_ID = new Map(PATH_STATIONS.map((s) => [s.id, s]))
 
 /** A station by its id, case insensitive. */
 export function pathStation(raw: string): PathStation | undefined {
@@ -94,10 +120,10 @@ export function pathStation(raw: string): PathStation | undefined {
 }
 
 export function routesOf(station: PathStation): PathRoute[] {
-  return station.routes.flatMap(id => ROUTE_BY_ID.get(id) ?? [])
+  return station.routes.flatMap((id) => ROUTE_BY_ID.get(id) ?? [])
 }
 
-const SEARCH = PATH_STATIONS.map(station => ({
+const SEARCH = PATH_STATIONS.map((station) => ({
   item: station,
   names: [station.name, station.id, ...(ALIASES[station.id] ?? [])].map(tokenize),
 }))

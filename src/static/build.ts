@@ -114,7 +114,7 @@ export function buildSubwayData(files: GtfsFiles): SubwayData {
   for (const members of groups.values()) {
     members.sort()
     const id = members.join('+')
-    const infos = members.map(m => stops[m]!)
+    const infos = members.map((m) => stops[m]!)
     for (const s of infos) s.station = id
     stations.push({
       id,
@@ -122,7 +122,7 @@ export function buildSubwayData(files: GtfsFiles): SubwayData {
       lat: round(infos.reduce((a, s) => a + s.lat, 0) / infos.length),
       lon: round(infos.reduce((a, s) => a + s.lon, 0) / infos.length),
       stops: members,
-      routes: [...new Set(infos.flatMap(s => s.routes))].sort(byRouteOrder),
+      routes: [...new Set(infos.flatMap((s) => s.routes))].sort(byRouteOrder),
     })
   }
   stations.sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id))
@@ -148,6 +148,9 @@ function stationName(members: StopInfo[]): string {
   const counts = new Map<string, number>()
   for (const m of members) counts.set(m.name, (counts.get(m.name) ?? 0) + 1)
   return [...members].sort(
-    (a, b) => counts.get(b.name)! - counts.get(a.name)! || b.routes.length - a.routes.length || a.id.localeCompare(b.id)
+    (a, b) =>
+      counts.get(b.name)! - counts.get(a.name)! ||
+      b.routes.length - a.routes.length ||
+      a.id.localeCompare(b.id),
   )[0]!.name
 }

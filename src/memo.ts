@@ -28,7 +28,12 @@ const memo = new Map<string, { expiresAt: number; value: Promise<unknown> }>()
  * `ttlMs` if shorter) counted from when it failed, not from when it started: a load that hangs until its 8 s timeout
  * would otherwise have used up the window before it rejects.
  */
-export function memoized<T>(key: string, now: number, load: () => Promise<T>, ttlMs = MEMO_MS): Promise<T> {
+export function memoized<T>(
+  key: string,
+  now: number,
+  load: () => Promise<T>,
+  ttlMs = MEMO_MS,
+): Promise<T> {
   const hit = memo.get(key)
   if (hit && now < hit.expiresAt) return hit.value as Promise<T>
   // A miss is a good time to let go of feeds nobody asked for lately.
@@ -39,7 +44,8 @@ export function memoized<T>(key: string, now: number, load: () => Promise<T>, tt
   memo.set(key, entry)
   value.catch(() => {
     // `now` is the caller's clock (fixed in tests); the real time the load took moves it to the moment of failure.
-    if (memo.get(key) === entry) entry.expiresAt = now + (Date.now() - started) + Math.min(ttlMs, FAIL_MS)
+    if (memo.get(key) === entry)
+      entry.expiresAt = now + (Date.now() - started) + Math.min(ttlMs, FAIL_MS)
   })
   return value
 }

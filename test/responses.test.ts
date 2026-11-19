@@ -32,11 +32,15 @@ type Handler = (request: Request) => Promise<Response> | Response
 
 /** A handler serving the recorded feeds at the time they were recorded. */
 const HANDLERS: Record<string, () => Handler> = {
-  '/subway/arrivals': () => arrivalsHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
+  '/subway/arrivals': () =>
+    arrivalsHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
   '/stops/search': () => searchHandler(),
-  '/subway/alerts': () => subwayAlertsHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
-  '/subway/vehicles': () => subwayVehiclesHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
-  '/preview/subway': () => subwayPreviewHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
+  '/subway/alerts': () =>
+    subwayAlertsHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
+  '/subway/vehicles': () =>
+    subwayVehiclesHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
+  '/preview/subway': () =>
+    subwayPreviewHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
   '/path/': () => pathHandler({ fetcher: fixtureFetcher(), now: () => PATH_FIXTURE_NOW_MS }),
   '/preview/path': () => pathHandler({ fetcher: fixtureFetcher(), now: () => PATH_FIXTURE_NOW_MS }),
   '/bus/alerts': () => busHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
@@ -48,7 +52,8 @@ const HANDLERS: Record<string, () => Handler> = {
   '/': () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
 }
 
-const handlerFor = (path: string) => HANDLERS[Object.keys(HANDLERS).find(prefix => path.startsWith(prefix))!]!()
+const handlerFor = (path: string) =>
+  HANDLERS[Object.keys(HANDLERS).find((prefix) => path.startsWith(prefix))!]!()
 
 const TIMES_SQ = encodeURIComponent(SUBWAY_DATA.stops['127']!.station)
 
@@ -94,13 +99,13 @@ const REQUESTS = [
 
 describe('documented routes', () => {
   it('each have a request here', () => {
-    const requested = new Set(REQUESTS.map(r => r.split('?')[0]))
-    expect(ROUTES.map(r => r.path).filter(p => !requested.has(p))).toEqual([])
+    const requested = new Set(REQUESTS.map((r) => r.split('?')[0]))
+    expect(ROUTES.map((r) => r.path).filter((p) => !requested.has(p))).toEqual([])
   })
 
-  it.each(REQUESTS)('%s answers what its schema says', async request => {
+  it.each(REQUESTS)('%s answers what its schema says', async (request) => {
     const path = request.split('?')[0]!
-    const route = ROUTES.find(r => r.path === path)!
+    const route = ROUTES.find((r) => r.path === path)!
     const res = await handlerFor(path)(get(request, auth))
     expect(res.status).toBe(200)
     if (route.response === 'text') {
@@ -112,18 +117,19 @@ describe('documented routes', () => {
     expect(parsed.error?.issues ?? []).toEqual([])
   })
 
-  it.each(ROUTES.filter(r => Object.hasOwn(r.errors, 404)))(
+  it.each(ROUTES.filter((r) => Object.hasOwn(r.errors, 404)))(
     '$path answers its 404 in the error schema',
-    async route => {
+    async (route) => {
       // The route's id parameter, the one an unknown value of is a 404.
       const params = Object.keys(z.toJSONSchema(route.query, { io: 'input' }).properties ?? {})
-      const param = ['stop', 'station', 'id', 'route'].find(p => params.includes(p))
+      const param = ['stop', 'station', 'id', 'route'].find((p) => params.includes(p))
       // Bus stop codes have a format: anything else is a 400, before Bus Time is asked. Bus Time
       // decides which routes exist: ZZZ is its recorded answer for one it doesn't run.
-      const unknown = route.path === '/bus/vehicles' ? 'ZZZ' : route.tag === 'Bus' ? '999999' : 'nope'
+      const unknown =
+        route.path === '/bus/vehicles' ? 'ZZZ' : route.tag === 'Bus' ? '999999' : 'nope'
       const res = await handlerFor(route.path)(get(`${route.path}?${param}=${unknown}`, auth))
       expect(res.status).toBe(404)
       expect(ErrorBody.safeParse(await res.json()).success).toBe(true)
-    }
+    },
   )
 })

@@ -9,7 +9,15 @@ import { decodeFeed, VEHICLE_MAX_AGE_S } from '#src/gtfsrt.js'
 import { ALERT_STATUSES, alertType, splitAlertId, statusRank } from '#src/mercury.js'
 import { computeSubwayTrains } from '#src/subway/vehicles.js'
 import { encodeFeed, feedFrom, mercuryAlert } from './feed.js'
-import { auth, fixture, fixtureFetcher, FIXTURE_NOW_MS, get, useRouteTestSetup, expectedErrorCode } from './helpers.js'
+import {
+  auth,
+  fixture,
+  fixtureFetcher,
+  FIXTURE_NOW_MS,
+  get,
+  useRouteTestSetup,
+  expectedErrorCode,
+} from './helpers.js'
 
 const NOW = 1_800_000_000
 const TIMES_SQ = SUBWAY_DATA.stops['127']!.station
@@ -67,7 +75,10 @@ const feed = feedFrom(NOW - 30, [
   },
   {
     id: 'lmm:alert:5',
-    alert: { informedEntity: [{ trip: { tripId: 't', routeId: 'L' } }], headerText: en('The 8:15 [L] is late') },
+    alert: {
+      informedEntity: [{ trip: { tripId: 't', routeId: 'L' } }],
+      headerText: en('The 8:15 [L] is late'),
+    },
   },
   {
     id: 'lmm:alert:6',
@@ -77,13 +88,18 @@ const feed = feedFrom(NOW - 30, [
       headerText: en('New route ZZ is delayed'),
     },
   },
-  { id: 'lmm:alert:7', alert: { activePeriod: [{ start: NOW - 60 }], informedEntity: [{ routeId: 'A' }] } },
+  {
+    id: 'lmm:alert:7',
+    alert: { activePeriod: [{ start: NOW - 60 }], informedEntity: [{ routeId: 'A' }] },
+  },
 ])
 const options: AlertsOptions = {
   now: NOW,
-  route: id => ({ id, name: `${id} train`, color: '#000000', textColor: '#FFFFFF' }),
-  stop: id => {
-    const name = ({ '127': 'Times Sq-42 St', '127N': 'Times Sq-42 St' } as Record<string, string>)[id]
+  route: (id) => ({ id, name: `${id} train`, color: '#000000', textColor: '#FFFFFF' }),
+  stop: (id) => {
+    const name = ({ '127': 'Times Sq-42 St', '127N': 'Times Sq-42 St' } as Record<string, string>)[
+      id
+    ]
     return name ? { id, name, direction: null } : undefined
   },
 }
@@ -92,7 +108,12 @@ describe('computeAlerts', () => {
   it('keeps the alerts in effect now, incidents before planned work, newest first', () => {
     const r = computeAlerts(feed, options)
     expect(r.updatedAt).toBe(NOW - 30)
-    expect(r.alerts.map(a => a.id)).toEqual(['lmm:alert:6', 'lmm:alert:1', 'lmm:alert:5', 'lmm:planned_work:2'])
+    expect(r.alerts.map((a) => a.id)).toEqual([
+      'lmm:alert:6',
+      'lmm:alert:1',
+      'lmm:alert:5',
+      'lmm:planned_work:2',
+    ])
   })
 
   it('returns plain text, the period in effect, and routes and stops with names', () => {
@@ -128,15 +149,16 @@ describe('computeAlerts', () => {
   })
 
   it('filters on any informed entity', () => {
-    const ids = (match: AlertsOptions['match']) => computeAlerts(feed, { ...options, match }).alerts.map(a => a.id)
-    expect(ids(r => r === 'A')).toEqual(['lmm:alert:1'])
+    const ids = (match: AlertsOptions['match']) =>
+      computeAlerts(feed, { ...options, match }).alerts.map((a) => a.id)
+    expect(ids((r) => r === 'A')).toEqual(['lmm:alert:1'])
     expect(ids((_r, s) => s === '127N')).toEqual(['lmm:planned_work:2'])
     expect(ids(() => false)).toEqual([])
   })
 
   it.each(['subway-alerts', 'bus-alerts', 'lirr-alerts', 'mnr-alerts', 'ferry-alert'])(
     'reads the recorded %s feed',
-    name => {
+    (name) => {
       const { alerts, updatedAt } = computeAlerts(decodeFeed(fixture(`${name}.pb`)), {
         ...options,
         now: Math.floor(FIXTURE_NOW_MS / 1000),
@@ -151,8 +173,8 @@ describe('computeAlerts', () => {
         if (name === 'ferry-alert') expect([a.category, a.priority]).toEqual([null, null])
         else expect(statusRank(a.category ?? '')).toBe(a.priority)
       }
-      expect(new Set(alerts.map(a => a.id)).size).toBe(alerts.length)
-    }
+      expect(new Set(alerts.map((a) => a.id)).size).toBe(alerts.length)
+    },
   )
 })
 
@@ -179,12 +201,20 @@ describe('MTA alert statuses', () => {
       { id: 'b', alert: { headerText: en('y') } },
       { id: 'c', alert: { headerText: en('z') }, alertType: 'Planned - Stops Skipped ✓' },
     ])
-    expect(f.entity.map(e => alertType(e.alert!))).toEqual(['Delays', undefined, 'Planned - Stops Skipped ✓'])
+    expect(f.entity.map((e) => alertType(e.alert!))).toEqual([
+      'Delays',
+      undefined,
+      'Planned - Stops Skipped ✓',
+    ])
     // Other unknown fields are skipped, unreadable bytes give nothing.
-    expect(alertType({ $unknowns: [mercuryAlert('Other', 1002), mercuryAlert('Delays')] })).toBe('Delays')
+    expect(alertType({ $unknowns: [mercuryAlert('Other', 1002), mercuryAlert('Delays')] })).toBe(
+      'Delays',
+    )
     expect(alertType({ $unknowns: [new Uint8Array([0xca, 0x3e, 0x40, 0x01])] })).toBeUndefined()
     // An unreadable field next to it doesn't hide the extension.
-    expect(alertType({ $unknowns: [new Uint8Array([0xcb, 0x3e]), mercuryAlert('Delays')] })).toBe('Delays')
+    expect(alertType({ $unknowns: [new Uint8Array([0xcb, 0x3e]), mercuryAlert('Delays')] })).toBe(
+      'Delays',
+    )
     expect(alertType({})).toBeUndefined()
   })
 
@@ -209,7 +239,11 @@ describe('MTA alert statuses', () => {
     },
     {
       id: 'lmm:alert:10:3',
-      alert: { activePeriod: [{ start: NOW - 60 }], informedEntity: [{ routeId: '4' }], headerText: en('Notice') },
+      alert: {
+        activePeriod: [{ start: NOW - 60 }],
+        informedEntity: [{ routeId: '4' }],
+        headerText: en('Notice'),
+      },
     },
     {
       id: 'lmm:planned_work:11',
@@ -225,7 +259,7 @@ describe('MTA alert statuses', () => {
 
   it('merges the parts of an alert under its id, with the most serious status', () => {
     const { alerts } = computeAlerts(split, options)
-    expect(alerts.map(a => [a.id, a.category, a.priority])).toEqual([
+    expect(alerts.map((a) => [a.id, a.category, a.priority])).toEqual([
       ['lmm:alert:9', 'Delays', 26],
       // Newer, but a lower priority; its status comes from the rank alone.
       ['lmm:alert:10', 'Station Notice', 3],
@@ -233,17 +267,17 @@ describe('MTA alert statuses', () => {
       ['lmm:planned_work:11', 'Planned - Suspended', 21],
       ['lmm:planned_work:12', 'Boarding Change', 10],
     ])
-    expect(alerts[0]!.routes.map(r => r.id)).toEqual(['6', '6X', '4', '5'])
+    expect(alerts[0]!.routes.map((r) => r.id)).toEqual(['6', '6X', '4', '5'])
     expect(alerts[0]!.start).toBe(NOW - 300)
   })
 
   it('merges only the parts that pass the filter', () => {
-    const { alerts } = computeAlerts(split, { ...options, match: r => r === '5' })
-    expect(alerts.map(a => [a.id, a.category])).toEqual([
+    const { alerts } = computeAlerts(split, { ...options, match: (r) => r === '5' })
+    expect(alerts.map((a) => [a.id, a.category])).toEqual([
       ['lmm:alert:9', 'Express to Local'],
       ['lmm:planned_work:11', 'Planned - Suspended'],
     ])
-    expect(alerts[0]!.routes.map(r => r.id)).toEqual(['4', '5'])
+    expect(alerts[0]!.routes.map((r) => r.id)).toEqual(['4', '5'])
   })
 })
 
@@ -257,7 +291,9 @@ describe('subway alerts and vehicles routes', () => {
 
   it('/subway/alerts returns every alert in effect with names and colors joined in', async () => {
     const fetcher = fixtureFetcher()
-    const res = await subwayAlertsHandler({ fetcher, now: () => FIXTURE_NOW_MS })(get('/subway/alerts', auth))
+    const res = await subwayAlertsHandler({ fetcher, now: () => FIXTURE_NOW_MS })(
+      get('/subway/alerts', auth),
+    )
     expect(res.status).toBe(200)
     expect(res.headers.get('cache-control')).toBe(ALERTS_CACHE)
     expect(fetcher.calls).toEqual(['subway-alerts'])
@@ -265,7 +301,8 @@ describe('subway alerts and vehicles routes', () => {
     expect(body.alerts.length).toBeGreaterThan(0)
     const routes = body.alerts.flatMap((a: { routes: { id: string; color: string }[] }) => a.routes)
     expect(routes.length).toBeGreaterThan(0)
-    for (const r of routes) if (SUBWAY_DATA.routes[r.id]) expect(r.color).toBe(SUBWAY_DATA.routes[r.id]!.color)
+    for (const r of routes)
+      if (SUBWAY_DATA.routes[r.id]) expect(r.color).toBe(SUBWAY_DATA.routes[r.id]!.color)
   })
 
   it('/subway/alerts filters by route, case insensitively', async () => {
@@ -284,12 +321,17 @@ describe('subway alerts and vehicles routes', () => {
     const body = await (await alerts(`/subway/alerts?stop=${encodeURIComponent(TIMES_SQ)}`)).json()
     expect(body.stop).toMatchObject({ id: TIMES_SQ, name: 'Times Sq-42 St' })
     // A and C stop in the complex; the L alert names a trip, not a stop here; ZZ is no route of it.
-    expect(body.alerts.map((a: { id: string }) => a.id)).toEqual(['lmm:alert:1', 'lmm:planned_work:2'])
+    expect(body.alerts.map((a: { id: string }) => a.id)).toEqual([
+      'lmm:alert:1',
+      'lmm:planned_work:2',
+    ])
     // It names the stop and its northbound platform: both directions.
     expect(body.alerts[1].stops).toEqual([{ id: '127', name: 'Times Sq-42 St', direction: null }])
     const bedford = await (await alerts('/subway/alerts?stop=L08')).json()
     expect(bedford.alerts.map((a: { id: string }) => a.id)).toEqual(['lmm:alert:5'])
-    const both = await (await alerts(`/subway/alerts?stop=${encodeURIComponent(TIMES_SQ)}&route=1`)).json()
+    const both = await (
+      await alerts(`/subway/alerts?stop=${encodeURIComponent(TIMES_SQ)}&route=1`)
+    ).json()
     expect(both.alerts.map((a: { id: string }) => a.id)).toEqual(['lmm:planned_work:2'])
   })
 
@@ -311,9 +353,13 @@ describe('subway alerts and vehicles routes', () => {
     ])
     const fetcher = async () => new Response(encodeFeed(directional) as Uint8Array<ArrayBuffer>)
     const ids = async (stop: string) =>
-      (await (await alerts(`/subway/alerts?stop=${stop}`, fetcher)).json()).alerts.map((a: { id: string }) => a.id)
+      (await (await alerts(`/subway/alerts?stop=${stop}`, fetcher)).json()).alerts.map(
+        (a: { id: string }) => a.id,
+      )
     const [alert] = (await (await alerts('/subway/alerts?route=7', fetcher)).json()).alerts
-    expect(alert.stops.map((s: { id: string; direction: string | null }) => [s.id, s.direction])).toEqual([
+    expect(
+      alert.stops.map((s: { id: string; direction: string | null }) => [s.id, s.direction]),
+    ).toEqual([
       ['711', 'S'],
       ['712', null],
       ['713', 'S'],
@@ -339,12 +385,18 @@ describe('subway alerts and vehicles routes', () => {
     const res = await alerts('/subway/alerts', async () => new Response('down', { status: 503 }))
     expect(res.status).toBe(502)
     expect(res.headers.get('cache-control')).toBe('no-store')
-    expect(await res.json()).toEqual({ error: 'MTA alerts unavailable', code: 'upstream_unavailable' })
+    expect(await res.json()).toEqual({
+      error: 'MTA alerts unavailable',
+      code: 'upstream_unavailable',
+    })
   })
 
   const vehicles = (path: string, fail: string[] = []) => {
     const fetcher = fixtureFetcher(fail)
-    return { fetcher, res: subwayVehiclesHandler({ fetcher, now: () => FIXTURE_NOW_MS })(get(path, auth)) }
+    return {
+      fetcher,
+      res: subwayVehiclesHandler({ fetcher, now: () => FIXTURE_NOW_MS })(get(path, auth)),
+    }
   }
 
   it("/subway/vehicles lists a route's trains with the stop each is at or heading to", async () => {
@@ -354,10 +406,22 @@ describe('subway alerts and vehicles routes', () => {
     expect(r.headers.get('cache-control')).toBe(LIVE_CACHE)
     expect(fetcher.calls).toEqual(['gtfs-l'])
     const body = await r.json()
-    expect(body.route).toEqual({ id: 'L', name: 'L', color: SUBWAY_DATA.routes.L!.color, textColor: '#FFFFFF' })
+    expect(body.route).toEqual({
+      id: 'L',
+      name: 'L',
+      color: SUBWAY_DATA.routes.L!.color,
+      textColor: '#FFFFFF',
+    })
     expect(body.vehicles.length).toBeGreaterThan(3)
     for (const v of body.vehicles) {
-      expect(Object.keys(v).sort()).toEqual(['direction', 'headsign', 'status', 'stop', 'time', 'tripId'])
+      expect(Object.keys(v).sort()).toEqual([
+        'direction',
+        'headsign',
+        'status',
+        'stop',
+        'time',
+        'tripId',
+      ])
       expect(['INCOMING_AT', 'STOPPED_AT', 'IN_TRANSIT_TO']).toContain(v.status)
       expect(v.stop.id).toMatch(/^L\d\d[NS]$/)
       expect(v.stop.id.endsWith(v.direction)).toBe(true)
@@ -392,9 +456,22 @@ describe('computeSubwayTrains', () => {
         ],
       },
     },
-    { vehicle: { trip: { tripId: 'south', routeId: 'L' }, currentStatus: 1, stopId: 'L08S', timestamp: NOW - 10 } },
+    {
+      vehicle: {
+        trip: { tripId: 'south', routeId: 'L' },
+        currentStatus: 1,
+        stopId: 'L08S',
+        timestamp: NOW - 10,
+      },
+    },
     { vehicle: { trip: { tripId: 'north', routeId: 'L' }, stopId: 'L06N', timestamp: NOW - 5 } },
-    { vehicle: { trip: { tripId: 'stale', routeId: 'L' }, stopId: 'L03N', timestamp: NOW - VEHICLE_MAX_AGE_S - 1 } },
+    {
+      vehicle: {
+        trip: { tripId: 'stale', routeId: 'L' },
+        stopId: 'L03N',
+        timestamp: NOW - VEHICLE_MAX_AGE_S - 1,
+      },
+    },
     { vehicle: { trip: { tripId: 'other', routeId: 'G' }, stopId: 'G22N', timestamp: NOW } },
   ])
 

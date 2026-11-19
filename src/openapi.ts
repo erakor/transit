@@ -2,7 +2,12 @@
 import * as z from 'zod'
 import { AGENCIES } from '#src/agency/agencies.js'
 import { AgencyVehiclesQuery, STOP_QUERIES } from '#src/agency/queries.js'
-import { AgencyArrival, AgencyVehicle, AgencyVehiclesResponse, STOP_SCHEMAS } from '#src/agency/schemas.js'
+import {
+  AgencyArrival,
+  AgencyVehicle,
+  AgencyVehiclesResponse,
+  STOP_SCHEMAS,
+} from '#src/agency/schemas.js'
 import { TOKEN_HEADER } from '#src/auth.js'
 import {
   BusAlertsQuery,
@@ -20,7 +25,12 @@ import {
   NearbyBusStop,
 } from '#src/bus/schemas.js'
 import { NearbyQuery, StationQuery } from '#src/citibike/queries.js'
-import { BikeStation, NearbyResponse, NearbyStation, StationResponse } from '#src/citibike/schemas.js'
+import {
+  BikeStation,
+  NearbyResponse,
+  NearbyStation,
+  StationResponse,
+} from '#src/citibike/schemas.js'
 import { PathArrivalsQuery, PathPreviewQuery } from '#src/path/queries.js'
 import {
   PathArrival,
@@ -29,7 +39,13 @@ import {
   PathStationsResponse,
 } from '#src/path/schemas.js'
 import { Alert, AlertsResult, ErrorBody, HealthResponse, RouteDisplay } from '#src/schema.js'
-import { AlertsQuery, ArrivalsQuery, PreviewQuery, SearchQuery, VehiclesQuery } from '#src/subway/queries.js'
+import {
+  AlertsQuery,
+  ArrivalsQuery,
+  PreviewQuery,
+  SearchQuery,
+  VehiclesQuery,
+} from '#src/subway/queries.js'
 import {
   AlertsResponse,
   Arrival,
@@ -63,67 +79,70 @@ const PREVIEW =
 
 /** `/lirr/...`, `/mnr/...` and `/ferry/...`: the same routes, named after what the agency calls a stop. */
 function agencyRoutes(): Route[] {
-  return Object.values(AGENCIES).flatMap(({ id, name, stopParam: p, vehicleWord, scheduled }): Route[] => {
-    const s = STOP_SCHEMAS[p]
-    const q = STOP_QUERIES[p]
-    const unknown = `Unknown \`${p}\`.`
-    const unavailable = `The ${name} feed failed.`
-    return [
-      {
-        path: `/${id}/arrivals`,
-        tag: name,
-        summary: `Next departures at a ${name} ${p}`,
-        description:
-          'Every route and direction in one list, soonest first, like a departure board.' +
-          (scheduled
-            ? ' Stops the feed does not predict are timed from the last predicted stop with the schedule.'
-            : ''),
-        query: q.ArrivalsQuery,
-        response: s.ArrivalsResponse,
-        errors: { 400: `Missing \`${p}\` or bad \`limit\`.`, 404: unknown, 502: unavailable },
-      },
-      {
-        path: `/${id}/${p}s`,
-        tag: name,
-        summary: `${name} ${p}s`,
-        description: `All ${p}s by name, or those matching \`q\`, best first. Changes only with a deploy.`,
-        query: q.StopsQuery,
-        response: s.StopsResponse,
-        errors: { 400: '`q` too long or bad `limit`.' },
-      },
-      {
-        path: `/${id}/alerts`,
-        tag: name,
-        summary: `${name} service alerts`,
-        description: `The alerts in effect now, optionally for one route or ${p}.`,
-        query: q.AlertsQuery,
-        response: s.AlertsResponse,
-        errors: { 404: unknown, 502: `The ${name} alerts feed failed.` },
-      },
-      {
-        path: `/${id}/vehicles`,
-        tag: name,
-        summary: `Where the ${name} ${vehicleWord} are`,
-        description: 'Positions from the realtime feed, with the trip each vehicle runs when known.',
-        query: AgencyVehiclesQuery,
-        response: AgencyVehiclesResponse,
-        errors: { 404: 'Unknown `route`.', 502: unavailable },
-      },
-      {
-        path: `/preview/${id}`,
-        tag: name,
-        summary: `${name} departures as one line of text`,
-        description: `${PREVIEW} The next departure to each destination.`,
-        query: q.PreviewQuery,
-        response: 'text',
-        errors: {
-          400: `Neither \`q\` nor \`${p}\`, or \`q\` too long.`,
-          404: `Unknown \`${p}\` or no match.`,
-          502: unavailable,
+  return Object.values(AGENCIES).flatMap(
+    ({ id, name, stopParam: p, vehicleWord, scheduled }): Route[] => {
+      const s = STOP_SCHEMAS[p]
+      const q = STOP_QUERIES[p]
+      const unknown = `Unknown \`${p}\`.`
+      const unavailable = `The ${name} feed failed.`
+      return [
+        {
+          path: `/${id}/arrivals`,
+          tag: name,
+          summary: `Next departures at a ${name} ${p}`,
+          description:
+            'Every route and direction in one list, soonest first, like a departure board.' +
+            (scheduled
+              ? ' Stops the feed does not predict are timed from the last predicted stop with the schedule.'
+              : ''),
+          query: q.ArrivalsQuery,
+          response: s.ArrivalsResponse,
+          errors: { 400: `Missing \`${p}\` or bad \`limit\`.`, 404: unknown, 502: unavailable },
         },
-      },
-    ]
-  })
+        {
+          path: `/${id}/${p}s`,
+          tag: name,
+          summary: `${name} ${p}s`,
+          description: `All ${p}s by name, or those matching \`q\`, best first. Changes only with a deploy.`,
+          query: q.StopsQuery,
+          response: s.StopsResponse,
+          errors: { 400: '`q` too long or bad `limit`.' },
+        },
+        {
+          path: `/${id}/alerts`,
+          tag: name,
+          summary: `${name} service alerts`,
+          description: `The alerts in effect now, optionally for one route or ${p}.`,
+          query: q.AlertsQuery,
+          response: s.AlertsResponse,
+          errors: { 404: unknown, 502: `The ${name} alerts feed failed.` },
+        },
+        {
+          path: `/${id}/vehicles`,
+          tag: name,
+          summary: `Where the ${name} ${vehicleWord} are`,
+          description:
+            'Positions from the realtime feed, with the trip each vehicle runs when known.',
+          query: AgencyVehiclesQuery,
+          response: AgencyVehiclesResponse,
+          errors: { 404: 'Unknown `route`.', 502: unavailable },
+        },
+        {
+          path: `/preview/${id}`,
+          tag: name,
+          summary: `${name} departures as one line of text`,
+          description: `${PREVIEW} The next departure to each destination.`,
+          query: q.PreviewQuery,
+          response: 'text',
+          errors: {
+            400: `Neither \`q\` nor \`${p}\`, or \`q\` too long.`,
+            404: `Unknown \`${p}\` or no match.`,
+            502: unavailable,
+          },
+        },
+      ]
+    },
+  )
 }
 
 /** Documented routes: every route but `/docs` and `/openapi.json` themselves. */
@@ -137,7 +156,11 @@ export const ROUTES: Route[] = [
       'what was available, `unavailableFeeds`, and a shorter cache.',
     query: ArrivalsQuery,
     response: ArrivalsResponse,
-    errors: { 400: 'Missing `stop` or bad `limit`.', 404: 'Unknown stop.', 502: 'Every MTA feed failed.' },
+    errors: {
+      400: 'Missing `stop` or bad `limit`.',
+      404: 'Unknown stop.',
+      502: 'Every MTA feed failed.',
+    },
   },
   {
     path: '/stops/search',
@@ -161,7 +184,8 @@ export const ROUTES: Route[] = [
     path: '/subway/vehicles',
     tag: 'Subway',
     summary: "Where a subway route's trains are",
-    description: 'The stop each train of the route is at or heading to. The subway feeds carry no coordinates.',
+    description:
+      'The stop each train of the route is at or heading to. The subway feeds carry no coordinates.',
     query: VehiclesQuery,
     response: VehiclesResponse,
     errors: { 400: 'Missing `route`.', 404: 'Unknown route.', 502: "The route's feed failed." },
@@ -186,7 +210,11 @@ export const ROUTES: Route[] = [
     description: 'Next trains per route and direction.',
     query: PathArrivalsQuery,
     response: PathArrivalsResponse,
-    errors: { 400: 'Missing `station` or bad `limit`.', 404: 'Unknown station.', 502: 'The PATH feed failed.' },
+    errors: {
+      400: 'Missing `station` or bad `limit`.',
+      404: 'Unknown station.',
+      502: 'The PATH feed failed.',
+    },
   },
   {
     path: '/path/stations',
@@ -243,7 +271,8 @@ export const ROUTES: Route[] = [
     path: '/bus/vehicles',
     tag: 'Bus',
     summary: "Where a bus route's buses are",
-    description: 'Every bus on one route, both directions, from MTA Bus Time: position, heading and next stop.',
+    description:
+      'Every bus on one route, both directions, from MTA Bus Time: position, heading and next stop.',
     query: BusVehiclesQuery,
     response: BusVehiclesResponse,
     errors: {
@@ -261,7 +290,10 @@ export const ROUTES: Route[] = [
       'that stop there. From MTA Bus Time.',
     query: BusNearbyQuery,
     response: BusNearbyResponse,
-    errors: { 400: 'Missing or out of range `lat` or `lon`, or bad `limit`.', 502: 'Bus Time failed.' },
+    errors: {
+      400: 'Missing or out of range `lat` or `lon`, or bad `limit`.',
+      502: 'Bus Time failed.',
+    },
   },
   {
     path: '/bus/alerts',
@@ -288,7 +320,10 @@ export const ROUTES: Route[] = [
     description: 'The closest stations on the street, nearest first, with their bikes and docks.',
     query: NearbyQuery,
     response: NearbyResponse,
-    errors: { 400: 'Missing or bad `lat` or `lon`, or bad `n`.', 502: 'The Citi Bike feeds failed.' },
+    errors: {
+      400: 'Missing or bad `lat` or `lon`, or bad `n`.',
+      502: 'The Citi Bike feeds failed.',
+    },
   },
   {
     path: '/health',
@@ -351,7 +386,10 @@ function embedded(schema: object): Record<string, unknown> {
  * Count and coordinate parameters are checked as text but are numbers to clients: their helpers in
  * src/schema.ts give the schema to show in `.meta({ asNumber })`, which replaces the text rule.
  */
-const asNumber: NonNullable<z.core.JSONSchemaGeneratorParams['override']> = ({ zodSchema, jsonSchema }) => {
+const asNumber: NonNullable<z.core.JSONSchemaGeneratorParams['override']> = ({
+  zodSchema,
+  jsonSchema,
+}) => {
   const number = z.globalRegistry.get(zodSchema)?.asNumber
   if (!number) return
   const { description } = jsonSchema
@@ -362,7 +400,7 @@ const asNumber: NonNullable<z.core.JSONSchemaGeneratorParams['override']> = ({ z
 export function buildOpenApi(version: string) {
   const registry = z.registry<{ id: string }>()
   for (const [id, schema] of Object.entries(NAMED)) registry.add(schema, { id })
-  const { schemas } = z.toJSONSchema(registry, { uri: id => `#/components/schemas/${id}` })
+  const { schemas } = z.toJSONSchema(registry, { uri: (id) => `#/components/schemas/${id}` })
   const ref = (schema: z.ZodType) => {
     const id = registry.get(schema)?.id
     if (!id) throw new Error('response schemas must be listed in NAMED')
@@ -379,7 +417,7 @@ export function buildOpenApi(version: string) {
   })
 
   const paths = Object.fromEntries(
-    ROUTES.map(route => {
+    ROUTES.map((route) => {
       const query = z.toJSONSchema(route.query, { io: 'input', override: asNumber })
       const parameters = Object.entries(query.properties ?? {}).map(([name, property]) => {
         const { description, ...schema } = property as Record<string, unknown>
@@ -404,21 +442,41 @@ export function buildOpenApi(version: string) {
                 'WWW-Authenticate': header('The token header to send: x-transit-token.'),
               }),
               500: error('Unexpected failure.'),
-              503: error('The server is not configured: no token or, for the bus routes, no Bus Time key.'),
+              503: error(
+                'The server is not configured: no token or, for the bus routes, no Bus Time key.',
+              ),
             }),
         ...Object.fromEntries(
           Object.entries(route.errors).map(([status, why]) => [
             status,
-            error(why, status === '502' ? { 'Retry-After': header('Seconds to wait before retrying.') } : undefined),
-          ])
+            error(
+              why,
+              status === '502'
+                ? { 'Retry-After': header('Seconds to wait before retrying.') }
+                : undefined,
+            ),
+          ]),
         ),
       }
       const { path, tag, summary, description } = route
       // `/subway/arrivals` -> `subwayArrivals`: names the operation in generated clients.
       const operationId = path.slice(1).replace(/[/-](\w)/g, (_, c: string) => c.toUpperCase())
       const security = route.public ? { security: [] } : {}
-      return [path, { get: { operationId, tags: [tag], summary, description, ...security, parameters, responses } }]
-    })
+      return [
+        path,
+        {
+          get: {
+            operationId,
+            tags: [tag],
+            summary,
+            description,
+            ...security,
+            parameters,
+            responses,
+          },
+        },
+      ]
+    }),
   )
 
   return {
@@ -435,7 +493,9 @@ export function buildOpenApi(version: string) {
     paths,
     components: {
       securitySchemes: { token: { type: 'apiKey', in: 'header', name: TOKEN_HEADER } },
-      schemas: Object.fromEntries(Object.entries(schemas).map(([id, schema]) => [id, embedded(schema)])),
+      schemas: Object.fromEntries(
+        Object.entries(schemas).map(([id, schema]) => [id, embedded(schema)]),
+      ),
     },
   }
 }

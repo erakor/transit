@@ -13,15 +13,18 @@ import type { ArrivalsResult } from './schemas.js'
 export async function loadArrivals(
   stop: ResolvedStop,
   idx: StationIndex,
-  { fetcher, nowMs, limit }: { fetcher?: Fetcher; nowMs: number; limit: number }
+  { fetcher, nowMs, limit }: { fetcher?: Fetcher; nowMs: number; limit: number },
 ): Promise<{ result: ArrivalsResult; failed: string[] } | undefined> {
   const names = feedsForRoutes(stop.routes)
-  const settled = await Promise.allSettled(names.map(f => fetchFeed(f, { fetcher, now: nowMs })))
-  const feeds = settled.flatMap(s => (s.status === 'fulfilled' ? [s.value] : []))
+  const settled = await Promise.allSettled(names.map((f) => fetchFeed(f, { fetcher, now: nowMs })))
+  const feeds = settled.flatMap((s) => (s.status === 'fulfilled' ? [s.value] : []))
   const failed = names.filter((_, i) => settled[i]!.status === 'rejected')
   for (const [i, s] of settled.entries()) {
     if (s.status === 'rejected') console.error(`feed ${names[i]} failed:`, s.reason)
   }
   if (names.length > 0 && feeds.length === 0) return undefined
-  return { result: computeArrivals(stop, feeds, idx, { now: Math.floor(nowMs / 1000), limit }), failed }
+  return {
+    result: computeArrivals(stop, feeds, idx, { now: Math.floor(nowMs / 1000), limit }),
+    failed,
+  }
 }

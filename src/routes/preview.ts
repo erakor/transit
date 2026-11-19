@@ -15,7 +15,11 @@ const PARTIAL_PREVIEW_CACHE = 'public, max-age=5, s-maxage=5'
  * per route and direction, for a launcher hint. `q` takes the top `/stops/search` result.
  * Errors are JSON like every other route; clients that show a line just ignore them.
  */
-export function subwayPreviewHandler({ fetcher, now = () => Date.now(), index = stationIndex }: ArrivalsDeps = {}) {
+export function subwayPreviewHandler({
+  fetcher,
+  now = () => Date.now(),
+  index = stationIndex,
+}: ArrivalsDeps = {}) {
   let search: StopSearch | undefined
   return authenticated(async (_request, url) => {
     const parsed = parseQuery(PreviewQuery, url)
@@ -23,7 +27,10 @@ export function subwayPreviewHandler({ fetcher, now = () => Date.now(), index = 
     const query = parsed.query
 
     const idx = index()
-    const stopId = query.id !== undefined ? query.id : (search ??= new StopSearch(idx.data)).search(query.q, 1)[0]?.id
+    const stopId =
+      query.id !== undefined
+        ? query.id
+        : (search ??= new StopSearch(idx.data)).search(query.q, 1)[0]?.id
     if (!stopId) return errorResponse('unknown_station', 'no matching station')
     const stop = idx.resolve(stopId)
     if (!stop) return errorResponse('unknown_stop', `unknown stop ${stopId}`)

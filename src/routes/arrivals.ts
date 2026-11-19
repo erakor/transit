@@ -16,7 +16,11 @@ export interface ArrivalsDeps {
 }
 
 /** GET /subway/arrivals?stop=<station, stop or platform id>&limit=<per route and direction, default 3, max 10> */
-export function arrivalsHandler({ fetcher, now = () => Date.now(), index = stationIndex }: ArrivalsDeps = {}) {
+export function arrivalsHandler({
+  fetcher,
+  now = () => Date.now(),
+  index = stationIndex,
+}: ArrivalsDeps = {}) {
   return authenticated(async (_request, url) => {
     const parsed = parseQuery(ArrivalsQuery, url)
     if (!parsed.ok) return parsed.response

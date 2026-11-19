@@ -20,7 +20,7 @@ export function nearest<T extends { lat: number; lon: number }>(
   lat: number,
   lon: number,
   n: number,
-  id: (item: T) => string
+  id: (item: T) => string,
 ): [distance: number, item: T][] {
   const best: [number, T][] = []
   if (n < 1) return best

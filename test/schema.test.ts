@@ -1,12 +1,21 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import * as z from 'zod'
 import { VEHICLE_STATUS } from '#src/gtfsrt.js'
-import { coordinateParam, countParam, optionalParam, parseQuery, requiredParam } from '#src/query.js'
+import {
+  coordinateParam,
+  countParam,
+  optionalParam,
+  parseQuery,
+  requiredParam,
+} from '#src/query.js'
 import { VehicleStatus } from '#src/schema.js'
 import { ArrivalsQuery } from '#src/subway/queries.js'
 import { ArrivalsResponse } from '#src/subway/schemas.js'
 
-const Query = z.object({ name: requiredParam('name', 'A name.'), n: countParam('n', 3, 10, 'How many.') })
+const Query = z.object({
+  name: requiredParam('name', 'A name.'),
+  n: countParam('n', 3, 10, 'How many.'),
+})
 const parse = (qs: string) => parseQuery(Query, new URL(`https://x.test/${qs}`))
 
 describe('parseQuery', () => {
@@ -65,7 +74,10 @@ describe('parameter helpers', () => {
   })
 
   it('caps text length after trimming', async () => {
-    expect(parse('?q=%20abcde%20&name=abcde')).toMatchObject({ ok: true, query: { q: 'abcde', name: 'abcde' } })
+    expect(parse('?q=%20abcde%20&name=abcde')).toMatchObject({
+      ok: true,
+      query: { q: 'abcde', name: 'abcde' },
+    })
     expect(await error('?q=abcdef')).toBe('q is too long')
     expect(await error('?name=abcdef')).toBe('name is too long')
   })
@@ -83,7 +95,7 @@ describe('parameter helpers', () => {
 
   it.each([
     ['%20', 'lat is required'],
-    ...['90.1', '-91', '0x10', 'abc', '1,5', 'Infinity', '1e999', '-1e400'].map(v => [
+    ...['90.1', '-91', '0x10', 'abc', '1,5', 'Infinity', '1e999', '-1e400'].map((v) => [
       v,
       'lat must be a number between -90 and 90',
     ]),

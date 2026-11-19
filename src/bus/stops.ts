@@ -30,7 +30,12 @@ const ROUNDING_MARGIN_M = 100
 const MAX_COUNT = 250
 
 /** The request: the stops within `radiusM` of a point, around the rounded point. */
-export function stopsForLocationUrl(lat: number, lon: number, radiusM: number, key: string): string {
+export function stopsForLocationUrl(
+  lat: number,
+  lon: number,
+  radiusM: number,
+  key: string,
+): string {
   const query = new URLSearchParams({
     lat: rounded(lat),
     lon: rounded(lon),
@@ -89,7 +94,7 @@ export function parseStopsForLocation(body: unknown): BusStopInfo[] {
       direction: (s.direction ?? '').trim().toUpperCase(),
       lat: s.lat,
       lon: s.lon,
-      routeIds: [...new Set((s.routes ?? []).map(r => stripOperator(r.id)).filter(Boolean))],
+      routeIds: [...new Set((s.routes ?? []).map((r) => stripOperator(r.id)).filter(Boolean))],
     })
   }
   return stops
@@ -101,7 +106,7 @@ export function fetchStopsForLocation(
   lon: number,
   radiusM: number,
   key: string,
-  options?: FetchOptions
+  options?: FetchOptions,
 ): Promise<BusStopInfo[]> {
   const url = stopsForLocationUrl(lat, lon, radiusM, key)
   const memoKey = `bustime-stops:${rounded(lat)},${rounded(lon)},${radiusM}`
@@ -118,10 +123,12 @@ export function nearestBusStops(
   lon: number,
   routes: Record<string, RouteDisplay>,
   limit: number,
-  radiusM = Infinity
+  radiusM = Infinity,
 ): NearbyBusStop[] {
   // The answer covers a rounded point, so it can hold stops just past the radius.
-  const within = nearest(stops, lat, lon, limit, s => s.code).filter(([distance]) => distance <= radiusM)
+  const within = nearest(stops, lat, lon, limit, (s) => s.code).filter(
+    ([distance]) => distance <= radiusM,
+  )
   return within.map(([distance, s]) => ({
     id: s.code,
     name: s.name,
@@ -130,7 +137,7 @@ export function nearestBusStops(
     lon: s.lon,
     distance,
     routes: s.routeIds
-      .map(id => busRoute(routes, id))
+      .map((id) => busRoute(routes, id))
       .sort((a, b) => a.name.localeCompare(b.name, 'en', { numeric: true })),
   }))
 }

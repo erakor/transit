@@ -10,7 +10,7 @@ export function destinationsLine(
   stopName: string,
   departures: Iterable<{ label: string; time: number }>,
   now: number,
-  none = 'no trains soon'
+  none = 'no trains soon',
 ): string {
   const next = new Map<string, number>()
   for (const d of departures) {
@@ -20,7 +20,9 @@ export function destinationsLine(
     if (current === undefined || minutes < current) next.set(d.label, minutes)
   }
   if (next.size === 0) return `${stopName} · ${none}`
-  const parts = [...next.entries()].sort((a, b) => a[1] - b[1]).map(([label, minutes]) => `${label} ${minutes}`)
+  const parts = [...next.entries()]
+    .sort((a, b) => a[1] - b[1])
+    .map(([label, minutes]) => `${label} ${minutes}`)
   const shown = parts.slice(0, PREVIEW_MAX_DESTINATIONS)
   return `${stopName} · ${shown.join(' · ')} min${parts.length > shown.length ? ' · …' : ''}`
 }

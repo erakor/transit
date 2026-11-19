@@ -41,7 +41,7 @@ export const AGENCIES: Record<string, Agency> = {
     tripsFeed: 'lirr/gtfs-lirr',
     alertsFeed: 'camsys/lirr-alerts',
     scheduled: false,
-    data: () => import('#src/data/lirr.generated.js').then(m => m.LIRR_DATA),
+    data: () => import('#src/data/lirr.generated.js').then((m) => m.LIRR_DATA),
   },
   mnr: {
     id: 'mnr',
@@ -52,7 +52,7 @@ export const AGENCIES: Record<string, Agency> = {
     tripsFeed: 'mnr/gtfs-mnr',
     alertsFeed: 'camsys/mnr-alerts',
     scheduled: false,
-    data: () => import('#src/data/mnr.generated.js').then(m => m.MNR_DATA),
+    data: () => import('#src/data/mnr.generated.js').then((m) => m.MNR_DATA),
   },
   ferry: {
     id: 'ferry',
@@ -64,7 +64,7 @@ export const AGENCIES: Record<string, Agency> = {
     vehiclesFeed: FERRY + 'vehicleposition',
     alertsFeed: FERRY + 'alert',
     scheduled: true,
-    data: () => import('#src/data/ferry.generated.js').then(m => m.FERRY_DATA),
+    data: () => import('#src/data/ferry.generated.js').then((m) => m.FERRY_DATA),
   },
 }
 
@@ -85,8 +85,15 @@ const searchEntries = new Map<AgencyData, NameEntry<AgencyStop>[]>()
 export function searchStops(data: AgencyData, query: string): AgencyStop[] {
   let entries = searchEntries.get(data)
   if (!entries) {
-    entries = Object.values(data.stops).map(stop => ({ item: stop, names: [tokenize(stop.name)] }))
+    entries = Object.values(data.stops).map((stop) => ({
+      item: stop,
+      names: [tokenize(stop.name)],
+    }))
     searchEntries.set(data, entries)
   }
-  return rankByName(entries, query, (a, b) => b.routes.length - a.routes.length || a.name.localeCompare(b.name))
+  return rankByName(
+    entries,
+    query,
+    (a, b) => b.routes.length - a.routes.length || a.name.localeCompare(b.name),
+  )
 }

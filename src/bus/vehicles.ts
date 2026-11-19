@@ -12,7 +12,7 @@ export function compassHeading(bearing: number): number {
 /** One route's buses, by destination and then bus number. Pure. */
 export function computeBusVehicles(answer: VehicleMonitoring): BusVehicle[] {
   return answer.vehicles
-    .map(v => ({
+    .map((v) => ({
       id: v.vehicle,
       headsign: v.destination,
       lat: v.lat,
@@ -25,5 +25,8 @@ export function computeBusVehicles(answer: VehicleMonitoring): BusVehicle[] {
       time: v.recordedAt ?? null,
       tripId: v.tripId,
     }))
-    .sort((a, b) => a.headsign.localeCompare(b.headsign) || a.id.localeCompare(b.id, 'en', { numeric: true }))
+    .sort(
+      (a, b) =>
+        a.headsign.localeCompare(b.headsign) || a.id.localeCompare(b.id, 'en', { numeric: true }),
+    )
 }

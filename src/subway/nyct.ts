@@ -21,7 +21,10 @@ const CHANGES: Record<string, TripChange> = { '=': 'reroute', '/': 'skip-stop', 
  * terminal; the feed also lists trips due to start in the next 30 minutes, which are likelier to
  * be changed or cancelled), and how the trip differs from its schedule, when its train id says.
  */
-export function nyctTrip(trip: object | null | undefined): { assigned: boolean; change: TripChange | null } {
+export function nyctTrip(trip: object | null | undefined): {
+  assigned: boolean
+  change: TripChange | null
+} {
   const ext = extension(trip, NYCT_TRIP_DESCRIPTOR)
   const trainId = text(ext, TRAIN_ID) ?? ''
   return { assigned: varint(ext, IS_ASSIGNED) === 1, change: CHANGES[trainId[0] ?? ''] ?? null }
@@ -47,8 +50,10 @@ export function tripConditions(feed: FeedMessage): { stalled: Set<string>; delay
     const v = entity.vehicle
     const moved = num(v?.timestamp)
     const tripId = v?.trip?.tripId
-    if (tripId && now !== undefined && moved !== undefined && now - moved > STALLED_AFTER_S) stalled.add(tripId)
-    for (const e of entity.alert?.informedEntity ?? []) if (e.trip?.tripId) delayed.add(e.trip.tripId)
+    if (tripId && now !== undefined && moved !== undefined && now - moved > STALLED_AFTER_S)
+      stalled.add(tripId)
+    for (const e of entity.alert?.informedEntity ?? [])
+      if (e.trip?.tripId) delayed.add(e.trip.tripId)
   }
   return { stalled, delayed }
 }

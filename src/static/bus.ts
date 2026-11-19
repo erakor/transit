@@ -22,14 +22,16 @@ export function buildBusData(feeds: GtfsFiles[]): BusData {
         textColor: hex(r.route_text_color, 'FFFFFF'),
       }
     }
-    const version = files['feed_info.txt'] ? parseCsvObjects(files['feed_info.txt'])[0]?.feed_version : undefined
+    const version = files['feed_info.txt']
+      ? parseCsvObjects(files['feed_info.txt'])[0]?.feed_version
+      : undefined
     if (version) versions.add(version)
   }
   if (Object.keys(routes).length === 0) throw new Error('bus GTFS has no routes')
   const sorted = Object.fromEntries(
     Object.keys(routes)
       .sort()
-      .map(id => [id, routes[id]!])
+      .map((id) => [id, routes[id]!]),
   )
   return { feedVersion: [...versions].sort().join('+'), routes: sorted }
 }

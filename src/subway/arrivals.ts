@@ -23,7 +23,7 @@ export function computeArrivals(
   stop: ResolvedStop,
   feeds: FeedMessage[],
   index: StationIndex,
-  { now, limit }: { now: number; limit: number }
+  { now, limit }: { now: number; limit: number },
 ): ArrivalsResult {
   const data: SubwayData = index.data
   const platforms = new Set(stop.platforms)
@@ -38,7 +38,7 @@ export function computeArrivals(
       const routeId = tu.trip?.routeId ?? ''
       const tripId = tu.trip?.tripId ?? entity.id
       const updates = tu.stopTimeUpdate ?? []
-      const headsign = terminalName(updates, id => index.stopName(id))
+      const headsign = terminalName(updates, (id) => index.stopName(id))
       for (const stu of updates) {
         const stopId = stu.stopId ?? ''
         if (!platforms.has(stopId)) continue
@@ -79,13 +79,15 @@ export function computeArrivals(
 
   const order = (r: string) => data.routes[r]?.sortOrder ?? 999
   const result = [...groups.values()]
-    .map(g => {
+    .map((g) => {
       const arrivals = g.arrivals.sort((a, b) => a.time - b.time).slice(0, limit)
       return { ...g, headsign: arrivals[0]?.headsign ?? '', arrivals }
     })
     .sort(
       (a, b) =>
-        order(a.route) - order(b.route) || a.route.localeCompare(b.route) || a.direction.localeCompare(b.direction)
+        order(a.route) - order(b.route) ||
+        a.route.localeCompare(b.route) ||
+        a.direction.localeCompare(b.direction),
     )
 
   return {

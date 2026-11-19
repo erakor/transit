@@ -23,7 +23,7 @@ export function decodeFeed(bytes: Uint8Array): FeedMessage {
 
 export function fetchFeed(
   feed: string,
-  { fetcher = fetch, now = Date.now(), timeoutMs = 8_000 }: FetchOptions = {}
+  { fetcher = fetch, now = Date.now(), timeoutMs = 8_000 }: FetchOptions = {},
 ): Promise<FeedMessage> {
   return memoized(feed, now, async () => {
     const res = await fetcher(feedUrl(feed), { signal: AbortSignal.timeout(timeoutMs) })
@@ -33,7 +33,10 @@ export function fetchFeed(
 }
 
 /** `fetchFeed`, or undefined (logged) when the upstream fails: for routes that answer 502 then. */
-export function tryFetchFeed(feed: string, options?: FetchOptions): Promise<FeedMessage | undefined> {
+export function tryFetchFeed(
+  feed: string,
+  options?: FetchOptions,
+): Promise<FeedMessage | undefined> {
   return tryLoad(`feed ${feed}`, () => fetchFeed(feed, options))
 }
 
@@ -47,7 +50,9 @@ export function num(v: number | Long | null | undefined): number | undefined {
 
 /** Oldest header timestamp among `feeds` (epoch seconds), null when none has one. */
 export function oldestTimestamp(feeds: FeedMessage[]): number | null {
-  const stamps = feeds.map(f => num(f.header?.timestamp)).filter((t): t is number => t !== undefined)
+  const stamps = feeds
+    .map((f) => num(f.header?.timestamp))
+    .filter((t): t is number => t !== undefined)
   return stamps.length ? Math.min(...stamps) : null
 }
 
@@ -57,7 +62,7 @@ export function oldestTimestamp(feeds: FeedMessage[]): number | null {
  */
 export function terminalName(
   updates: { stopId?: string | null }[],
-  stopName: (id: string) => string | undefined
+  stopName: (id: string) => string | undefined,
 ): string {
   for (let i = updates.length - 1; i >= 0; i--) {
     const name = stopName(updates[i]!.stopId ?? '')
@@ -67,7 +72,11 @@ export function terminalName(
 }
 
 /** `VehiclePosition.current_status`, by enum value. */
-export const VEHICLE_STATUS = ['INCOMING_AT', 'STOPPED_AT', 'IN_TRANSIT_TO'] as const satisfies VehicleStatus[]
+export const VEHICLE_STATUS = [
+  'INCOMING_AT',
+  'STOPPED_AT',
+  'IN_TRANSIT_TO',
+] as const satisfies VehicleStatus[]
 
 /** Positions older than this are left out: the feeds keep finished trips around for hours. */
 export const VEHICLE_MAX_AGE_S = 900

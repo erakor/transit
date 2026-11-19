@@ -23,7 +23,7 @@ function stationLoader({ fetcher, now = () => Date.now() }: CitibikeDeps): Loade
   return async () => {
     const opts = { fetcher, now: now() }
     const feeds = await tryLoad('citibike feeds', () =>
-      Promise.all([fetchGbfs('station_information', opts), fetchGbfs('station_status', opts)])
+      Promise.all([fetchGbfs('station_information', opts), fetchGbfs('station_status', opts)]),
     )
     if (!feeds) return undefined
     const [information, status] = feeds
@@ -50,7 +50,9 @@ function stationHandler(loadStations: Loader) {
     if (!stations) return errorResponse('upstream_unavailable', UNAVAILABLE)
     const station = stations.byId.get(id)
     if (!station) return errorResponse('unknown_station', `unknown station ${id}`)
-    return json({ updatedAt: stations.updatedAt, station } satisfies StationResponse, { cache: LIVE_CACHE })
+    return json({ updatedAt: stations.updatedAt, station } satisfies StationResponse, {
+      cache: LIVE_CACHE,
+    })
   })
 }
 
@@ -68,9 +70,12 @@ function nearbyHandler(loadStations: Loader) {
     const stations = await loadStations()
     if (!stations) return errorResponse('upstream_unavailable', UNAVAILABLE)
     const nearest = nearestStations(stations.byId.values(), lat, lon, n)
-    return json({ lat, lon, updatedAt: stations.updatedAt, stations: nearest } satisfies NearbyResponse, {
-      cache: LIVE_CACHE,
-    })
+    return json(
+      { lat, lon, updatedAt: stations.updatedAt, stations: nearest } satisfies NearbyResponse,
+      {
+        cache: LIVE_CACHE,
+      },
+    )
   })
 }
 
@@ -80,5 +85,8 @@ function nearbyHandler(loadStations: Loader) {
  */
 export function citibikeHandler(deps: CitibikeDeps = {}) {
   const loadStations = stationLoader(deps)
-  return byOp('citibike', { station: stationHandler(loadStations), nearby: nearbyHandler(loadStations) })
+  return byOp('citibike', {
+    station: stationHandler(loadStations),
+    nearby: nearbyHandler(loadStations),
+  })
 }

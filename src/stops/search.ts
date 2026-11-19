@@ -30,9 +30,9 @@ export function tokenize(text: string): string[] {
     .toLowerCase()
     .replace(/['’]/g, '')
     .split(/[^\p{L}\p{N}]+/u)
-    .map(t => t.replace(/^(\d+)(st|nd|rd|th)$/, '$1'))
-    .map(t => SYNONYMS[t] ?? t)
-    .filter(t => t !== '')
+    .map((t) => t.replace(/^(\d+)(st|nd|rd|th)$/, '$1'))
+    .map((t) => SYNONYMS[t] ?? t)
+    .filter((t) => t !== '')
 }
 
 /** Something findable by name: `names` are the tokenized names it answers to. */
@@ -46,7 +46,11 @@ export interface NameEntry<T> {
  * then names starting with the query, then other matches; `tieBreak` orders equal scores, and
  * without it they keep the entries' order.
  */
-export function rankByName<T>(entries: readonly NameEntry<T>[], query: string, tieBreak?: (a: T, b: T) => number): T[] {
+export function rankByName<T>(
+  entries: readonly NameEntry<T>[],
+  query: string,
+  tieBreak?: (a: T, b: T) => number,
+): T[] {
   const q = tokenize(query)
   if (q.length === 0) return []
   const joined = q.join(' ')
@@ -54,23 +58,25 @@ export function rankByName<T>(entries: readonly NameEntry<T>[], query: string, t
   for (const e of entries) {
     let best = 0
     for (const name of e.names) {
-      if (!q.every(t => name.some(n => n.startsWith(t)))) continue
+      if (!q.every((t) => name.some((n) => n.startsWith(t)))) continue
       const full = name.join(' ')
       best = Math.max(best, full === joined ? 3 : full.startsWith(joined) ? 2 : 1)
     }
     if (best > 0) hits.push({ item: e.item, score: best })
   }
-  return hits.sort((a, b) => b.score - a.score || (tieBreak?.(a.item, b.item) ?? 0)).map(h => h.item)
+  return hits
+    .sort((a, b) => b.score - a.score || (tieBreak?.(a.item, b.item) ?? 0))
+    .map((h) => h.item)
 }
 
 export class StopSearch {
   private readonly entries: NameEntry<StationInfo>[]
 
   constructor(data: SubwayData) {
-    this.entries = data.stations.map(station => ({
+    this.entries = data.stations.map((station) => ({
       item: station,
       // Every member stop name, so "Port Authority" finds the Times Sq complex.
-      names: [...new Set([station.name, ...station.stops.map(s => data.stops[s]?.name ?? '')])]
+      names: [...new Set([station.name, ...station.stops.map((s) => data.stops[s]?.name ?? '')])]
         .filter(Boolean)
         .map(tokenize),
     }))
@@ -81,7 +87,7 @@ export class StopSearch {
     return rankByName(
       this.entries,
       query,
-      (a, b) => b.routes.length - a.routes.length || a.name.localeCompare(b.name)
+      (a, b) => b.routes.length - a.routes.length || a.name.localeCompare(b.name),
     ).slice(0, limit)
   }
 }

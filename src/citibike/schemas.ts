@@ -5,7 +5,9 @@ import { EpochSeconds, Latitude, Longitude } from '#src/schema.js'
 const Count = z.int().nonnegative()
 
 export const BikeStation = z.strictObject({
-  id: z.string().meta({ description: 'Opaque (a UUID or a long digit string). Stable: store it as a favorite.' }),
+  id: z.string().meta({
+    description: 'Opaque (a UUID or a long digit string). Stable: store it as a favorite.',
+  }),
   name: z.string(),
   lat: Latitude,
   lon: Longitude,
@@ -15,7 +17,9 @@ export const BikeStation = z.strictObject({
   docks: Count.meta({ description: 'Free docks.' }),
   renting: z.boolean().meta({ description: "False when the station isn't renting bikes." }),
   returning: z.boolean().meta({ description: "False when the station isn't accepting returns." }),
-  reportedAt: EpochSeconds.optional().meta({ description: 'When the station last reported. Absent if it never did.' }),
+  reportedAt: EpochSeconds.optional().meta({
+    description: 'When the station last reported. Absent if it never did.',
+  }),
 })
 
 export const NearbyStation = BikeStation.extend({
@@ -30,7 +34,9 @@ export const NearbyResponse = z.strictObject({
   lat: Latitude,
   lon: Longitude,
   updatedAt: UpdatedAt,
-  stations: z.array(NearbyStation).meta({ description: 'Nearest first. Only stations on the street.' }),
+  stations: z
+    .array(NearbyStation)
+    .meta({ description: 'Nearest first. Only stations on the street.' }),
 })
 
 export type BikeStation = z.infer<typeof BikeStation>

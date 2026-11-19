@@ -88,11 +88,9 @@ describe('computeArrivals on a built feed', () => {
     const r = computeArrivals(stop, [feed], index, { now: NOW, limit: 2 })
     expect(r.stop).toEqual({ id: '127', name: 'Times Sq-42 St', stops: ['127'] })
     expect(r.updatedAt).toBe(NOW - 5)
-    expect(r.groups.map(g => `${g.route}${g.direction}:${g.arrivals.map(a => a.tripId).join(',')}`)).toEqual([
-      '1N:t2,t1',
-      '2N:t5',
-      '2S:t5',
-    ])
+    expect(
+      r.groups.map((g) => `${g.route}${g.direction}:${g.arrivals.map((a) => a.tripId).join(',')}`),
+    ).toEqual(['1N:t2,t1', '2N:t5', '2S:t5'])
     const g = r.groups[0]!
     expect(g).toMatchObject({
       name: '1',
@@ -114,18 +112,24 @@ describe('computeArrivals on a built feed', () => {
   it('covers every stop of a station complex', () => {
     const stop = index.resolve(SUBWAY_DATA.stops['127']!.station)!
     const r = computeArrivals(stop, [feed], index, { now: NOW, limit: 3 })
-    expect(r.groups.map(g => g.route + g.direction)).toEqual(
+    expect(r.groups.map((g) => g.route + g.direction)).toEqual(
       ['AS', '1N', '2N', '2S', 'QS'].sort(
-        (a, b) => SUBWAY_DATA.routes[a[0]!]!.sortOrder - SUBWAY_DATA.routes[b[0]!]!.sortOrder || a.localeCompare(b)
-      )
+        (a, b) =>
+          SUBWAY_DATA.routes[a[0]!]!.sortOrder - SUBWAY_DATA.routes[b[0]!]!.sortOrder ||
+          a.localeCompare(b),
+      ),
     )
-    expect(r.groups.find(g => g.route === '1')!.arrivals.map(a => a.tripId)).toEqual(['t2', 't1', 't4'])
+    expect(r.groups.find((g) => g.route === '1')!.arrivals.map((a) => a.tripId)).toEqual([
+      't2',
+      't1',
+      't4',
+    ])
   })
 
   it('limits to one platform when given a platform id', () => {
     const r = computeArrivals(index.resolve('127s')!, [feed], index, { now: NOW, limit: 3 })
     expect(r.stop.id).toBe('127S')
-    expect(r.groups.map(g => g.route + g.direction)).toEqual(['2S'])
+    expect(r.groups.map((g) => g.route + g.direction)).toEqual(['2S'])
   })
 })
 
@@ -134,7 +138,9 @@ describe('computeArrivals on recorded MTA feeds', () => {
   for (const name of Object.keys(FEEDS)) {
     it(`parses ${name} into upcoming arrivals with known routes`, () => {
       const feed = decodeFeed(fixture(`${name}.pb`))
-      const stations = SUBWAY_DATA.stations.filter(s => s.routes.some(r => FEEDS[name]!.includes(r)))
+      const stations = SUBWAY_DATA.stations.filter((s) =>
+        s.routes.some((r) => FEEDS[name]!.includes(r)),
+      )
       let total = 0
       for (const s of stations) {
         const r = computeArrivals(index.resolve(s.id)!, [feed], index, { now, limit: 3 })
@@ -157,12 +163,14 @@ describe('computeArrivals on recorded MTA feeds', () => {
   }
 
   it('reads the NYCT extension of the recorded trips', () => {
-    const trips = Object.keys(FEEDS).flatMap(name =>
-      decodeFeed(fixture(`${name}.pb`)).entity.flatMap(e => (e.tripUpdate ? [nyctTrip(e.tripUpdate.trip)] : []))
+    const trips = Object.keys(FEEDS).flatMap((name) =>
+      decodeFeed(fixture(`${name}.pb`)).entity.flatMap((e) =>
+        e.tripUpdate ? [nyctTrip(e.tripUpdate.trip)] : [],
+      ),
     )
     // Most trips are underway; the next half hour's are listed before a train is assigned.
-    expect(trips.filter(t => t.assigned).length).toBeGreaterThan(trips.length / 2)
-    expect(trips.filter(t => !t.assigned).length).toBeGreaterThan(0)
+    expect(trips.filter((t) => t.assigned).length).toBeGreaterThan(trips.length / 2)
+    expect(trips.filter((t) => !t.assigned).length).toBeGreaterThan(0)
   })
 })
 
@@ -184,8 +192,14 @@ describe('NYCT trip conditions', () => {
         stopTimeUpdate: [{ stopId: '127N', arrival: { time: NOW + 300 } }],
       },
     })),
-    { id: 'v1', vehicle: { trip: { tripId: 'moving', routeId: '1' }, timestamp: NOW - STALLED_AFTER_S } },
-    { id: 'v2', vehicle: { trip: { tripId: 'stalled', routeId: '1' }, timestamp: NOW - STALLED_AFTER_S - 1 } },
+    {
+      id: 'v1',
+      vehicle: { trip: { tripId: 'moving', routeId: '1' }, timestamp: NOW - STALLED_AFTER_S },
+    },
+    {
+      id: 'v2',
+      vehicle: { trip: { tripId: 'stalled', routeId: '1' }, timestamp: NOW - STALLED_AFTER_S - 1 },
+    },
     {
       id: 'a1',
       alert: {
@@ -199,7 +213,10 @@ describe('NYCT trip conditions', () => {
   withExtension(feed.entity[2]!.tripUpdate!.trip!, trip('=1 1950  BBR/PEL', false))
 
   it('marks assigned, changed, stalled and delayed trains', () => {
-    const [g] = computeArrivals(index.resolve('127N')!, [feed], index, { now: NOW, limit: 5 }).groups
+    const [g] = computeArrivals(index.resolve('127N')!, [feed], index, {
+      now: NOW,
+      limit: 5,
+    }).groups
     expect(
       g!.arrivals.map(({ tripId, assigned, change, stalled, delayed }) => ({
         tripId,
@@ -207,7 +224,7 @@ describe('NYCT trip conditions', () => {
         change,
         stalled,
         delayed,
-      }))
+      })),
     ).toEqual([
       { tripId: 'moving', assigned: true, change: null, stalled: false, delayed: false },
       { tripId: 'stalled', assigned: true, change: 'short-turn', stalled: true, delayed: true },
@@ -216,15 +233,19 @@ describe('NYCT trip conditions', () => {
   })
 
   it('reads train id trip types the reference documents, and nothing else', () => {
-    const of = (trainId: string) => nyctTrip(withExtension({}, extensionField(1001, { 1: trainId }))).change
-    expect([of('06 0123+ PEL/BBR'), of('/6 0123+ PEL/BBR'), of('1A 1949 207/FAR'), of('E6 0123')]).toEqual([
-      null,
-      'skip-stop',
-      null,
-      null,
-    ])
+    const of = (trainId: string) =>
+      nyctTrip(withExtension({}, extensionField(1001, { 1: trainId }))).change
+    expect([
+      of('06 0123+ PEL/BBR'),
+      of('/6 0123+ PEL/BBR'),
+      of('1A 1949 207/FAR'),
+      of('E6 0123'),
+    ]).toEqual([null, 'skip-stop', null, null])
     expect(nyctTrip(undefined)).toEqual({ assigned: false, change: null })
-    expect(nyctTrip(withExtension({}, new Uint8Array([0x8a, 0x3e, 0x40])))).toEqual({ assigned: false, change: null })
+    expect(nyctTrip(withExtension({}, new Uint8Array([0x8a, 0x3e, 0x40])))).toEqual({
+      assigned: false,
+      change: null,
+    })
   })
 })
 
@@ -234,6 +255,6 @@ describe('feedsForRoutes', () => {
   })
   it('covers every route in the static data', () => {
     const covered = new Set(Object.values(FEEDS).flat())
-    expect(Object.keys(SUBWAY_DATA.routes).filter(r => !covered.has(r))).toEqual([])
+    expect(Object.keys(SUBWAY_DATA.routes).filter((r) => !covered.has(r))).toEqual([])
   })
 })

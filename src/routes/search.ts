@@ -15,16 +15,16 @@ export function searchHandler(data: SubwayData = SUBWAY_DATA) {
     const { q, limit } = parsed.query
 
     search ??= new StopSearch(data)
-    const results: SearchResponse['results'] = search.search(q, limit).map(s => ({
+    const results: SearchResponse['results'] = search.search(q, limit).map((s) => ({
       id: s.id,
       name: s.name,
       lat: s.lat,
       lon: s.lon,
-      stops: s.stops.map(id => ({ id, name: data.stops[id]?.name ?? id })),
+      stops: s.stops.map((id) => ({ id, name: data.stops[id]?.name ?? id })),
       // Diamond express variants (6X, 7X, FX) run on the same line as their base route.
       routes: s.routes
-        .filter(r => !(r.endsWith('X') && s.routes.includes(r.slice(0, -1))))
-        .map(r => {
+        .filter((r) => !(r.endsWith('X') && s.routes.includes(r.slice(0, -1))))
+        .map((r) => {
           const route = data.routes[r]
           return {
             id: r,

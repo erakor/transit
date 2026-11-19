@@ -8,7 +8,11 @@ import { computeSubwayTrains } from '#src/subway/vehicles.js'
 import type { ArrivalsDeps } from './arrivals.js'
 
 /** GET /subway/vehicles?route=<id>: the stop each of the route's trains is at or heading to. */
-export function subwayVehiclesHandler({ fetcher, now = () => Date.now(), index = stationIndex }: ArrivalsDeps = {}) {
+export function subwayVehiclesHandler({
+  fetcher,
+  now = () => Date.now(),
+  index = stationIndex,
+}: ArrivalsDeps = {}) {
   return authenticated(async (_request, url) => {
     const parsed = parseQuery(VehiclesQuery, url)
     if (!parsed.ok) return parsed.response
@@ -21,6 +25,8 @@ export function subwayVehiclesHandler({ fetcher, now = () => Date.now(), index =
     const nowMs = now()
     const feed = await tryFetchFeed(feedName, { fetcher, now: nowMs })
     if (!feed) return errorResponse('upstream_unavailable', 'MTA feeds unavailable')
-    return json(computeSubwayTrains(route, feed, idx, { now: Math.floor(nowMs / 1000) }), { cache: LIVE_CACHE })
+    return json(computeSubwayTrains(route, feed, idx, { now: Math.floor(nowMs / 1000) }), {
+      cache: LIVE_CACHE,
+    })
   })
 }

@@ -22,7 +22,9 @@ export function previewLine(result: ArrivalsResult, now: number): string {
   }
   if (byRoute.size === 0) return `${result.stop.name} · no trains soon`
   const routes = [...byRoute.entries()].map(([name, d]) =>
-    [name, d.N !== undefined ? `↑${d.N}` : '', d.S !== undefined ? `↓${d.S}` : ''].filter(Boolean).join(' ')
+    [name, d.N !== undefined ? `↑${d.N}` : '', d.S !== undefined ? `↓${d.S}` : '']
+      .filter(Boolean)
+      .join(' '),
   )
   const shown = routes.slice(0, PREVIEW_MAX_ROUTES)
   const more = routes.length > shown.length ? ' · …' : ''

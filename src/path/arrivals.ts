@@ -16,7 +16,7 @@ export const BOARDING_GRACE_S = 120
 export function computePathArrivals(
   station: PathStation,
   feed: PathFeed,
-  { now, limit }: { now: number; limit: number }
+  { now, limit }: { now: number; limit: number },
 ): PathArrivalsResponse {
   const trains = feed.stations[station.id] ?? []
   const groups = new Map<string, PathRouteDirectionArrivals>()
@@ -47,7 +47,7 @@ export function computePathArrivals(
   }
 
   const result = [...groups.values()]
-    .map(g => {
+    .map((g) => {
       const arrivals = g.arrivals.sort((a, b) => a.time - b.time).slice(0, limit)
       return { ...g, headsign: arrivals[0]?.headsign ?? '', arrivals }
     })
@@ -56,12 +56,12 @@ export function computePathArrivals(
       (a, b) =>
         routeOrder(a.route) - routeOrder(b.route) ||
         a.route.localeCompare(b.route) ||
-        b.direction.localeCompare(a.direction)
+        b.direction.localeCompare(a.direction),
     )
 
   return {
     station: { id: station.id, name: station.name },
-    updatedAt: trains.length ? Math.min(...trains.map(t => t.updatedAt)) : null,
+    updatedAt: trains.length ? Math.min(...trains.map((t) => t.updatedAt)) : null,
     groups: result,
   }
 }

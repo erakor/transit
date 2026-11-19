@@ -50,14 +50,16 @@ const index = stationIndex()
 /** Every feed is fetched up front, in parallel; a failure is reported where the feed is checked. */
 const live = (feed: string) => fetchFeed(feed, { timeoutMs: 20_000 }).catch((err: Error) => err)
 const agencies = Object.values(AGENCIES)
-const alertFeeds = [SUBWAY_ALERTS_FEED, BUS_ALERTS_FEED, ...agencies.map(a => a.alertsFeed)]
+const alertFeeds = [SUBWAY_ALERTS_FEED, BUS_ALERTS_FEED, ...agencies.map((a) => a.alertsFeed)]
 const fetched = new Map<string, FeedMessage | Error>()
 await Promise.all(
-  [...Object.keys(FEEDS), ...agencies.flatMap(a => [a.tripsFeed, a.vehiclesFeed ?? a.tripsFeed]), ...alertFeeds].map(
-    async feed => {
-      if (!fetched.has(feed)) fetched.set(feed, await live(feed))
-    }
-  )
+  [
+    ...Object.keys(FEEDS),
+    ...agencies.flatMap((a) => [a.tripsFeed, a.vehiclesFeed ?? a.tripsFeed]),
+    ...alertFeeds,
+  ].map(async (feed) => {
+    if (!fetched.has(feed)) fetched.set(feed, await live(feed))
+  }),
 )
 /** The fetched feed, or undefined after reporting why it is missing. */
 function feedOrFail(label: string, feed: string): FeedMessage | undefined {
@@ -67,20 +69,25 @@ function feedOrFail(label: string, feed: string): FeedMessage | undefined {
 }
 
 /** The checks every trip updates feed gets. Returns its trips. */
-function checkTripFeed(label: string, feed: FeedMessage, knownStop: (id: string) => boolean, extra = '') {
+function checkTripFeed(
+  label: string,
+  feed: FeedMessage,
+  knownStop: (id: string) => boolean,
+  extra = '',
+) {
   const ts = Number(feed.header.timestamp ?? 0)
-  const trips = feed.entity.flatMap(e => (e.tripUpdate ? [e.tripUpdate] : []))
-  const stopIds = trips.flatMap(t => (t.stopTimeUpdate ?? []).map(s => s.stopId ?? ''))
-  const unknownStops = stopIds.filter(s => !knownStop(s))
+  const trips = feed.entity.flatMap((e) => (e.tripUpdate ? [e.tripUpdate] : []))
+  const stopIds = trips.flatMap((t) => (t.stopTimeUpdate ?? []).map((s) => s.stopId ?? ''))
+  const unknownStops = stopIds.filter((s) => !knownStop(s))
   console.log(
-    `${label}: ${trips.length} trips, age ${nowS - ts}s, ${unknownStops.length}/${stopIds.length} stop updates with unknown stop ids${extra}`
+    `${label}: ${trips.length} trips, age ${nowS - ts}s, ${unknownStops.length}/${stopIds.length} stop updates with unknown stop ids${extra}`,
   )
   if (Math.abs(nowS - ts) > 600) fail(`${label}: header timestamp ${ts} is ${nowS - ts}s old`)
   if (trips.length === 0) fail(`${label}: no trip updates`)
   // A few yard/non-revenue ids are normal; many means the static data is out of date.
   if (stopIds.length && unknownStops.length / stopIds.length > 0.1) {
     fail(
-      `${label}: ${unknownStops.length} of ${stopIds.length} stop ids unknown, e.g. ${[...new Set(unknownStops)].slice(0, 5).join(',')}`
+      `${label}: ${unknownStops.length} of ${stopIds.length} stop ids unknown, e.g. ${[...new Set(unknownStops)].slice(0, 5).join(',')}`,
     )
   }
   return trips
@@ -92,9 +99,16 @@ for (const name of Object.keys(FEEDS)) {
   const feed = feedOrFail(name, name)
   if (!feed) continue
   subway.push(feed)
-  const routes = new Set(feed.entity.flatMap(e => (e.tripUpdate ? [e.tripUpdate.trip?.routeId ?? ''] : [])))
-  checkTripFeed(name, feed, id => !!index.stopName(id), `, routes ${[...routes].sort().join(',')}`)
-  const unknownRoutes = [...routes].filter(r => !FEEDS[name]!.includes(r))
+  const routes = new Set(
+    feed.entity.flatMap((e) => (e.tripUpdate ? [e.tripUpdate.trip?.routeId ?? ''] : [])),
+  )
+  checkTripFeed(
+    name,
+    feed,
+    (id) => !!index.stopName(id),
+    `, routes ${[...routes].sort().join(',')}`,
+  )
+  const unknownRoutes = [...routes].filter((r) => !FEEDS[name]!.includes(r))
   if (unknownRoutes.length) fail(`${name}: routes missing from FEEDS: ${unknownRoutes.join(',')}`)
 }
 for (const stopId of ['127', '631', 'R20', 'A41', 'L08']) {
@@ -113,17 +127,19 @@ for (const stopId of ['127', '631', 'R20', 'A41', 'L08']) {
 try {
   const path = await fetchPathFeed({ timeoutMs: 20_000 })
   const trains = Object.values(path.stations).flat()
-  const newest = Math.max(0, ...trains.map(t => t.updatedAt))
-  const unknownStations = Object.keys(path.stations).filter(id => !pathStation(id))
-  const missingStations = PATH_STATIONS.filter(s => !path.stations[s.id]).map(s => s.id)
-  const unknownColors = [...new Set(trains.map(t => t.colors))].filter(c => !routeForColors(c))
+  const newest = Math.max(0, ...trains.map((t) => t.updatedAt))
+  const unknownStations = Object.keys(path.stations).filter((id) => !pathStation(id))
+  const missingStations = PATH_STATIONS.filter((s) => !path.stations[s.id]).map((s) => s.id)
+  const unknownColors = [...new Set(trains.map((t) => t.colors))].filter((c) => !routeForColors(c))
   console.log(
-    `path: ${Object.keys(path.stations).length} stations, ${trains.length} trains, age ${nowS - newest}s, ${path.skipped} skipped entries`
+    `path: ${Object.keys(path.stations).length} stations, ${trains.length} trains, age ${nowS - newest}s, ${path.skipped} skipped entries`,
   )
   if (path.skipped) fail(`path: ${path.skipped} entries the parser could not read`)
   if (Math.abs(nowS - newest) > 600) fail(`path: newest update ${newest} is ${nowS - newest}s old`)
-  if (unknownStations.length) fail(`path: stations missing from PATH_STATIONS: ${unknownStations.join(',')}`)
-  if (missingStations.length) fail(`path: stations missing from the feed: ${missingStations.join(',')}`)
+  if (unknownStations.length)
+    fail(`path: stations missing from PATH_STATIONS: ${unknownStations.join(',')}`)
+  if (missingStations.length)
+    fail(`path: stations missing from the feed: ${missingStations.join(',')}`)
   if (unknownColors.length) fail(`path: line colors with no route: ${unknownColors.join(' ')}`)
   const jsq = computePathArrivals(pathStation('JSQ')!, path, { now: nowS, limit: 3 })
   const n = jsq.groups.reduce((a, g) => a + g.arrivals.length, 0)
@@ -142,15 +158,22 @@ for (const agency of agencies) {
   const feed = feedOrFail(id, agency.tripsFeed)
   const positions = agency.vehiclesFeed ? feedOrFail(id, agency.vehiclesFeed) : feed
   if (!feed || !positions) continue
-  const trips = checkTripFeed(id, feed, s => !!data.stops[s])
-  const routeIds = new Set(trips.map(t => t.trip?.routeId || data.trips?.[t.trip?.tripId ?? '']?.route || ''))
-  const unknownRoutes = [...routeIds].filter(r => r && !data.routes[r])
-  if (unknownRoutes.length) fail(`${id}: routes missing from the static data: ${unknownRoutes.join(',')}`)
+  const trips = checkTripFeed(id, feed, (s) => !!data.stops[s])
+  const routeIds = new Set(
+    trips.map((t) => t.trip?.routeId || data.trips?.[t.trip?.tripId ?? '']?.route || ''),
+  )
+  const unknownRoutes = [...routeIds].filter((r) => r && !data.routes[r])
+  if (unknownRoutes.length)
+    fail(`${id}: routes missing from the static data: ${unknownRoutes.join(',')}`)
   // The static schedule is a day behind at worst; many unknown trips means the refresh is failing.
-  const unscheduled = data.trips ? trips.filter(t => !data.trips![t.trip?.tripId ?? '']) : []
+  const unscheduled = data.trips ? trips.filter((t) => !data.trips![t.trip?.tripId ?? '']) : []
   if (trips.length && unscheduled.length / trips.length > 0.2)
     fail(`${id}: ${unscheduled.length} of ${trips.length} trips are not in the static schedule`)
-  const { vehicles } = computeAgencyVehicles(positions === feed ? [feed] : [positions, feed], data, { now: nowS })
+  const { vehicles } = computeAgencyVehicles(
+    positions === feed ? [feed] : [positions, feed],
+    data,
+    { now: nowS },
+  )
   if (vehicles.length === 0) fail(`${id}: no vehicle positions`)
   const main = data.stops[MAIN_STOP[id] ?? '']
   if (!main) {
@@ -159,7 +182,7 @@ for (const agency of agencies) {
   }
   const n = computeAgencyArrivals(main, feed, data, { now: nowS, limit: 30 }).arrivals.length
   console.log(
-    `${id}: ${vehicles.length} vehicles, ${unscheduled.length} trips not in the static schedule; ${main.name}: ${n} departures`
+    `${id}: ${vehicles.length} vehicles, ${unscheduled.length} trips not in the static schedule; ${main.name}: ${n} departures`,
   )
   if (n === 0) fail(`${id}: no departures at ${main.name}`)
 }
@@ -172,7 +195,9 @@ try {
   ])
   const joined = joinStations(information, status)
   // Seasonal closures take stations off the street (is_installed 0); the join should keep the rest.
-  const installed = status.data.stations.filter(s => s.is_installed === 1 || s.is_installed === true).length
+  const installed = status.data.stations.filter(
+    (s) => s.is_installed === 1 || s.is_installed === true,
+  ).length
   const stations = [...joined.byId.values()]
   let bikes = 0,
     ebikes = 0,
@@ -184,15 +209,19 @@ try {
   }
   console.log(
     `citibike: ${stations.length} of ${installed} installed stations joined, ${bikes} bikes, ${ebikes} e-bikes, ${docks} free docks, ` +
-      `age ${nowS - joined.updatedAt}s`
+      `age ${nowS - joined.updatedAt}s`,
   )
-  if (Math.abs(nowS - joined.updatedAt) > 600) fail(`citibike: station_status is ${nowS - joined.updatedAt}s old`)
+  if (Math.abs(nowS - joined.updatedAt) > 600)
+    fail(`citibike: station_status is ${nowS - joined.updatedAt}s old`)
   if (stations.length < 1000 || stations.length < installed * 0.95)
     fail(`citibike: only ${stations.length} of ${installed} installed stations joined`)
   if (bikes + ebikes === 0 || docks === 0) fail('citibike: no bikes or no free docks anywhere')
-  if (!stations.some(s => s.ebikes > 0)) fail('citibike: no e-bikes anywhere (num_ebikes_available gone?)')
+  if (!stations.some((s) => s.ebikes > 0))
+    fail('citibike: no e-bikes anywhere (num_ebikes_available gone?)')
   const near = nearestStations(stations, TIMES_SQ.lat, TIMES_SQ.lon, 3)
-  console.log(`citibike near Times Sq: ${near.map(s => `${s.name} (${s.distance} m)`).join(', ')}`)
+  console.log(
+    `citibike near Times Sq: ${near.map((s) => `${s.name} (${s.distance} m)`).join(', ')}`,
+  )
   if (!near[0] || near[0].distance > 500) fail('citibike: no station within 500 m of Times Sq')
 } catch (err) {
   fail(`citibike: ${(err as Error).message}`)
@@ -204,41 +233,50 @@ if (!busKey) console.log('bus: skipped, BUSTIME_KEY is not set')
 else {
   try {
     const [stop, unknown] = await Promise.all(
-      [BUS_STOP, '999999'].map(s => fetchStopMonitoring(s, busKey, { timeoutMs: 20_000 }))
+      [BUS_STOP, '999999'].map((s) => fetchStopMonitoring(s, busKey, { timeoutMs: 20_000 })),
     )
-    const unknownRoutes = [...new Set(stop!.visits.map(v => v.routeId))].filter(r => !BUS_DATA.routes[r])
-    const timed = stop!.visits.filter(v => v.time !== undefined).length
+    const unknownRoutes = [...new Set(stop!.visits.map((v) => v.routeId))].filter(
+      (r) => !BUS_DATA.routes[r],
+    )
+    const timed = stop!.visits.filter((v) => v.time !== undefined).length
     const name = stop!.visits[0]?.stopName ?? BUS_STOP
     console.log(
-      `bus ${name}: ${stop!.visits.length} buses, ${timed} with a time, age ${nowS - (stop!.updatedAt ?? 0)}s`
+      `bus ${name}: ${stop!.visits.length} buses, ${timed} with a time, age ${nowS - (stop!.updatedAt ?? 0)}s`,
     )
     if (stop!.error) fail(`bus stop ${BUS_STOP}: ${stop!.error}`)
     if (Math.abs(nowS - (stop!.updatedAt ?? 0)) > 600)
       fail(`bus stop ${BUS_STOP}: response timestamp ${stop!.updatedAt}`)
     if (stop!.visits.length === 0) fail(`bus stop ${BUS_STOP}: no buses on their way`)
-    if (unknownRoutes.length) fail(`bus: routes missing from the static data: ${unknownRoutes.join(',')}`)
+    if (unknownRoutes.length)
+      fail(`bus: routes missing from the static data: ${unknownRoutes.join(',')}`)
     // src/routes/bus.ts answers 404 when the parser reads the error as not found.
     if (!unknown!.notFound) fail(`bus: unknown stop answered ${JSON.stringify(unknown!.error)}`)
 
     // Vehicles: the M15 runs around the clock. Bus Time takes the plain route id as its line ref.
     const [m15, noRoute] = await Promise.all(
-      ['M15', 'ZZZ'].map(r => fetchVehicleMonitoring(r, busKey, { timeoutMs: 20_000 }))
+      ['M15', 'ZZZ'].map((r) => fetchVehicleMonitoring(r, busKey, { timeoutMs: 20_000 })),
     )
     console.log(`bus M15: ${m15!.vehicles.length} buses, age ${nowS - (m15!.updatedAt ?? 0)}s`)
     if (m15!.error) fail(`bus vehicles M15: ${m15!.error}`)
     if (m15!.vehicles.length === 0) fail('bus vehicles M15: no buses')
-    if (m15!.vehicles.some(v => !v.stopId || v.recordedAt === undefined))
+    if (m15!.vehicles.some((v) => !v.stopId || v.recordedAt === undefined))
       fail('bus vehicles M15: buses without a next stop or a time')
     // src/routes/bus.ts answers 404 when the parser reads the error as not found.
     if (!noRoute!.notFound) fail(`bus: unknown route answered ${JSON.stringify(noRoute!.error)}`)
 
     // Nearby stops, from the Discovery API.
     const { lat, lon } = BUS_STOP_POINT
-    const stops = await fetchStopsForLocation(lat, lon, NEARBY_RADIUS_M, busKey, { timeoutMs: 20_000 })
+    const stops = await fetchStopsForLocation(lat, lon, NEARBY_RADIUS_M, busKey, {
+      timeoutMs: 20_000,
+    })
     console.log(`bus stops near ${BUS_STOP}: ${stops.length}`)
-    if (!stops.some(s => s.code === BUS_STOP)) fail(`bus stops: ${BUS_STOP} not near its own position`)
-    const unknownStopRoutes = [...new Set(stops.flatMap(s => s.routeIds))].filter(r => !BUS_DATA.routes[r])
-    if (unknownStopRoutes.length) fail(`bus stops: routes missing from the static data: ${unknownStopRoutes.join(',')}`)
+    if (!stops.some((s) => s.code === BUS_STOP))
+      fail(`bus stops: ${BUS_STOP} not near its own position`)
+    const unknownStopRoutes = [...new Set(stops.flatMap((s) => s.routeIds))].filter(
+      (r) => !BUS_DATA.routes[r],
+    )
+    if (unknownStopRoutes.length)
+      fail(`bus stops: routes missing from the static data: ${unknownStopRoutes.join(',')}`)
   } catch (err) {
     fail(`bus: ${(err as Error).message}`)
   }
@@ -250,16 +288,18 @@ for (const name of alertFeeds) {
   const feed = feedOrFail(label, name)
   if (!feed) continue
   const { alerts, updatedAt } = computeAlerts(feed, { now: nowS })
-  console.log(`${label}: ${feed.entity.length} alerts, ${alerts.length} in effect, age ${nowS - (updatedAt ?? 0)}s`)
+  console.log(
+    `${label}: ${feed.entity.length} alerts, ${alerts.length} in effect, age ${nowS - (updatedAt ?? 0)}s`,
+  )
   if (Math.abs(nowS - (updatedAt ?? 0)) > 86_400)
     fail(`${label}: header timestamp ${updatedAt} is ${nowS - (updatedAt ?? 0)}s old`)
-  if (feed.entity.some(e => !e.alert)) fail(`${label}: entities that are not alerts`)
+  if (feed.entity.some((e) => !e.alert)) fail(`${label}: entities that are not alerts`)
   // Every MTA alert carries its status in the extension; NYC Ferry's (a full URL) don't.
   if (name.startsWith('https://')) continue
-  const types = feed.entity.flatMap(e => (e.alert ? [alertType(e.alert)] : []))
-  const untyped = types.filter(t => !t).length
+  const types = feed.entity.flatMap((e) => (e.alert ? [alertType(e.alert)] : []))
+  const untyped = types.filter((t) => !t).length
   if (untyped) fail(`${label}: ${untyped} alerts without an alert_type`)
-  const unknown = [...new Set(types.filter(t => t && !statusRank(t)))]
+  const unknown = [...new Set(types.filter((t) => t && !statusRank(t)))]
   if (unknown.length) fail(`${label}: statuses missing from ALERT_STATUSES: ${unknown.join(', ')}`)
 }
 
@@ -269,7 +309,7 @@ if (base) {
   const call = async (path: string, withToken: boolean) => {
     const res = await fetch(base + path, { headers: withToken ? { 'x-transit-token': token } : {} })
     console.log(
-      `GET ${path} ${withToken ? 'with' : 'without'} token: ${res.status}, x-vercel-cache ${res.headers.get('x-vercel-cache')}`
+      `GET ${path} ${withToken ? 'with' : 'without'} token: ${res.status}, x-vercel-cache ${res.headers.get('x-vercel-cache')}`,
     )
     return res
   }
@@ -297,7 +337,11 @@ if (base) {
   expectStatus(await call(arrivals, false), 401, 'arrivals without token after a cached hit')
   expectStatus(await call('/stops/search?q=times%20sq', false), 401, 'search without token')
   expectStatus(await call('/stops/search?q=times%20sq', true), 200, 'search with token')
-  expectStatus(await call(`/preview/subway?q=times%20sq&smoke=${nowS}`, false), 401, 'preview without token')
+  expectStatus(
+    await call(`/preview/subway?q=times%20sq&smoke=${nowS}`, false),
+    401,
+    'preview without token',
+  )
   await expectPreview('/preview/subway?q=times%20sq', 'Times Sq-42 St')
 
   const pathArrivals = `/path/arrivals?station=JSQ&smoke=${nowS}`
@@ -322,14 +366,22 @@ if (base) {
     '/subway/alerts?route=A',
     '/subway/vehicles?route=L',
   ]
-  for (const [i, res] of (await Promise.all(others.map(path => call(path, true)))).entries())
+  for (const [i, res] of (await Promise.all(others.map((path) => call(path, true)))).entries())
     expectStatus(res, 200, others[i]!)
   expectStatus(await call('/lirr/nope', true), 404, 'an unknown agency route')
   if (busKey) {
     const bus = `/bus/arrivals?stop=${BUS_STOP}&smoke=${nowS}`
     expectStatus(await call(bus, false), 401, 'bus arrivals without token')
-    expectStatus(await call(bus, true), 200, 'bus arrivals with token (is BUSTIME_KEY set on the deployment?)')
-    expectStatus(await call(`/bus/vehicles?route=M15&smoke=${nowS}`, true), 200, 'bus vehicles with token')
+    expectStatus(
+      await call(bus, true),
+      200,
+      'bus arrivals with token (is BUSTIME_KEY set on the deployment?)',
+    )
+    expectStatus(
+      await call(`/bus/vehicles?route=M15&smoke=${nowS}`, true),
+      200,
+      'bus vehicles with token',
+    )
     const near = `/bus/nearby?lat=${BUS_STOP_POINT.lat}&lon=${BUS_STOP_POINT.lon}&smoke=${nowS}`
     expectStatus(await call(near, true), 200, 'bus nearby with token')
   }
@@ -347,11 +399,14 @@ if (base) {
     expectStatus(
       await call(`/citibike/station?id=${encodeURIComponent(first.id)}&smoke=${nowS}`, true),
       200,
-      'Citi Bike station with token'
+      'Citi Bike station with token',
     )
   }
 
-  await expectPreview(`/preview/mnr?station=${MAIN_STOP.mnr}`, (await AGENCIES.mnr!.data()).stops[MAIN_STOP.mnr!]!.name)
+  await expectPreview(
+    `/preview/mnr?station=${MAIN_STOP.mnr}`,
+    (await AGENCIES.mnr!.data()).stops[MAIN_STOP.mnr!]!.name,
+  )
 }
 
 if (problems.length) {

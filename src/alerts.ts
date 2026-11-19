@@ -30,10 +30,14 @@ export function inEffect(period: Period, now: number): boolean {
 }
 
 function plain(
-  text: { translation?: { text?: string | null; language?: string | null }[] | null } | null | undefined
+  text:
+    | { translation?: { text?: string | null; language?: string | null }[] | null }
+    | null
+    | undefined,
 ): string {
   const all = text?.translation ?? []
-  const pick = all.find(t => t.language === 'en') ?? all.find(t => !t.language?.endsWith('html')) ?? all[0]
+  const pick =
+    all.find((t) => t.language === 'en') ?? all.find((t) => !t.language?.endsWith('html')) ?? all[0]
   return (pick?.text ?? '').trim()
 }
 
@@ -45,18 +49,22 @@ function plain(
  * the most serious status. Current events come first, then planned work; by priority, then
  * newest first. Pure.
  */
-export function computeAlerts(feed: FeedMessage, { now, match, route, stop }: AlertsOptions): AlertsResult {
+export function computeAlerts(
+  feed: FeedMessage,
+  { now, match, route, stop }: AlertsOptions,
+): AlertsResult {
   const byId = new Map<string, Alert[]>()
   const routeOf = (e: Entity) => e.routeId || e.trip?.routeId || ''
-  const directionOf = (e: Entity) => (Object.hasOwn(e, 'directionId') ? (e.directionId ?? undefined) : undefined)
+  const directionOf = (e: Entity) =>
+    Object.hasOwn(e, 'directionId') ? (e.directionId ?? undefined) : undefined
   for (const entity of feed.entity) {
     const a = entity.alert
     if (!a || entity.isDeleted) continue
     // The cheap filter first: planned work can carry hundreds of periods.
     const informed: Entity[] = a.informedEntity ?? []
-    if (match && !informed.some(e => match(routeOf(e), e.stopId ?? '', directionOf(e)))) continue
+    if (match && !informed.some((e) => match(routeOf(e), e.stopId ?? '', directionOf(e)))) continue
     const periods = a.activePeriod ?? []
-    const period = periods.find(p => inEffect(p, now))
+    const period = periods.find((p) => inEffect(p, now))
     if (periods.length > 0 && !period) continue
     const header = plain(a.headerText)
     if (!header) continue
@@ -79,7 +87,7 @@ export function computeAlerts(feed: FeedMessage, { now, match, route, stop }: Al
       priority: (category ? statusRank(category) : undefined) ?? null,
       header,
       description: plain(a.descriptionText),
-      routes: routeIds.map(id => route?.(id) ?? fallbackRoute(id)),
+      routes: routeIds.map((id) => route?.(id) ?? fallbackRoute(id)),
       stops,
       start: num(period?.start) ?? null,
       end: num(period?.end) ?? null,
@@ -92,7 +100,7 @@ export function computeAlerts(feed: FeedMessage, { now, match, route, stop }: Al
       Number(a.planned) - Number(b.planned) ||
       (b.priority ?? 0) - (a.priority ?? 0) ||
       (b.start ?? 0) - (a.start ?? 0) ||
-      a.id.localeCompare(b.id)
+      a.id.localeCompare(b.id),
   )
   return { updatedAt: num(feed.header?.timestamp) ?? null, alerts }
 }
@@ -102,12 +110,12 @@ function merge(parts: Alert[]): Alert {
   const first = parts.reduce((best, p) => ((p.priority ?? 0) > (best.priority ?? 0) ? p : best))
   const routes = new Map<string, RouteDisplay>()
   for (const p of parts) for (const r of p.routes) if (!routes.has(r.id)) routes.set(r.id, r)
-  const starts = parts.map(p => p.start)
-  const ends = parts.map(p => p.end)
+  const starts = parts.map((p) => p.start)
+  const ends = parts.map((p) => p.end)
   return {
     ...first,
     routes: [...routes.values()],
-    stops: mergeStops(parts.flatMap(p => p.stops)),
+    stops: mergeStops(parts.flatMap((p) => p.stops)),
     start: starts.includes(null) ? null : Math.min(...(starts as number[])),
     end: ends.includes(null) ? null : Math.max(...(ends as number[])),
   }

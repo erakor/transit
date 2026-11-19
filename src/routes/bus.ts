@@ -54,11 +54,17 @@ export const NEARBY_RADIUS_M = 500
  * One stop's answer from Bus Time, or the response to send instead: 500 without a key, 404 for a
  * stop Bus Time doesn't know, 502 when it fails.
  */
-async function loadStop(stop: string, deps: BusDeps, nowMs: number): Promise<StopMonitoring | Response> {
+async function loadStop(
+  stop: string,
+  deps: BusDeps,
+  nowMs: number,
+): Promise<StopMonitoring | Response> {
   const key = requireKey(deps)
   if (key instanceof Response) return key
   const { fetcher } = deps
-  const answer = await tryLoad(`bustime stop ${stop}`, () => fetchStopMonitoring(stop, key, { fetcher, now: nowMs }))
+  const answer = await tryLoad(`bustime stop ${stop}`, () =>
+    fetchStopMonitoring(stop, key, { fetcher, now: nowMs }),
+  )
   if (!answer) return errorResponse('upstream_unavailable', 'Bus Time unavailable')
   if (answer.error) {
     if (answer.notFound) return errorResponse('unknown_stop', `unknown stop ${stop}`)
@@ -91,14 +97,18 @@ export function busPreviewHandler(deps: BusDeps = {}) {
     const nowMs = now()
     const answer = await loadStop(stop, deps, nowMs)
     if (answer instanceof Response) return answer
-    const { stop: resolved, arrivals } = computeBusArrivals(stop, answer, BUS_DATA.routes, { limit: Infinity })
+    const { stop: resolved, arrivals } = computeBusArrivals(stop, answer, BUS_DATA.routes, {
+      limit: Infinity,
+    })
     // A cancelled bus won't come: the line shows the next one that will.
-    const departures = arrivals.flatMap(a => (a.time === null || a.cancelled ? [] : [{ label: a.name, time: a.time }]))
+    const departures = arrivals.flatMap((a) =>
+      a.time === null || a.cancelled ? [] : [{ label: a.name, time: a.time }],
+    )
     const line = destinationsLine(
       resolved.name ?? `Stop ${stop}`,
       departures,
       Math.floor(nowMs / 1000),
-      'no buses soon'
+      'no buses soon',
     )
     return text(line, { cache: PREVIEW_CACHE })
   })
@@ -115,8 +125,8 @@ export function busAlertsHandler({ fetcher, now = () => Date.now() }: BusDeps = 
     if (!feed) return errorResponse('upstream_unavailable', 'MTA alerts unavailable')
     const result = computeAlerts(feed, {
       now: Math.floor(nowMs / 1000),
-      match: routeParam ? r => r.toUpperCase() === routeParam : undefined,
-      route: id => busRoute(BUS_DATA.routes, id),
+      match: routeParam ? (r) => r.toUpperCase() === routeParam : undefined,
+      route: (id) => busRoute(BUS_DATA.routes, id),
     })
     return json(result, { cache: ALERTS_CACHE })
   })
@@ -135,7 +145,7 @@ export function busVehiclesHandler(deps: BusDeps = {}) {
     const key = requireKey(deps)
     if (key instanceof Response) return key
     const answer = await tryLoad(`bustime route ${route.id}`, () =>
-      fetchVehicleMonitoring(route.id, key, { fetcher, now: now() })
+      fetchVehicleMonitoring(route.id, key, { fetcher, now: now() }),
     )
     if (!answer) return errorResponse('upstream_unavailable', 'Bus Time unavailable')
     if (answer.error) {
@@ -143,7 +153,11 @@ export function busVehiclesHandler(deps: BusDeps = {}) {
       console.error(`bustime route ${route.id}: ${answer.error}`)
       return errorResponse('upstream_unavailable', 'Bus Time unavailable')
     }
-    const body: BusVehiclesResponse = { route, updatedAt: answer.updatedAt, vehicles: computeBusVehicles(answer) }
+    const body: BusVehiclesResponse = {
+      route,
+      updatedAt: answer.updatedAt,
+      vehicles: computeBusVehicles(answer),
+    }
     return json(body, { cache: LIVE_CACHE })
   })
 }
@@ -158,10 +172,12 @@ export function busNearbyHandler(deps: BusDeps = {}) {
     const key = requireKey(deps)
     if (key instanceof Response) return key
     const stops = await tryLoad('bustime stops', () =>
-      fetchStopsForLocation(lat, lon, NEARBY_RADIUS_M, key, { fetcher, now: now() })
+      fetchStopsForLocation(lat, lon, NEARBY_RADIUS_M, key, { fetcher, now: now() }),
     )
     if (!stops) return errorResponse('upstream_unavailable', 'Bus Time unavailable')
-    const body: BusNearbyResponse = { stops: nearestBusStops(stops, lat, lon, BUS_DATA.routes, limit, NEARBY_RADIUS_M) }
+    const body: BusNearbyResponse = {
+      stops: nearestBusStops(stops, lat, lon, BUS_DATA.routes, limit, NEARBY_RADIUS_M),
+    }
     // Stops change with the quarterly schedules, upstream and without a deploy.
     return json(body, { cache: LOOKUP_CACHE })
   })

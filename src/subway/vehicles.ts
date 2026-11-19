@@ -1,6 +1,12 @@
 import type { RouteInfo } from '#src/static/types.js'
 import type { StationIndex } from '#src/stops/stations.js'
-import { num, terminalName, VEHICLE_MAX_AGE_S, VEHICLE_STATUS, type FeedMessage } from '#src/gtfsrt.js'
+import {
+  num,
+  terminalName,
+  VEHICLE_MAX_AGE_S,
+  VEHICLE_STATUS,
+  type FeedMessage,
+} from '#src/gtfsrt.js'
 import type { SubwayTrain, VehiclesResponse } from './schemas.js'
 
 /**
@@ -13,7 +19,7 @@ export function computeSubwayTrains(
   route: RouteInfo,
   feed: FeedMessage,
   index: StationIndex,
-  { now }: { now: number }
+  { now }: { now: number },
 ): VehiclesResponse {
   const headsigns = new Map<string, string>()
   for (const entity of feed.entity) {
@@ -21,7 +27,7 @@ export function computeSubwayTrains(
     if (tu?.trip?.tripId)
       headsigns.set(
         tu.trip.tripId,
-        terminalName(tu.stopTimeUpdate ?? [], id => index.stopName(id))
+        terminalName(tu.stopTimeUpdate ?? [], (id) => index.stopName(id)),
       )
   }
   const trains: SubwayTrain[] = []
@@ -47,7 +53,7 @@ export function computeSubwayTrains(
     (a, b) =>
       (a.direction ?? 'Z').localeCompare(b.direction ?? 'Z') ||
       (a.stop?.id ?? '').localeCompare(b.stop?.id ?? '') ||
-      a.tripId.localeCompare(b.tripId)
+      a.tripId.localeCompare(b.tripId),
   )
   return {
     route: { id: route.id, name: route.shortName, color: route.color, textColor: route.textColor },

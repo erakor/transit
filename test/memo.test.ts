@@ -28,7 +28,8 @@ describe('memoized', () => {
     vi.useFakeTimers()
     try {
       const load = vi.fn(
-        () => new Promise<string>((_, reject) => setTimeout(() => reject(new Error('timeout')), 8_000))
+        () =>
+          new Promise<string>((_, reject) => setTimeout(() => reject(new Error('timeout')), 8_000)),
       )
       const first = expect(memoized('k', 0, load)).rejects.toThrow('timeout')
       await vi.advanceTimersByTimeAsync(8_000)
