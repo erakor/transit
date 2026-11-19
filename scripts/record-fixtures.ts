@@ -28,12 +28,11 @@ import { gbfsUrl } from '#src/citibike/feeds.js'
 import { distanceMeters } from '#src/geo.js'
 import { decodeFeed, feedUrl } from '#src/gtfsrt.js'
 import { parsePathFeed, PATH_FEED_URL } from '#src/path/feed.js'
-import { BUS_ALERTS_FEED } from '#src/routes/bus.js'
+import { BUS_ALERTS_FEED, NEARBY_RADIUS_M } from '#src/routes/bus.js'
 import { SUBWAY_ALERTS_FEED } from '#src/routes/alerts.js'
 import { FEEDS } from '#src/subway/feeds.js'
 import { stopMonitoringUrl, vehicleMonitoringUrl } from '#src/bus/siri.js'
 import { stopsForLocationUrl } from '#src/bus/stops.js'
-import { NEARBY_RADIUS_M } from '#src/routes/bus.js'
 import { BUS_ROUTE, BUS_STOP, BUS_STOP_POINT, fixtureName, TIMES_SQ } from '../test/helpers.js'
 
 const { FeedMessage } = GtfsRealtimeBindings.transit_realtime

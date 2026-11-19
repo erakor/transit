@@ -303,9 +303,9 @@ Ids, which clients store as favorites, so keep them stable:
   `only-throw-error`; `.oxlintrc.json`): `await`, `.catch()` or `void` every promise. Import
   restrictions repeat their patterns in each `overrides` entry, because a later entry for the same
   rule replaces the earlier one's options.
-- `@erakor/toolchain` is pinned to a commit until the repo has a `v1.x` tag; move it to the tag
-  (`github:erakor/toolchain#v1.0.0`) once released. `tsconfig.json` extends its base, keeps `lib` with
-  `DOM` (the shared one omits it, and `fetch` types need it) and sets `module: NodeNext`.
+- `@erakor/toolchain` is pinned to a release tag (`github:erakor/toolchain#v1.1.0`), which Dependabot
+  bumps. `tsconfig.json` extends its base, keeps `lib` with `DOM` (the shared one omits it, and
+  `fetch` types need it) and sets `module: NodeNext`.
 - Read an upstream body with `readLimited()` or `readLimitedJson()` (`src/memo.ts`), not `res.json()` or `res.arrayBuffer()`: it
   throws past 32 MiB (the largest live body is under 1 MB) without naming the URL, which can carry a key.
 - `vercel.json` sends `X-Content-Type-Options: nosniff` on every response.
