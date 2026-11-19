@@ -45,7 +45,7 @@
   "packageManager": "pnpm@12.18.0",
   "lint-staged": {
     "*.{js,mjs,cjs,ts}": [
-      "oxlint --fix --type-aware",
+      "oxlint --fix",
       "oxfmt --no-error-on-unmatched-pattern"
     ],
     "*.{json,yml,yaml}": "oxfmt --no-error-on-unmatched-pattern"

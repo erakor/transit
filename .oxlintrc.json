@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "extends": ["./node_modules/@erakor/toolchain/oxlint/base.json"],
-  "ignorePatterns": ["src/data/*.generated.ts", ".vercel/", "coverage/", "test/fixtures/**"],
+  "ignorePatterns": ["src/data/*.generated.ts", "test/fixtures/**"],
   "rules": {
     "typescript/no-floating-promises": "error",
     "typescript/no-misused-promises": "error",

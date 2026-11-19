@@ -6,7 +6,6 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "noUncheckedIndexedAccess": true,
-    "esModuleInterop": true,
     "types": ["node"]
   },
   "include": ["api", "src", "scripts", "test"]
