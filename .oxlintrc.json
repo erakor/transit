@@ -3,6 +3,9 @@
   "extends": ["./node_modules/@erakor/toolchain/oxlint/base.json"],
   "ignorePatterns": ["src/data/*.generated.ts", "test/fixtures/**"],
   "rules": {
+    "no-empty": "error",
+    "no-prototype-builtins": "error",
+    "no-case-declarations": "error",
     "typescript/no-floating-promises": "error",
     "typescript/no-misused-promises": "error",
     "typescript/return-await": ["error", "in-try-catch"],

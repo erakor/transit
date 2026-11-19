@@ -9,3 +9,6 @@
 # Lockfiles: collapsed in GitHub diffs.
 pnpm-lock.yaml linguist-generated=true -diff
 package-lock.json linguist-generated=true -diff
+
+# Recorded protobuf feeds: never normalize line endings.
+*.pb binary
