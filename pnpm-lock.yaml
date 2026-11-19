@@ -174,8 +174,8 @@ importers:
         version: 4.6.7
     devDependencies:
       '@erakor/toolchain':
-        specifier: github:erakor/toolchain#7b648f778dfc2e4f0753ef20bb5a0a9484f9377a
-        version: https://codeload.github.com/erakor/toolchain/tar.gz/7b648f778dfc2e4f0753ef20bb5a0a9484f9377a(oxfmt@0.79.0)(oxlint@1.94.0(oxlint-tsgolint@7.0.2007))
+        specifier: github:erakor/toolchain#a43487e76663bd84ede121057887848f69e6016d
+        version: https://codeload.github.com/erakor/toolchain/tar.gz/a43487e76663bd84ede121057887848f69e6016d(oxfmt@0.79.0)(oxlint@1.94.0(oxlint-tsgolint@7.0.2007))
       '@types/node':
         specifier: ^26.6.6
         version: 26.6.6
@@ -238,9 +238,9 @@ packages:
   '@emnapi/wasi-threads@1.2.2':
     resolution: {integrity: sha512-c95qOXkHdydNKhscBTebqEC1CVAZpyqOfVfBzQ1qgzyl3gfeldUjIggDbIZgDKsHLgnsM+igH7TJ/eAasaVuMA==}
 
-  '@erakor/toolchain@https://codeload.github.com/erakor/toolchain/tar.gz/7b648f778dfc2e4f0753ef20bb5a0a9484f9377a':
-    resolution: {gitHosted: true, integrity: sha512-v0x7i3w6kzKk1k02PXzk6fm483GJHELo6EU5oSDOyNTcppOlhqUuZ6LvCIaBiVTx1iUkSzwAtBtUBivbGRDmFA==, tarball: https://codeload.github.com/erakor/toolchain/tar.gz/7b648f778dfc2e4f0753ef20bb5a0a9484f9377a}
-    version: 1.2.1
+  '@erakor/toolchain@https://codeload.github.com/erakor/toolchain/tar.gz/a43487e76663bd84ede121057887848f69e6016d':
+    resolution: {gitHosted: true, integrity: sha512-0zGmWgKEQtiKKW5FWrGFnJcNz9vgAJcBu9pg+mzn1+cBEDY5piSG8MMRspS4XWg9tfLhAoT3ZG3XrNALcQyqpA==, tarball: https://codeload.github.com/erakor/toolchain/tar.gz/a43487e76663bd84ede121057887848f69e6016d}
+    version: 1.4.0
     engines: {node: '>=26'}
     peerDependencies:
       oxfmt: '>=0.79.0'
@@ -1648,7 +1648,7 @@ snapshots:
       tslib: 2.9.1
     optional: true
 
-  '@erakor/toolchain@https://codeload.github.com/erakor/toolchain/tar.gz/7b648f778dfc2e4f0753ef20bb5a0a9484f9377a(oxfmt@0.79.0)(oxlint@1.94.0(oxlint-tsgolint@7.0.2007))':
+  '@erakor/toolchain@https://codeload.github.com/erakor/toolchain/tar.gz/a43487e76663bd84ede121057887848f69e6016d(oxfmt@0.79.0)(oxlint@1.94.0(oxlint-tsgolint@7.0.2007))':
     dependencies:
       oxfmt: 0.79.0
       oxlint: 1.94.0(oxlint-tsgolint@7.0.2007)
