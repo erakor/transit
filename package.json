@@ -33,14 +33,14 @@
     "@types/node": "^26.6.6",
     "fflate": "^0.8.3",
     "husky": "^9.1.7",
-    "knip": "^6.45.1",
+    "knip": "^6.46.1",
     "lint-staged": "^17.6.1",
     "oxfmt": "^0.79.0",
     "oxlint": "^1.94.0",
     "oxlint-tsgolint": "^7.0.2007",
     "tsx": "^4.23.15",
-    "typescript": "5.9",
-    "vitest": "^5.1.0"
+    "typescript": "~5.9.3",
+    "vitest": "^5.1.1"
   },
   "packageManager": "pnpm@12.18.0",
   "lint-staged": {
