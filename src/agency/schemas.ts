@@ -21,8 +21,13 @@ import {
 } from '#src/schema.js'
 
 export const AgencyArrival = z.strictObject({
-  time: EpochSeconds.meta({ description: 'When it leaves this stop, or arrives where its trip ends.' }),
-  delay: z.int().optional().meta({ description: 'Seconds behind schedule (negative: ahead), when the feed says.' }),
+  time: EpochSeconds.meta({
+    description: 'When it leaves this stop, or arrives where its trip ends.',
+  }),
+  delay: z
+    .int()
+    .optional()
+    .meta({ description: 'Seconds behind schedule (negative: ahead), when the feed says.' }),
   track: z.string().optional().meta({
     description:
       'LIRR and Metro-North: the track it uses at this station (`2`, `2A`, `204`), when the railroad has posted it.',
@@ -48,20 +53,25 @@ export const AgencyArrivalsResult = z.strictObject({
 export const AgencyVehicle = z.strictObject({
   id: z.string(),
   label: z.string().meta({
-    description: 'The number riders and crews know it by (train number, boat name); empty when the feed has none.',
+    description:
+      'The number riders and crews know it by (train number, boat name); empty when the feed has none.',
   }),
   tripId: z.string(),
   route: RouteDisplay.nullable(),
   headsign: z.string().meta({ description: 'Where its trip ends, empty when unknown.' }),
   lat: Latitude,
   lon: Longitude,
-  status: VehicleStatus.nullable().meta({ description: "Relative to `stop`; null when the feed doesn't say." }),
+  status: VehicleStatus.nullable().meta({
+    description: "Relative to `stop`; null when the feed doesn't say.",
+  }),
   stop: StopRef.nullable(),
   time: EpochSeconds.nullable().meta({ description: 'When the position was measured.' }),
 })
 
 export const AgencyVehiclesResponse = z.strictObject({
-  updatedAt: EpochSeconds.nullable().meta({ description: 'Oldest header timestamp among the feeds used.' }),
+  updatedAt: EpochSeconds.nullable().meta({
+    description: 'Oldest header timestamp among the feeds used.',
+  }),
   vehicles: z
     .array(AgencyVehicle)
     .meta({ description: 'By route name. Positions older than 15 minutes are left out.' }),
@@ -80,7 +90,10 @@ function stopSchemas(p: StopParam) {
   })
 
   const StopsResponse = z.strictObject({
-    query: z.string().optional().meta({ description: 'The search text, trimmed, when there was one.' }),
+    query: z
+      .string()
+      .optional()
+      .meta({ description: 'The search text, trimmed, when there was one.' }),
     ...keyed(`${p}s`, z.array(Stop)),
   })
 

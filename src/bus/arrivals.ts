@@ -7,7 +7,11 @@ import type { StopMonitoring } from './siri.js'
  * A route's display fields by GTFS route id; one the static data lacks shows under the name the
  * bus displays, in gray.
  */
-export function busRoute(routes: Record<string, RouteDisplay>, id: string, shownAs = ''): RouteDisplay {
+export function busRoute(
+  routes: Record<string, RouteDisplay>,
+  id: string,
+  shownAs = '',
+): RouteDisplay {
   return routes[id] ?? routes[id.toUpperCase()] ?? { ...fallbackRoute(id), name: shownAs || id }
 }
 
@@ -34,9 +38,9 @@ export function computeBusArrivals(
   stop: string,
   answer: StopMonitoring,
   routes: Record<string, RouteDisplay>,
-  { limit }: { limit: number }
+  { limit }: { limit: number },
 ): BusArrivalsResponse {
-  const arrivals: BusArrival[] = answer.visits.map(v => {
+  const arrivals: BusArrival[] = answer.visits.map((v) => {
     const route = busRoute(routes, v.routeId, v.publishedName)
     return {
       time: v.time ?? null,
@@ -60,9 +64,9 @@ export function computeBusArrivals(
       (a.time ?? far) - (b.time ?? far) ||
       (a.meters ?? far) - (b.meters ?? far) ||
       a.name.localeCompare(b.name) ||
-      a.tripId.localeCompare(b.tripId)
+      a.tripId.localeCompare(b.tripId),
   )
-  const name = answer.visits.find(v => v.stopName)?.stopName ?? null
+  const name = answer.visits.find((v) => v.stopName)?.stopName ?? null
   // Cancelled trips stay where they fall, but only buses that will come count toward `limit`.
   const kept: BusArrival[] = []
   let coming = 0

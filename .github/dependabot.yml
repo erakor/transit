@@ -18,7 +18,8 @@ updates:
     # A dependency goes to the first group it matches: specific groups above the catch-alls.
     groups:
       tooling:
-        patterns: ['eslint', '@eslint/*', 'typescript-eslint', 'prettier', 'knip', 'husky', 'lint-staged']
+        patterns:
+          ['oxlint', 'oxlint-*', 'oxfmt', '@erakor/toolchain', 'knip', 'husky', 'lint-staged']
         update-types: [minor, patch]
       # Majors fall out of the groups as their own PRs, to be reviewed one at a time.
       npm:

@@ -13,7 +13,11 @@ export const TOKEN_HEADER = 'x-transit-token'
 
 export type AuthResult =
   | { ok: true }
-  | { ok: false; code: Extract<ErrorCode, 'missing_token' | 'invalid_token' | 'not_configured'>; error: string }
+  | {
+      ok: false
+      code: Extract<ErrorCode, 'missing_token' | 'invalid_token' | 'not_configured'>
+      error: string
+    }
 
 function digest(s: string): Buffer {
   return createHash('sha256').update(s).digest()
@@ -23,7 +27,7 @@ function digest(s: string): Buffer {
 export function configuredTokens(env: Record<string, string | undefined> = process.env): string[] {
   return (env.TRANSIT_TOKEN ?? '')
     .split(',')
-    .map(t => t.trim())
+    .map((t) => t.trim())
     .filter(Boolean)
 }
 
@@ -31,9 +35,13 @@ export function presentedToken(headers: Headers): string | undefined {
   return headers.get(TOKEN_HEADER)?.trim() || undefined
 }
 
-export function checkToken(headers: Headers, env: Record<string, string | undefined> = process.env): AuthResult {
+export function checkToken(
+  headers: Headers,
+  env: Record<string, string | undefined> = process.env,
+): AuthResult {
   const tokens = configuredTokens(env)
-  if (tokens.length === 0) return { ok: false, code: 'not_configured', error: 'service unavailable' }
+  if (tokens.length === 0)
+    return { ok: false, code: 'not_configured', error: 'service unavailable' }
   const given = presentedToken(headers)
   if (!given) return { ok: false, code: 'missing_token', error: 'missing token' }
   const g = digest(given)

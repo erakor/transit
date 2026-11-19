@@ -23,7 +23,7 @@ export function requiredParam(name: string, description: string, maxLength?: num
 /** An optional query parameter, trimmed; blank reads as absent (`undefined`). */
 export function optionalParam(name: string, description: string, maxLength?: number) {
   return capped(z.string().trim(), name, maxLength)
-    .transform(s => s || undefined)
+    .transform((s) => s || undefined)
     .optional()
     .meta({ description })
 }
@@ -66,7 +66,7 @@ export function countParam(name: string, fallback: number, max: number, descript
       .string()
       .regex(DIGITS, { error })
       // Clamp before the int check: z.int() rejects values past 2^53, which this API lowers to max.
-      .transform(s => Math.min(Number(s), max))
+      .transform((s) => Math.min(Number(s), max))
       .pipe(z.int().min(1, { error }))
       .prefault(String(fallback))
       .meta({
@@ -128,7 +128,7 @@ export function previewQuery(param: string, qDescription: string, paramDescripti
  */
 export function parseQuery<S extends z.ZodType>(
   schema: S,
-  url: URL
+  url: URL,
 ): { ok: true; query: z.output<S> } | { ok: false; response: Response } {
   // No prototype, so names like `constructor` are ordinary keys.
   const raw: Record<string, string> = Object.create(null)
@@ -136,7 +136,13 @@ export function parseQuery<S extends z.ZodType>(
   for (const key in raw) if (raw[key] === '') delete raw[key]
   const parsed = schema.safeParse(raw)
   if (parsed.success) return { ok: true, query: parsed.data }
-  return { ok: false, response: errorResponse('invalid_parameter', parsed.error.issues[0]?.message ?? 'invalid query') }
+  return {
+    ok: false,
+    response: errorResponse(
+      'invalid_parameter',
+      parsed.error.issues[0]?.message ?? 'invalid query',
+    ),
+  }
 }
 
 /**

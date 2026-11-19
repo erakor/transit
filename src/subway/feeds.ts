@@ -11,7 +11,8 @@ export const FEEDS: Record<string, readonly string[]> = {
 }
 
 const FEED_OF_ROUTE = new Map<string, string>()
-for (const [feed, routes] of Object.entries(FEEDS)) for (const r of routes) FEED_OF_ROUTE.set(r, feed)
+for (const [feed, routes] of Object.entries(FEEDS))
+  for (const r of routes) FEED_OF_ROUTE.set(r, feed)
 
 /** The feeds that carry any of `routes`, in FEEDS order. Unknown routes are ignored. */
 export function feedsForRoutes(routes: Iterable<string>): string[] {
@@ -20,5 +21,5 @@ export function feedsForRoutes(routes: Iterable<string>): string[] {
     const f = FEED_OF_ROUTE.get(r)
     if (f) wanted.add(f)
   }
-  return Object.keys(FEEDS).filter(f => wanted.has(f))
+  return Object.keys(FEEDS).filter((f) => wanted.has(f))
 }

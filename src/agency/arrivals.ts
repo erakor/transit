@@ -19,7 +19,7 @@ export function computeAgencyArrivals(
   stop: AgencyStop,
   feed: FeedMessage,
   data: AgencyData,
-  { now, limit }: { now: number; limit: number }
+  { now, limit }: { now: number; limit: number },
 ): AgencyArrivalsResult {
   const arrivals: AgencyArrival[] = []
   const seen = new Set<string>()
@@ -35,7 +35,7 @@ export function computeAgencyArrivals(
 
     let time: number | undefined
     let delay: number | undefined
-    const here = updates.find(u => u.stopId === stop.id)
+    const here = updates.find((u) => u.stopId === stop.id)
     if (here) {
       if (here.scheduleRelationship === SKIPPED) continue
       const event = num(here.departure?.time) !== undefined ? here.departure : here.arrival
@@ -65,7 +65,7 @@ export function computeAgencyArrivals(
       name: route.name,
       color: route.color,
       textColor: route.textColor,
-      headsign: scheduled?.headsign || terminalName(updates, id => data.stops[id]?.name),
+      headsign: scheduled?.headsign || terminalName(updates, (id) => data.stops[id]?.name),
       tripId,
     })
   }

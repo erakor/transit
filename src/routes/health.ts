@@ -11,6 +11,6 @@ export function healthHandler() {
         staticFeedVersion: SUBWAY_FEED_VERSION,
         time: Math.floor(Date.now() / 1000),
       } satisfies HealthResponse,
-      { cache: NO_STORE }
+      { cache: NO_STORE },
     )
 }

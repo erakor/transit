@@ -10,8 +10,8 @@ pnpm test                            # vitest, all tests (offline: uses test/fix
 pnpm vitest run test/routes.test.ts  # one file
 pnpm vitest run -t "caps limit"      # tests whose name matches
 pnpm typecheck                       # tsc --noEmit over api, src, scripts, test
-pnpm lint                            # eslint (eslint.config.js)
-pnpm format                          # prettier over the code, JSON and YAML (`format:check` only reports)
+pnpm lint                            # oxlint with type-aware rules (.oxlintrc.json)
+pnpm format                          # oxfmt over the code, JSON and YAML (`format:check` only reports)
 pnpm knip                            # unused files, exports and dependencies
 pnpm check                           # all of the above and the tests, as CI runs them
 pnpm build:openapi                   # regenerate public/openapi.json from the route schemas (src/openapi.ts)
@@ -23,8 +23,11 @@ pnpm record-fixtures citibike        # only the Citi Bike feeds (`bus`: Bus Time
 pnpm smoke                           # live feed checks, Citi Bike included (+ deployment checks if TRANSIT_BASE_URL is set)
 ```
 
-Style is Prettier's (`.prettierrc.json`; Markdown is skipped because its prose is wrapped by hand),
-and ESLint (`eslint.config.js`) turns the import rules below into errors. A pre-commit hook
+Formatting (oxfmt, `oxfmt.config.ts`) and linting (oxlint, `.oxlintrc.json`) build on the shared
+`@erakor/toolchain` package: its style is no semicolons, single quotes and width 100, and its lint
+baseline, `tsconfig/base.json` and `.editorconfig` come from there. What is transit's own (ignored
+paths, the import rules below, the typed promise rules, `module: NodeNext`) sits on top. Markdown is
+not formatted because its prose is wrapped by hand. A pre-commit hook
 (`.husky/pre-commit`, through lint-staged) runs both on staged files; CI runs `pnpm check`. A
 reformat that touches many lines goes in its own commit, listed in `.git-blame-ignore-revs`.
 
@@ -89,8 +92,8 @@ The LIRR, Metro-North and NYC Ferry share one implementation, driven by the `AGE
 - Each function bundles what it imports: `src/routes/agency.ts` must not import the subway's
   station index (155 KiB of data), and subway routes must not import `src/agency/agencies.ts`.
   `test/bundles.test.ts` walks each function's imports, indirect ones included, and fails when a
-  large module reaches a function not allowed to bundle it; list a new large module there. ESLint
-  checks that provider folders don't import each other (`eslint.config.js`).
+  large module reaches a function not allowed to bundle it; list a new large module there. oxlint
+  checks that provider folders don't import each other (`.oxlintrc.json`).
 - Adding an agency whose realtime feed is plain GTFS-realtime with its own static GTFS is a row
   in `AGENCIES`, a source in `scripts/build-static.ts`, entries in `vercel.json`, and a
   `MAIN_STOP` in `scripts/smoke.ts`; the fixture recorder and the tests' fetcher follow `AGENCIES`.
@@ -295,9 +298,14 @@ Ids, which clients store as favorites, so keep them stable:
 - Workflow actions are pinned to a full commit SHA with the release in a trailing `# vX.Y.Z` comment
   (Dependabot's `github-actions` ecosystem updates both). Workflows set `permissions` (read-only unless
   they push), `timeout-minutes` and `concurrency`.
-- ESLint also runs the promise rules that need type information (`no-floating-promises`,
-  `no-misused-promises`, `return-await` in try/catch, `only-throw-error`; `eslint.config.js`): `await`,
-  `.catch()` or `void` every promise. They are the only typed rules, to keep lint fast.
+- oxlint runs with `--type-aware` (the `oxlint-tsgolint` package), which adds the promise rules that
+  need type information (`no-floating-promises`, `no-misused-promises`, `return-await` in try/catch,
+  `only-throw-error`; `.oxlintrc.json`): `await`, `.catch()` or `void` every promise. Import
+  restrictions repeat their patterns in each `overrides` entry, because a later entry for the same
+  rule replaces the earlier one's options.
+- `@erakor/toolchain` is pinned to a commit until the repo has a `v1.x` tag; move it to the tag
+  (`github:erakor/toolchain#v1.0.0`) once released. `tsconfig.json` extends its base, keeps `lib` with
+  `DOM` (the shared one omits it, and `fetch` types need it) and sets `module: NodeNext`.
 - Read an upstream body with `readLimited()` or `readLimitedJson()` (`src/memo.ts`), not `res.json()` or `res.arrayBuffer()`: it
   throws past 32 MiB (the largest live body is under 1 MB) without naming the URL, which can carry a key.
 - `vercel.json` sends `X-Content-Type-Options: nosniff` on every response.

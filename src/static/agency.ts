@@ -13,7 +13,10 @@ function seconds(time: string): number {
  * them and, with `trips`, each trip's route, headsign and stop offsets. Deterministic: keys are
  * sorted, so the same GTFS gives a byte-identical file.
  */
-export function buildAgencyData(files: GtfsFiles, { trips: withTrips = false }: { trips?: boolean } = {}): AgencyData {
+export function buildAgencyData(
+  files: GtfsFiles,
+  { trips: withTrips = false }: { trips?: boolean } = {},
+): AgencyData {
   requireFiles(files)
 
   const routes: Record<string, AgencyRoute> = {}
@@ -64,7 +67,7 @@ export function buildAgencyData(files: GtfsFiles, { trips: withTrips = false }: 
       let list = calls.get(trip!)
       if (!list) calls.set(trip!, (list = []))
       list.push([Number(seq), stop!, seconds(time)])
-    }
+    },
   )
   for (const [id, set] of routeSets) stops[id]!.routes = [...set].sort(byRouteName)
 
@@ -73,7 +76,11 @@ export function buildAgencyData(files: GtfsFiles, { trips: withTrips = false }: 
   const sortedStops: Record<string, AgencyStop> = {}
   for (const k of Object.keys(stops).sort()) sortedStops[k] = stops[k]!
   const feedInfo = files['feed_info.txt'] ? parseCsvObjects(files['feed_info.txt'])[0] : undefined
-  const data: AgencyData = { feedVersion: feedInfo?.feed_version ?? '', routes: sortedRoutes, stops: sortedStops }
+  const data: AgencyData = {
+    feedVersion: feedInfo?.feed_version ?? '',
+    routes: sortedRoutes,
+    stops: sortedStops,
+  }
 
   if (withTrips) {
     const trips: Record<string, AgencyTrip> = {}

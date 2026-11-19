@@ -1,15 +1,12 @@
 {
+  "extends": "@erakor/toolchain/tsconfig/base.json",
   "compilerOptions": {
     "target": "ES2024",
+    "lib": ["ES2024", "DOM"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "strict": true,
     "noUncheckedIndexedAccess": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "noEmit": true,
-    "types": ["node"],
-    "verbatimModuleSyntax": true
+    "types": ["node"]
   },
   "include": ["api", "src", "scripts", "test"]
 }

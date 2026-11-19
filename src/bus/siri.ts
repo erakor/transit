@@ -31,7 +31,12 @@ export function stopMonitoringUrl(stop: string, key: string): string {
 
 /** The request for one route's buses: SIRI 2, with each bus's next stop and destination. */
 export function vehicleMonitoringUrl(route: string, key: string): string {
-  const query = new URLSearchParams({ key, version: '2', LineRef: route, VehicleMonitoringDetailLevel: 'normal' })
+  const query = new URLSearchParams({
+    key,
+    version: '2',
+    LineRef: route,
+    VehicleMonitoringDetailLevel: 'normal',
+  })
   return `${VEHICLES}?${query}`
 }
 
@@ -46,7 +51,9 @@ interface SiriCall {
   NumberOfStopsAway?: number
   StopPointRef?: string
   StopPointName?: string | string[]
-  Extensions?: { Distances?: { PresentableDistance?: string; DistanceFromCall?: number; StopsFromCall?: number } }
+  Extensions?: {
+    Distances?: { PresentableDistance?: string; DistanceFromCall?: number; StopsFromCall?: number }
+  }
 }
 
 interface SiriJourney {
@@ -147,7 +154,9 @@ export function parseStopMonitoring(body: unknown): StopMonitoring {
   if (!delivery || !Array.isArray(delivery.StopMonitoringDelivery))
     throw new Error('bustime: not a SIRI StopMonitoring answer')
   const updatedAt = epoch(delivery.ResponseTimestamp) ?? null
-  const error = delivery.StopMonitoringDelivery.map(d => d.ErrorCondition).find(e => e !== undefined)
+  const error = delivery.StopMonitoringDelivery.map((d) => d.ErrorCondition).find(
+    (e) => e !== undefined,
+  )
   if (error) return { updatedAt, ...errorResult(error), visits: [] }
   const visits: BusVisit[] = []
   for (const d of delivery.StopMonitoringDelivery) {
@@ -159,14 +168,16 @@ export function parseStopMonitoring(body: unknown): StopMonitoring {
       const distances = call.Extensions?.Distances ?? {}
       const status = first(j.ProgressStatus)
       // SIRI 2 marks the journey; SIRI 1 marks its call.
-      const cancelled = [j.VehicleStatus, call.ArrivalStatus, call.DepartureStatus].some(v =>
-        /^cancell?ed$/i.test(v ?? '')
+      const cancelled = [j.VehicleStatus, call.ArrivalStatus, call.DepartureStatus].some((v) =>
+        /^cancell?ed$/i.test(v ?? ''),
       )
       visits.push({
         ...journeyFields(j, routeId),
         // A cancelled trip has no prediction: it is listed at its scheduled time.
         time: epoch(
-          call.ExpectedArrivalTime ?? call.ExpectedDepartureTime ?? (cancelled ? call.AimedArrivalTime : undefined)
+          call.ExpectedArrivalTime ??
+            call.ExpectedDepartureTime ??
+            (cancelled ? call.AimedArrivalTime : undefined),
         ),
         distanceText: (call.ArrivalProximityText ?? distances.PresentableDistance ?? '').trim(),
         stopsAway: count(call.NumberOfStopsAway ?? distances.StopsFromCall),
@@ -211,7 +222,10 @@ export interface VehicleMonitoring {
 }
 
 /** An `ErrorCondition`: its text, and whether it says the stop or route doesn't exist (`No such stop: MTA_999999.`). */
-function errorResult(e: NonNullable<SiriDelivery['ErrorCondition']>): { error: string; notFound: boolean } {
+function errorResult(e: NonNullable<SiriDelivery['ErrorCondition']>): {
+  error: string
+  notFound: boolean
+} {
   const error = (e.OtherError?.ErrorText || e.Description || 'error').trim()
   return { error, notFound: /^no such (stop|route)\b/i.test(error) }
 }
@@ -236,7 +250,9 @@ export function parseVehicleMonitoring(body: unknown): VehicleMonitoring {
   if (!delivery || !Array.isArray(delivery.VehicleMonitoringDelivery))
     throw new Error('bustime: not a SIRI VehicleMonitoring answer')
   const updatedAt = epoch(delivery.ResponseTimestamp) ?? null
-  const error = delivery.VehicleMonitoringDelivery.map(d => d.ErrorCondition).find(e => e !== undefined)
+  const error = delivery.VehicleMonitoringDelivery.map((d) => d.ErrorCondition).find(
+    (e) => e !== undefined,
+  )
   if (error) return { updatedAt, ...errorResult(error), vehicles: [] }
   const vehicles: BusPosition[] = []
   for (const d of delivery.VehicleMonitoringDelivery) {
@@ -251,7 +267,8 @@ export function parseVehicleMonitoring(body: unknown): VehicleMonitoring {
         ...journeyFields(j, routeId),
         lat,
         lon,
-        bearing: typeof j.Bearing === 'number' && Number.isFinite(j.Bearing) ? j.Bearing : undefined,
+        bearing:
+          typeof j.Bearing === 'number' && Number.isFinite(j.Bearing) ? j.Bearing : undefined,
         stopId: stripOperator(call.StopPointRef),
         stopName: first(call.StopPointName),
         distanceText: (call.ArrivalProximityText ?? '').trim(),
@@ -274,7 +291,7 @@ export function fetchBusTime<T>(
   label: string,
   parse: (body: unknown) => T,
   { fetcher = fetch, now = Date.now(), timeoutMs = 8_000 }: FetchOptions = {},
-  ttlMs?: number
+  ttlMs?: number,
 ): Promise<T> {
   return memoized(
     memoKey,
@@ -284,18 +301,32 @@ export function fetchBusTime<T>(
       if (!res.ok) throw new Error(`bustime ${label}: HTTP ${res.status}`)
       return parse(await readLimitedJson(res))
     },
-    ttlMs
+    ttlMs,
   )
 }
 
 /** One route's VehicleMonitoring answer. */
-export function fetchVehicleMonitoring(route: string, key: string, options?: FetchOptions): Promise<VehicleMonitoring> {
+export function fetchVehicleMonitoring(
+  route: string,
+  key: string,
+  options?: FetchOptions,
+): Promise<VehicleMonitoring> {
   const url = vehicleMonitoringUrl(route, key)
-  return fetchBusTime(`bustime-vehicles:${route}`, url, `route ${route}`, parseVehicleMonitoring, options)
+  return fetchBusTime(
+    `bustime-vehicles:${route}`,
+    url,
+    `route ${route}`,
+    parseVehicleMonitoring,
+    options,
+  )
 }
 
 /** One stop's StopMonitoring answer. */
-export function fetchStopMonitoring(stop: string, key: string, options?: FetchOptions): Promise<StopMonitoring> {
+export function fetchStopMonitoring(
+  stop: string,
+  key: string,
+  options?: FetchOptions,
+): Promise<StopMonitoring> {
   const url = stopMonitoringUrl(stop, key)
   return fetchBusTime(`bustime:${stop}`, url, `stop ${stop}`, parseStopMonitoring, options)
 }

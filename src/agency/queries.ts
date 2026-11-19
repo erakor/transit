@@ -4,10 +4,18 @@
  * same for both.
  */
 import * as z from 'zod'
-import { countParam, keyed, MAX_QUERY_LENGTH, optionalParam, previewQuery, requiredParam } from '#src/query.js'
+import {
+  countParam,
+  keyed,
+  MAX_QUERY_LENGTH,
+  optionalParam,
+  previewQuery,
+  requiredParam,
+} from '#src/query.js'
 import type { StopParam } from './types.js'
 
-const ROUTE_DESCRIPTION = 'Only this route id (from `routes` in the station list). Case insensitive.'
+const ROUTE_DESCRIPTION =
+  'Only this route id (from `routes` in the station list). Case insensitive.'
 
 export const AgencyVehiclesQuery = z.object({ route: optionalParam('route', ROUTE_DESCRIPTION) })
 
@@ -20,13 +28,13 @@ function stopQueries(p: StopParam) {
       ...keyed(p, requiredParam(p, description)),
       limit: countParam('limit', 10, 30, 'Departures to return.'),
     })
-    .transform(query => ({ stop: query[p], limit: query.limit }))
+    .transform((query) => ({ stop: query[p], limit: query.limit }))
 
   const StopsQuery = z.object({
     q: optionalParam(
       'q',
       `Only ${p}s matching this name, best first. Without it, all of them by name.`,
-      MAX_QUERY_LENGTH
+      MAX_QUERY_LENGTH,
     ),
     limit: countParam('limit', 10, 25, `${p}s to return with \`q\`.`),
   })
@@ -34,9 +42,15 @@ function stopQueries(p: StopParam) {
   const AlertsQuery = z
     .object({
       route: optionalParam('route', ROUTE_DESCRIPTION),
-      ...keyed(p, optionalParam(p, `Only alerts naming this ${p}, or a whole route that stops there. ${description}`)),
+      ...keyed(
+        p,
+        optionalParam(
+          p,
+          `Only alerts naming this ${p}, or a whole route that stops there. ${description}`,
+        ),
+      ),
     })
-    .transform(query => ({ route: query.route, stop: query[p] }))
+    .transform((query) => ({ route: query.route, stop: query[p] }))
 
   const PreviewQuery = previewQuery(p, `A ${p} name: the best match is used.`, description)
 

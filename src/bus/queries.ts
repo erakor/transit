@@ -7,7 +7,7 @@ const STOP_DESCRIPTION =
 
 /** Six digits; a leading `MTA_`, as Bus Time writes stop refs, is accepted and dropped. */
 const stopCode = requiredParam('stop', STOP_DESCRIPTION)
-  .transform(s => s.replace(/^MTA_/i, ''))
+  .transform((s) => s.replace(/^MTA_/i, ''))
   .pipe(z.string().regex(/^\d{6}$/, { error: 'stop must be a six-digit bus stop code' }))
 
 export const BusArrivalsQuery = z.object({

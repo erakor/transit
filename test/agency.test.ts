@@ -10,7 +10,15 @@ import { buildAgencyData } from '#src/static/agency.js'
 import { decodeFeed, VEHICLE_MAX_AGE_S } from '#src/gtfsrt.js'
 import { clearFeedMemo } from '#src/memo.js'
 import { extensionField, feedFrom, withExtension } from './feed.js'
-import { auth, fixture, fixtureFetcher, FIXTURE_NOW_MS, get, useRouteTestSetup, expectedErrorCode } from './helpers.js'
+import {
+  auth,
+  fixture,
+  fixtureFetcher,
+  FIXTURE_NOW_MS,
+  get,
+  useRouteTestSetup,
+  expectedErrorCode,
+} from './helpers.js'
 
 const NOW = 1_800_000_000
 const FIXTURE_NOW = Math.floor(FIXTURE_NOW_MS / 1000)
@@ -22,7 +30,8 @@ const files = {
   'stops.txt':
     'stop_id,stop_name,stop_lat,stop_lon,location_type\n' +
     'a,Wall St,40.7031611,-74.006144,\nb,Dumbo,40.703,-73.99,0\nc,Astoria,40.77,-73.93,\nd,Unserved,40.7,-73.9,\nhub,Terminal Building,40.7,-74.0,1\n',
-  'trips.txt': 'route_id,service_id,trip_id,trip_headsign\nER,1,t1,"Astoria (via Dumbo)"\nAS,1,t2,\nER,1,t3,Nowhere\n',
+  'trips.txt':
+    'route_id,service_id,trip_id,trip_headsign\nER,1,t1,"Astoria (via Dumbo)"\nAS,1,t2,\nER,1,t3,Nowhere\n',
   'stop_times.txt':
     'trip_id,arrival_time,departure_time,stop_id,stop_sequence\n' +
     't1,23:50:00,23:50:00,a,1\nt1,24:10:30,24:12:00,c,3\nt1,23:58:00,23:59:00,b,2\nt2,08:00:00,08:00:00,c,1\nt2,08:30:00,08:30:00,a,2\nt9,08:00:00,08:00:00,a,1\n',
@@ -32,10 +41,21 @@ describe('buildAgencyData', () => {
   it('keeps boarding stops with the routes serving them, routes by name', () => {
     const data = buildAgencyData(files)
     expect(Object.keys(data.routes)).toEqual(['AS', 'ER', 'X'])
-    expect(data.routes.ER).toEqual({ id: 'ER', name: 'East River', color: '#00839C', textColor: '#FFFFFF' })
+    expect(data.routes.ER).toEqual({
+      id: 'ER',
+      name: 'East River',
+      color: '#00839C',
+      textColor: '#FFFFFF',
+    })
     expect(data.routes.X).toMatchObject({ name: 'X', color: '#808183' })
     expect(Object.keys(data.stops)).toEqual(['a', 'b', 'c', 'd'])
-    expect(data.stops.a).toEqual({ id: 'a', name: 'Wall St', lat: 40.703161, lon: -74.006144, routes: ['AS', 'ER'] })
+    expect(data.stops.a).toEqual({
+      id: 'a',
+      name: 'Wall St',
+      lat: 40.703161,
+      lon: -74.006144,
+      routes: ['AS', 'ER'],
+    })
     expect(data.stops.d!.routes).toEqual([])
     expect(data.feedVersion).toBe('v7')
     expect(data.trips).toBeUndefined()
@@ -67,7 +87,9 @@ describe('buildAgencyData', () => {
 
   it('has no version without feed_info and fails on a missing file', () => {
     expect(buildAgencyData({ ...files, 'feed_info.txt': undefined } as never).feedVersion).toBe('')
-    expect(() => buildAgencyData({ ...files, 'trips.txt': undefined } as never)).toThrow(/trips.txt/)
+    expect(() => buildAgencyData({ ...files, 'trips.txt': undefined } as never)).toThrow(
+      /trips.txt/,
+    )
   })
 })
 
@@ -115,7 +137,11 @@ describe('computeAgencyArrivals', () => {
       tripUpdate: {
         trip: { tripId: 'late', routeId: 'ER' },
         stopTimeUpdate: [
-          { stopId: 'a', arrival: { time: NOW + 500, delay: 30 }, departure: { time: NOW + 600, delay: 90 } },
+          {
+            stopId: 'a',
+            arrival: { time: NOW + 500, delay: 30 },
+            departure: { time: NOW + 600, delay: 90 },
+          },
           at('c', NOW + 2000),
         ],
       },
@@ -126,7 +152,12 @@ describe('computeAgencyArrivals', () => {
         stopTimeUpdate: [at('c', NOW - 900), { stopId: 'a', arrival: { time: NOW + 120 } }],
       },
     },
-    { tripUpdate: { trip: { tripId: 'gone', routeId: 'ER' }, stopTimeUpdate: [at('a', NOW - 1), at('c', NOW + 900)] } },
+    {
+      tripUpdate: {
+        trip: { tripId: 'gone', routeId: 'ER' },
+        stopTimeUpdate: [at('a', NOW - 1), at('c', NOW + 900)],
+      },
+    },
     {
       tripUpdate: {
         trip: { tripId: 'skips', routeId: 'ER' },
@@ -191,10 +222,9 @@ describe('computeAgencyArrivals', () => {
   })
 
   it('keeps limit departures', () => {
-    expect(computeAgencyArrivals(A, feed, plain, { now: NOW, limit: 2 }).arrivals.map(a => a.tripId)).toEqual([
-      'ending',
-      'odd',
-    ])
+    expect(
+      computeAgencyArrivals(A, feed, plain, { now: NOW, limit: 2 }).arrivals.map((a) => a.tripId),
+    ).toEqual(['ending', 'odd'])
   })
 
   it('extends a feed that predicts only the next stop with the schedule', () => {
@@ -213,18 +243,17 @@ describe('computeAgencyArrivals', () => {
       {
         tripUpdate: {
           trip: { tripId: 't2' },
-          stopTimeUpdate: [{ stopId: 'c', arrival: { time: NOW + 50 }, departure: { time: NOW + 200 } }],
+          stopTimeUpdate: [
+            { stopId: 'c', arrival: { time: NOW + 50 }, departure: { time: NOW + 200 } },
+          ],
         },
       },
       { tripUpdate: { trip: { tripId: 'unscheduled' }, stopTimeUpdate: [at('a', NOW + 10)] } },
     ])
     const times = (stop: string) =>
-      computeAgencyArrivals(data.stops[stop]!, next, data, { now: NOW, limit: 10 }).arrivals.map(a => [
-        a.tripId,
-        a.time - NOW,
-        a.route,
-        a.headsign,
-      ])
+      computeAgencyArrivals(data.stops[stop]!, next, data, { now: NOW, limit: 10 }).arrivals.map(
+        (a) => [a.tripId, a.time - NOW, a.route, a.headsign],
+      )
     expect(times('c')).toEqual([
       ['t2', 200, 'AS', 'Wall St'],
       ['t1', 100 + 750, 'ER', 'Astoria'],
@@ -234,14 +263,19 @@ describe('computeAgencyArrivals', () => {
     expect(times('a')).toEqual([['t2', 50 + 1800, 'AS', 'Wall St']])
   })
 
-  describe.each(Object.values(AGENCIES))('on the recorded $name feed', agency => {
-    const feed = decodeFeed(fixture(agency.id === 'ferry' ? 'ferry-tripupdate.pb' : `gtfs-${agency.id}.pb`))
+  describe.each(Object.values(AGENCIES))('on the recorded $name feed', (agency) => {
+    const feed = decodeFeed(
+      fixture(agency.id === 'ferry' ? 'ferry-tripupdate.pb' : `gtfs-${agency.id}.pb`),
+    )
     it('finds upcoming departures with known routes and stops', async () => {
       const agencyData = await agency.data()
       let total = 0
       const stopsWithService = new Set<string>()
       for (const stop of Object.values(agencyData.stops)) {
-        const { arrivals } = computeAgencyArrivals(stop, feed, agencyData, { now: FIXTURE_NOW, limit: 30 })
+        const { arrivals } = computeAgencyArrivals(stop, feed, agencyData, {
+          now: FIXTURE_NOW,
+          limit: 30,
+        })
         for (const a of arrivals) {
           expect(agencyData.routes[a.route], `route ${a.route}`).toBeDefined()
           expect(a.headsign, `trip ${a.tripId}`).not.toBe('')
@@ -249,7 +283,9 @@ describe('computeAgencyArrivals', () => {
           expect(a.time).toBeLessThan(FIXTURE_NOW + 12 * 3600)
           stopsWithService.add(stop.id)
         }
-        expect(arrivals.map(a => a.time)).toEqual(arrivals.map(a => a.time).sort((x, y) => x - y))
+        expect(arrivals.map((a) => a.time)).toEqual(
+          arrivals.map((a) => a.time).sort((x, y) => x - y),
+        )
         total += arrivals.length
       }
       expect(total).toBeGreaterThan(20)
@@ -258,7 +294,9 @@ describe('computeAgencyArrivals', () => {
 
     it('places vehicles around New York', async () => {
       const agencyData = await agency.data()
-      const feeds = agency.vehiclesFeed ? [decodeFeed(fixture('ferry-vehicleposition.pb')), feed] : [feed]
+      const feeds = agency.vehiclesFeed
+        ? [decodeFeed(fixture('ferry-vehicleposition.pb')), feed]
+        : [feed]
       const { vehicles, updatedAt } = computeAgencyVehicles(feeds, agencyData, { now: FIXTURE_NOW })
       expect(updatedAt).toBeGreaterThan(FIXTURE_NOW - 600)
       expect(vehicles.length).toBeGreaterThan(5)
@@ -269,14 +307,15 @@ describe('computeAgencyArrivals', () => {
         expect(v.lon).toBeLessThan(-71.5)
         expect(v.id).not.toBe('')
       }
-      const routed = vehicles.filter(v => v.route && agencyData.routes[v.route.id])
+      const routed = vehicles.filter((v) => v.route && agencyData.routes[v.route.id])
       expect(routed.length / vehicles.length).toBeGreaterThan(0.7)
     })
   })
 })
 
 describe('railroadStopTime', () => {
-  const stopTime = (values: Record<number, string>) => railroadStopTime(withExtension({}, extensionField(1005, values)))
+  const stopTime = (values: Record<number, string>) =>
+    railroadStopTime(withExtension({}, extensionField(1005, values)))
 
   it('reads the track and status of the MTA railroad extension', () => {
     expect(stopTime({ 1: '2A', 2: 'On-Time' })).toEqual({ track: '2A', status: 'On-Time' })
@@ -319,14 +358,19 @@ describe('computeAgencyVehicles', () => {
       vehicle: { trip: { tripId: '501' }, position, timestamp: NOW },
     },
     { id: 'S', vehicle: { trip: { tripId: 't2' }, position, timestamp: NOW - 5 } },
-    { id: 'old', vehicle: { trip: { tripId: 'trip-1' }, position, timestamp: NOW - VEHICLE_MAX_AGE_S - 1 } },
+    {
+      id: 'old',
+      vehicle: { trip: { tripId: 'trip-1' }, position, timestamp: NOW - VEHICLE_MAX_AGE_S - 1 },
+    },
     { id: 'nowhere', vehicle: { trip: { tripId: 'trip-1' }, timestamp: NOW } },
   ])
 
   it("joins each vehicle to its trip's route and headsign, live or scheduled", () => {
     const { vehicles, updatedAt } = computeAgencyVehicles([feed], data, { now: NOW })
     expect(updatedAt).toBe(NOW)
-    expect(vehicles.map(v => [v.id, v.route?.id, v.headsign, v.status, v.stop?.name ?? null])).toEqual([
+    expect(
+      vehicles.map((v) => [v.id, v.route?.id, v.headsign, v.status, v.stop?.name ?? null]),
+    ).toEqual([
       ['501', 'AS', 'Wall St', null, null],
       ['S', 'AS', 'Wall St', null, null],
       ['9', 'ER', 'Astoria', 'STOPPED_AT', 'Dumbo'],
@@ -339,7 +383,9 @@ describe('computeAgencyVehicles', () => {
   })
 
   it('filters by route', () => {
-    expect(computeAgencyVehicles([feed], data, { now: NOW, route: 'ER' }).vehicles.map(v => v.id)).toEqual(['9'])
+    expect(
+      computeAgencyVehicles([feed], data, { now: NOW, route: 'ER' }).vehicles.map((v) => v.id),
+    ).toEqual(['9'])
   })
 })
 
@@ -355,13 +401,18 @@ describe('agency routes', () => {
     const route = (path: string) => agencyRoute(new URL(`https://transit.test${path}`))
     expect(route('/lirr/arrivals?station=102')).toEqual({ agency: 'lirr', op: 'arrivals' })
     expect(route('/preview/ferry?q=wall')).toEqual({ agency: 'ferry', op: 'preview' })
-    expect(route('/api/agency?agency=mnr&op=stations&q=rye')).toEqual({ agency: 'mnr', op: 'stations' })
+    expect(route('/api/agency?agency=mnr&op=stations&q=rye')).toEqual({
+      agency: 'mnr',
+      op: 'stations',
+    })
     expect(route('/api/agency')).toBeUndefined()
   })
 
   it('answers the same through the rewritten URL', async () => {
     const direct = await (await call('/mnr/arrivals?station=1&limit=2').res).json()
-    const rewritten = await (await call('/api/agency?agency=mnr&op=arrivals&station=1&limit=2').res).json()
+    const rewritten = await (
+      await call('/api/agency?agency=mnr&op=arrivals&station=1&limit=2').res
+    ).json()
     expect(rewritten).toEqual(direct)
     expect(direct.arrivals).toHaveLength(2)
   })
@@ -384,8 +435,8 @@ describe('agency routes', () => {
     for (const a of body.arrivals) {
       expect(
         Object.keys(a)
-          .filter(k => !['delay', 'track', 'status'].includes(k))
-          .sort()
+          .filter((k) => !['delay', 'track', 'status'].includes(k))
+          .sort(),
       ).toEqual(['color', 'headsign', 'name', 'route', 'textColor', 'time', 'tripId'])
     }
     // The railroads post tracks (and Metro-North a status) through their extension; the ferry neither.
@@ -433,7 +484,9 @@ describe('agency routes', () => {
     const { stations } = await all.json()
     expect(stations).toHaveLength(Object.keys((await dataOf('lirr')).stops).length)
     expect(stations.map((s: { name: string }) => s.name)).toEqual(
-      stations.map((s: { name: string }) => s.name).sort((a: string, b: string) => a.localeCompare(b))
+      stations
+        .map((s: { name: string }) => s.name)
+        .sort((a: string, b: string) => a.localeCompare(b)),
     )
 
     const found = await (await call('/mnr/stations?q=white%20plains&limit=1').res).json()
@@ -469,10 +522,16 @@ describe('agency routes', () => {
   it("says which vehicles aren't coming when none are", async () => {
     // Two days after the recording, every trip in it is over.
     const later = (path: string) =>
-      agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS + 2 * 86_400_000 })(get(path, auth))
-    expect(await (await later('/preview/ferry?stop=87')).text()).toBe('Wall St/Pier 11 · no ferries soon\n')
+      agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS + 2 * 86_400_000 })(
+        get(path, auth),
+      )
+    expect(await (await later('/preview/ferry?stop=87')).text()).toBe(
+      'Wall St/Pier 11 · no ferries soon\n',
+    )
     clearFeedMemo()
-    expect(await (await later('/preview/lirr?station=102')).text()).toBe('Jamaica · no trains soon\n')
+    expect(await (await later('/preview/lirr?station=102')).text()).toBe(
+      'Jamaica · no trains soon\n',
+    )
   })
 
   it('returns vehicles, for the ferry from its two feeds', async () => {
@@ -525,11 +584,13 @@ describe('agency routes', () => {
     ])
     expect(all.alerts[0].category).toEqual(expect.any(String))
 
-    const routeId: string = all.alerts.find((a: { routes: unknown[] }) => a.routes.length > 0).routes[0].id
+    const routeId: string = all.alerts.find((a: { routes: unknown[] }) => a.routes.length > 0)
+      .routes[0].id
     const byRoute = await (await call(`/lirr/alerts?route=${routeId}`).res).json()
     expect(byRoute.alerts.length).toBeGreaterThan(0)
     expect(byRoute.alerts.length).toBeLessThanOrEqual(all.alerts.length)
-    for (const a of byRoute.alerts) expect(a.routes.map((x: { id: string }) => x.id)).toContain(routeId)
+    for (const a of byRoute.alerts)
+      expect(a.routes.map((x: { id: string }) => x.id)).toContain(routeId)
 
     const byStation = await (await call('/lirr/alerts?station=102').res).json()
     expect(byStation.station).toEqual({ id: '102', name: 'Jamaica' })

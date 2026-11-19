@@ -44,7 +44,9 @@ export const RouteFields = {
 /** A stop or station named in a response. */
 export const StopRef = z.strictObject({ id: z.string(), name: z.string() })
 
-export const FeedUpdatedAt = EpochSeconds.nullable().meta({ description: "The feed's header timestamp." })
+export const FeedUpdatedAt = EpochSeconds.nullable().meta({
+  description: "The feed's header timestamp.",
+})
 
 /**
  * `VehiclePosition.current_status`. Spelled out rather than imported from `gtfsrt.ts`, which would
@@ -68,7 +70,9 @@ export const Alert = z.strictObject({
     description:
       "The MTA's alert id, without the status rank it appends to its entity ids, so it stays the same when the status changes.",
   }),
-  planned: z.boolean().meta({ description: 'Scheduled work rather than something that just happened.' }),
+  planned: z
+    .boolean()
+    .meta({ description: 'Scheduled work rather than something that just happened.' }),
   category: z.string().nullable().meta({
     description:
       "The MTA's status for the alert, such as `Delays`, `Part Suspended` or `Planned - Stops Skipped`: one of the 35 names in the MTA's status table. Null when the feed has none (NYC Ferry).",
@@ -78,26 +82,36 @@ export const Alert = z.strictObject({
       "The status's rank in the MTA's table, from 1 (`No Scheduled Service`) to 35 (`Suspended`); higher is more serious. Null with `category`.",
   }),
   header: z.string().meta({
-    description: 'One or two plain-text sentences. Subway texts name routes in brackets: `[A][C] trains`.',
+    description:
+      'One or two plain-text sentences. Subway texts name routes in brackets: `[A][C] trains`.',
   }),
   description: z.string().meta({ description: 'Longer plain text, empty when there is none.' }),
   routes: z.array(RouteDisplay),
-  stops: z.array(AlertStop).meta({ description: 'Stops the alert names, when the static data knows them.' }),
-  start: EpochSeconds.nullable().meta({ description: 'Start of the period in effect now; null when open.' }),
-  end: EpochSeconds.nullable().meta({ description: 'End of the period in effect now; null when open.' }),
+  stops: z
+    .array(AlertStop)
+    .meta({ description: 'Stops the alert names, when the static data knows them.' }),
+  start: EpochSeconds.nullable().meta({
+    description: 'Start of the period in effect now; null when open.',
+  }),
+  end: EpochSeconds.nullable().meta({
+    description: 'End of the period in effect now; null when open.',
+  }),
 })
 
 export const AlertsResult = z.strictObject({
   updatedAt: FeedUpdatedAt,
   alerts: z.array(Alert).meta({
-    description: 'In effect now: current events first, then planned work; by priority, then newest first.',
+    description:
+      'In effect now: current events first, then planned work; by priority, then newest first.',
   }),
 })
 
 /** `/health`, the one route without a token. */
 export const HealthResponse = z.strictObject({
   ok: z.literal(true),
-  staticFeedVersion: z.string().meta({ description: 'feed_version of the deployed subway schedule.' }),
+  staticFeedVersion: z
+    .string()
+    .meta({ description: 'feed_version of the deployed subway schedule.' }),
   time: EpochSeconds.meta({ description: "The server's clock." }),
 })
 

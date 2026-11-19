@@ -44,7 +44,9 @@ describe('readLimited', () => {
   })
 
   it('rejects a body longer than its Content-Length says', async () => {
-    await expect(readLimited(streamed(50, 5, { 'content-length': '5' }), 10)).rejects.toThrow('over 10 bytes')
+    await expect(readLimited(streamed(50, 5, { 'content-length': '5' }), 10)).rejects.toThrow(
+      'over 10 bytes',
+    )
   })
 
   it('keeps the request URL out of the error', async () => {

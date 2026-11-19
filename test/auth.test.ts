@@ -20,20 +20,36 @@ describe('token check', () => {
   })
 
   it('rejects missing and wrong tokens with 401', () => {
-    expect(checkToken(h({}), env)).toMatchObject({ ok: false, code: 'missing_token', error: 'missing token' })
-    expect(checkToken(h({ authorization: 'Basic alpha' }), env)).toMatchObject({ ok: false, code: 'missing_token' })
+    expect(checkToken(h({}), env)).toMatchObject({
+      ok: false,
+      code: 'missing_token',
+      error: 'missing token',
+    })
+    expect(checkToken(h({ authorization: 'Basic alpha' }), env)).toMatchObject({
+      ok: false,
+      code: 'missing_token',
+    })
     expect(checkToken(h({ 'x-transit-token': 'gamma' }), env)).toMatchObject({
       ok: false,
       code: 'invalid_token',
       error: 'invalid token',
     })
-    expect(checkToken(h({ 'x-transit-token': 'alph' }), env)).toMatchObject({ ok: false, code: 'invalid_token' })
-    expect(checkToken(h({ 'x-transit-token': 'alpha, beta' }), env)).toMatchObject({ ok: false, code: 'invalid_token' })
+    expect(checkToken(h({ 'x-transit-token': 'alph' }), env)).toMatchObject({
+      ok: false,
+      code: 'invalid_token',
+    })
+    expect(checkToken(h({ 'x-transit-token': 'alpha, beta' }), env)).toMatchObject({
+      ok: false,
+      code: 'invalid_token',
+    })
   })
 
   it('fails closed when no token is configured', () => {
     expect(configuredTokens({ TRANSIT_TOKEN: ' , ' })).toEqual([])
-    expect(checkToken(h({ 'x-transit-token': '' }), {})).toMatchObject({ ok: false, code: 'not_configured' })
+    expect(checkToken(h({ 'x-transit-token': '' }), {})).toMatchObject({
+      ok: false,
+      code: 'not_configured',
+    })
     expect(checkToken(h({ 'x-transit-token': 'anything' }), { TRANSIT_TOKEN: '' })).toMatchObject({
       ok: false,
       code: 'not_configured',

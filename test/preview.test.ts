@@ -4,7 +4,12 @@ import { PREVIEW_MAX_ROUTES, previewLine } from '#src/subway/preview.js'
 
 const NOW = 1_000_000
 
-function group(name: string, direction: 'N' | 'S', secondsAway: number[], route = name): RouteDirectionArrivals {
+function group(
+  name: string,
+  direction: 'N' | 'S',
+  secondsAway: number[],
+  route = name,
+): RouteDirectionArrivals {
   return {
     route,
     name,
@@ -31,7 +36,7 @@ function result(groups: RouteDirectionArrivals[]): ArrivalsResult {
 describe('previewLine', () => {
   it("lists each route's next train per direction, rounded down", () => {
     expect(previewLine(result([group('L', 'N', [150, 500]), group('L', 'S', [299])]), NOW)).toBe(
-      'Bedford Av · L ↑2 ↓4 min'
+      'Bedford Av · L ↑2 ↓4 min',
     )
   })
 
@@ -50,7 +55,7 @@ describe('previewLine', () => {
   })
 
   it(`lists at most ${PREVIEW_MAX_ROUTES} routes`, () => {
-    const many = ['1', '2', '3', '7', 'N', 'Q', 'R', 'W'].map(r => group(r, 'N', [60]))
+    const many = ['1', '2', '3', '7', 'N', 'Q', 'R', 'W'].map((r) => group(r, 'N', [60]))
     const line = previewLine(result(many), NOW)
     expect(line).toBe('Bedford Av · 1 ↑1 · 2 ↑1 · 3 ↑1 · 7 ↑1 · N ↑1 · Q ↑1 min · …')
   })

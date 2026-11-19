@@ -1,6 +1,12 @@
 /** Request schemas for the subway routes (`/subway/...`, `/stops/search` and `/preview/subway`). */
 import * as z from 'zod'
-import { countParam, MAX_QUERY_LENGTH, optionalParam, previewQuery, requiredParam } from '#src/query.js'
+import {
+  countParam,
+  MAX_QUERY_LENGTH,
+  optionalParam,
+  previewQuery,
+  requiredParam,
+} from '#src/query.js'
 
 const STOP_DESCRIPTION =
   'A station id from /stops/search (stop ids joined with `+`, such as `127+725+902+A27+R16`), ' +
@@ -20,7 +26,7 @@ export const AlertsQuery = z.object({
   route: optionalParam('route', 'Only alerts about this route id (`A`, `6X`). Case insensitive.'),
   stop: optionalParam(
     'stop',
-    `Only alerts naming one of this station's stops, or a whole route that stops there. ${STOP_DESCRIPTION}`
+    `Only alerts naming one of this station's stops, or a whole route that stops there. ${STOP_DESCRIPTION}`,
   ),
 })
 
@@ -31,5 +37,5 @@ export const VehiclesQuery = z.object({
 export const PreviewQuery = previewQuery(
   'stop',
   'A station name: the best /stops/search match is used.',
-  STOP_DESCRIPTION
+  STOP_DESCRIPTION,
 )

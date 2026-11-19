@@ -7,6 +7,8 @@ import type { PathArrivalsResponse } from './schemas.js'
  * destinations rather than routes. Pure: takes computed arrivals and `now` (epoch s).
  */
 export function pathPreviewLine(result: PathArrivalsResponse, now: number): string {
-  const trains = result.groups.flatMap(g => g.arrivals.map(a => ({ label: a.headsign || g.name, time: a.time })))
+  const trains = result.groups.flatMap((g) =>
+    g.arrivals.map((a) => ({ label: a.headsign || g.name, time: a.time })),
+  )
   return destinationsLine(result.station.name, trains, now)
 }

@@ -16,7 +16,11 @@
     ></script>
     <script>
       // Nothing from Scalar's servers: no AI agent (it would send them the API description), system fonts.
-      Scalar.createApiReference('#app', { url: '/openapi.json', agent: { disabled: true }, withDefaultFonts: false })
+      Scalar.createApiReference('#app', {
+        url: '/openapi.json',
+        agent: { disabled: true },
+        withDefaultFonts: false,
+      })
     </script>
   </body>
 </html>

@@ -32,14 +32,20 @@ export const Arrival = z.strictObject({
     description:
       "The train hasn't moved for over 90 seconds. Its predictions stop with it, so `time` is too early; station countdown clocks stop counting down then.",
   }),
-  delayed: z.boolean().meta({ description: 'The feed reports the train delayed ("Train delayed").' }),
+  delayed: z
+    .boolean()
+    .meta({ description: 'The feed reports the train delayed ("Train delayed").' }),
 })
 
 export const RouteDirectionArrivals = z.strictObject({
   ...RouteFields,
-  route: z.string().meta({ description: 'GTFS route id. Diamond express trips keep their own (`6X`, `7X`, `FX`).' }),
+  route: z.string().meta({
+    description: 'GTFS route id. Diamond express trips keep their own (`6X`, `7X`, `FX`).',
+  }),
   name: z.string().meta({ description: 'Rider-facing route name (`S` for the shuttles).' }),
-  direction: z.enum(['N', 'S']).meta({ description: "The MTA's northbound or southbound platform." }),
+  direction: z
+    .enum(['N', 'S'])
+    .meta({ description: "The MTA's northbound or southbound platform." }),
   headsign: z.string().meta({ description: 'Headsign of the next train.' }),
   arrivals: z.array(Arrival),
 })
@@ -54,7 +60,9 @@ export const ArrivalsResult = z.strictObject({
   updatedAt: EpochSeconds.nullable().meta({
     description: 'Oldest header timestamp among the feeds used; null when no feed serves the stop.',
   }),
-  groups: z.array(RouteDirectionArrivals).meta({ description: 'In MTA route order, then `N` before `S`.' }),
+  groups: z
+    .array(RouteDirectionArrivals)
+    .meta({ description: 'In MTA route order, then `N` before `S`.' }),
 })
 
 /** What the route answers: the computed result, plus the feeds that failed when some did. */
@@ -66,13 +74,15 @@ export const ArrivalsResponse = ArrivalsResult.extend({
 })
 
 export const SearchResult = StopRef.extend({
-  id: z.string().meta({ description: 'Station id, for `stop` in the other routes. Stable: store it as a favorite.' }),
+  id: z.string().meta({
+    description: 'Station id, for `stop` in the other routes. Stable: store it as a favorite.',
+  }),
   lat: Latitude,
   lon: Longitude,
   stops: z.array(StopRef).meta({ description: 'The GTFS stops (parent stations) it is made of.' }),
-  routes: z
-    .array(RouteDisplay)
-    .meta({ description: 'Routes scheduled here, in MTA order. Diamond express variants are left out.' }),
+  routes: z.array(RouteDisplay).meta({
+    description: 'Routes scheduled here, in MTA order. Diamond express variants are left out.',
+  }),
 })
 
 export const SearchResponse = z.strictObject({
@@ -90,18 +100,23 @@ export const SubwayTrain = z.strictObject({
     .enum(['N', 'S'])
     .nullable()
     .meta({ description: 'From the platform the train is at or heading to; null when unknown.' }),
-  headsign: z.string().meta({ description: "Name of the trip's last passenger stop in the feed, empty when unknown." }),
+  headsign: z.string().meta({
+    description: "Name of the trip's last passenger stop in the feed, empty when unknown.",
+  }),
   status: VehicleStatus,
-  stop: StopRef.nullable().meta({ description: 'The stop the train is at or heading to; null when unknown.' }),
+  stop: StopRef.nullable().meta({
+    description: 'The stop the train is at or heading to; null when unknown.',
+  }),
   time: EpochSeconds.nullable().meta({ description: 'When the train last reported.' }),
 })
 
 export const VehiclesResponse = z.strictObject({
   route: RouteDisplay,
   updatedAt: FeedUpdatedAt,
-  vehicles: z
-    .array(SubwayTrain)
-    .meta({ description: 'Northbound first, each direction in stop id order. The feeds carry no coordinates.' }),
+  vehicles: z.array(SubwayTrain).meta({
+    description:
+      'Northbound first, each direction in stop id order. The feeds carry no coordinates.',
+  }),
 })
 
 export type Arrival = z.infer<typeof Arrival>

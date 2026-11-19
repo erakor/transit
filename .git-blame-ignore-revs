@@ -6,3 +6,6 @@ bdac6021c5305ec92fc0e88b2a554c3d9800b9c2
 
 # Format with the new Prettier settings
 12bb42aa8ca220c83f62e5941ecfd2ca96f9db0e
+
+# Format with oxfmt and the shared toolchain style
+3038c923f99c8bedc173d0ea5d8ce494e4c1b63b

@@ -37,14 +37,14 @@ export function parseCsv(text: string): string[][] {
     row.push(field)
     rows.push(row)
   }
-  return rows.filter(r => !(r.length === 1 && r[0] === ''))
+  return rows.filter((r) => !(r.length === 1 && r[0] === ''))
 }
 
 /** Parses a CSV with a header row into objects keyed by column name. */
 export function parseCsvObjects(text: string): Record<string, string>[] {
   const [header, ...rows] = parseCsv(text)
   if (!header) return []
-  return rows.map(r => {
+  return rows.map((r) => {
     const o: Record<string, string> = {}
     header.forEach((h, i) => (o[h.trim()] = (r[i] ?? '').trim()))
     return o
@@ -56,7 +56,11 @@ export function parseCsvObjects(text: string): Record<string, string>[] {
  * stop_times.txt: it avoids building one object per row and only does full quote handling
  * on lines that contain a quote.
  */
-export function forEachCsvRow(text: string, columns: string[], fn: (values: string[]) => void): void {
+export function forEachCsvRow(
+  text: string,
+  columns: string[],
+  fn: (values: string[]) => void,
+): void {
   let start = text.charCodeAt(0) === 0xfeff ? 1 : 0
   let indexes: number[] | undefined
   while (start < text.length) {
@@ -68,14 +72,14 @@ export function forEachCsvRow(text: string, columns: string[], fn: (values: stri
     if (line === '') continue
     const cells = line.includes('"') ? (parseCsv(line)[0] ?? []) : line.split(',')
     if (!indexes) {
-      const header = cells.map(h => h.trim())
-      indexes = columns.map(c => {
+      const header = cells.map((h) => h.trim())
+      indexes = columns.map((c) => {
         const i = header.indexOf(c)
         if (i === -1) throw new Error(`missing column ${c}`)
         return i
       })
       continue
     }
-    fn(indexes.map(i => (cells[i] ?? '').trim()))
+    fn(indexes.map((i) => (cells[i] ?? '').trim()))
   }
 }

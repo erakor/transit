@@ -1,4 +1,13 @@
-import { authenticated, byOp, errorResponse, json, LIVE_CACHE, PREVIEW_CACHE, STATIC_CACHE, text } from '#src/http.js'
+import {
+  authenticated,
+  byOp,
+  errorResponse,
+  json,
+  LIVE_CACHE,
+  PREVIEW_CACHE,
+  STATIC_CACHE,
+  text,
+} from '#src/http.js'
 import { computePathArrivals } from '#src/path/arrivals.js'
 import { fetchPathFeed, type PathFeed } from '#src/path/feed.js'
 import { pathPreviewLine } from '#src/path/preview.js'
@@ -13,7 +22,10 @@ export interface PathDeps {
   now?: () => number
 }
 
-async function loadFeed(fetcher: Fetcher | undefined, nowMs: number): Promise<PathFeed | undefined> {
+async function loadFeed(
+  fetcher: Fetcher | undefined,
+  nowMs: number,
+): Promise<PathFeed | undefined> {
   try {
     return await fetchPathFeed({ fetcher, now: nowMs })
   } catch (err) {
@@ -34,7 +46,9 @@ export function pathArrivalsHandler({ fetcher, now = () => Date.now() }: PathDep
     const nowMs = now()
     const feed = await loadFeed(fetcher, nowMs)
     if (!feed) return errorResponse('upstream_unavailable', 'PATH feed unavailable')
-    return json(computePathArrivals(station, feed, { now: Math.floor(nowMs / 1000), limit }), { cache: LIVE_CACHE })
+    return json(computePathArrivals(station, feed, { now: Math.floor(nowMs / 1000), limit }), {
+      cache: LIVE_CACHE,
+    })
   })
 }
 
@@ -43,10 +57,10 @@ export function pathStationsHandler() {
   return authenticated(() =>
     json(
       {
-        stations: PATH_STATIONS.map(s => ({ id: s.id, name: s.name, routes: routesOf(s) })),
+        stations: PATH_STATIONS.map((s) => ({ id: s.id, name: s.name, routes: routesOf(s) })),
       } satisfies PathStationsResponse,
-      { cache: STATIC_CACHE }
-    )
+      { cache: STATIC_CACHE },
+    ),
   )
 }
 
@@ -62,15 +76,21 @@ export function pathPreviewHandler({ fetcher, now = () => Date.now() }: PathDeps
 
     const station = id !== undefined ? pathStation(id) : searchPathStations(parsed.query.q)[0]
     if (!station)
-      return errorResponse('unknown_station', id !== undefined ? `unknown station ${id}` : 'no matching station')
+      return errorResponse(
+        'unknown_station',
+        id !== undefined ? `unknown station ${id}` : 'no matching station',
+      )
 
     const nowMs = now()
     const feed = await loadFeed(fetcher, nowMs)
     if (!feed) return errorResponse('upstream_unavailable', 'PATH feed unavailable')
     const nowS = Math.floor(nowMs / 1000)
-    return text(pathPreviewLine(computePathArrivals(station, feed, { now: nowS, limit: 1 }), nowS), {
-      cache: PREVIEW_CACHE,
-    })
+    return text(
+      pathPreviewLine(computePathArrivals(station, feed, { now: nowS, limit: 1 }), nowS),
+      {
+        cache: PREVIEW_CACHE,
+      },
+    )
   })
 }
 

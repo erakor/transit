@@ -34,11 +34,15 @@ export function useRouteTestSetup(): void {
  */
 export function fixtureName(url: string): string {
   if (url.includes('stops-for-location')) return 'bustime-stops.json'
-  if (url.includes('vehicle-monitoring')) return `bustime-vehicles-${new URL(url).searchParams.get('LineRef')}.json`
-  if (url.includes('bustime.mta.info')) return `bustime-${new URL(url).searchParams.get('MonitoringRef')}.json`
+  if (url.includes('vehicle-monitoring'))
+    return `bustime-vehicles-${new URL(url).searchParams.get('LineRef')}.json`
+  if (url.includes('bustime.mta.info'))
+    return `bustime-${new URL(url).searchParams.get('MonitoringRef')}.json`
   const name = decodeURIComponent(url).split('/').pop()!
   if (url.includes('/gbfs/')) return `citibike-${name}`
-  const agency = Object.values(AGENCIES).find(a => [a.tripsFeed, a.vehiclesFeed, a.alertsFeed].includes(url))
+  const agency = Object.values(AGENCIES).find((a) =>
+    [a.tripsFeed, a.vehiclesFeed, a.alertsFeed].includes(url),
+  )
   return agency ? `${agency.id}-${name}` : name
 }
 

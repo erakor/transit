@@ -29,7 +29,9 @@ export interface PathFeed {
 const DIRECTIONS: Record<string, PathTrain['direction']> = { ToNY: 'NY', ToNJ: 'NJ' }
 
 const list = (v: unknown): Record<string, unknown>[] =>
-  Array.isArray(v) ? v.filter((x): x is Record<string, unknown> => typeof x === 'object' && x !== null) : []
+  Array.isArray(v)
+    ? v.filter((x): x is Record<string, unknown> => typeof x === 'object' && x !== null)
+    : []
 
 /**
  * Normalizes the feed. Each message gives `secondsToArrival` counted from its own `lastUpdated`

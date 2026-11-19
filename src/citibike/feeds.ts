@@ -9,7 +9,10 @@ const BASE = 'https://gbfs.lyft.com/gbfs/2.3/bkn/en/'
  * a failed refresh serves the last copy that loaded (up to `STALE_MAX_MS` old): stations rarely
  * change.
  */
-export const GBFS_FEEDS: Record<'station_information' | 'station_status', { memoMs: number; staleOnError: boolean }> = {
+export const GBFS_FEEDS: Record<
+  'station_information' | 'station_status',
+  { memoMs: number; staleOnError: boolean }
+> = {
   station_information: { memoMs: 600_000, staleOnError: true },
   station_status: { memoMs: 15_000, staleOnError: false },
 }
@@ -60,7 +63,9 @@ export function parseGbfs<T>(feed: string, body: unknown): GbfsFeed<T> {
   if (!b || typeof b.last_updated !== 'number' || !Array.isArray(b.data?.stations)) {
     throw new Error(`feed ${feed}: not a GBFS station feed`)
   }
-  const stations = b.data.stations.filter(s => typeof (s as { station_id?: unknown } | null)?.station_id === 'string')
+  const stations = b.data.stations.filter(
+    (s) => typeof (s as { station_id?: unknown } | null)?.station_id === 'string',
+  )
   if (stations.length === 0) throw new Error(`feed ${feed}: no stations`)
   return { ...b, last_updated: b.last_updated, data: { ...b.data, stations } }
 }
@@ -76,7 +81,11 @@ export const STALE_MAX_MS = 6 * 3_600_000
 
 export async function fetchGbfs<K extends GbfsFeedName>(
   feed: K,
-  { fetcher = fetch, now = Date.now(), timeoutMs = 8_000 }: { fetcher?: Fetcher; now?: number; timeoutMs?: number } = {}
+  {
+    fetcher = fetch,
+    now = Date.now(),
+    timeoutMs = 8_000,
+  }: { fetcher?: Fetcher; now?: number; timeoutMs?: number } = {},
 ): Promise<GbfsStations[K]> {
   const { memoMs, staleOnError } = GBFS_FEEDS[feed]
   const loaded = memoized(
@@ -93,11 +102,14 @@ export async function fetchGbfs<K extends GbfsFeedName>(
         const last = staleOnError ? lastGood.get(feed) : undefined
         if (!last || now - last.at > STALE_MAX_MS) throw err
         // Memoized like a fresh copy, so an outage costs one upstream attempt per memo window.
-        console.error(`feed ${feed} failed, using the copy from ${Math.round((now - last.at) / 60_000)} min ago:`, err)
+        console.error(
+          `feed ${feed} failed, using the copy from ${Math.round((now - last.at) / 60_000)} min ago:`,
+          err,
+        )
         return last.feed
       }
     },
-    memoMs
+    memoMs,
   )
   return loaded as Promise<GbfsStations[K]>
 }

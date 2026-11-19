@@ -27,14 +27,19 @@ function subwayDirection(stopId: string, directionId: number | undefined): 'N' |
  * now. With `stop`: alerts naming one of its stops (for a platform, in its direction), or a
  * whole route that stops there. With neither: every subway alert in effect.
  */
-export function subwayAlertsHandler({ fetcher, now = () => Date.now(), index = stationIndex }: ArrivalsDeps = {}) {
+export function subwayAlertsHandler({
+  fetcher,
+  now = () => Date.now(),
+  index = stationIndex,
+}: ArrivalsDeps = {}) {
   return authenticated(async (_request, url) => {
     const parsed = parseQuery(AlertsQuery, url)
     if (!parsed.ok) return parsed.response
     const routeParam = parsed.query.route?.toUpperCase()
     const stopParam = parsed.query.stop
     const idx = index()
-    if (routeParam && !idx.data.routes[routeParam]) return errorResponse('unknown_route', `unknown route ${routeParam}`)
+    if (routeParam && !idx.data.routes[routeParam])
+      return errorResponse('unknown_route', `unknown route ${routeParam}`)
     const stop = stopParam ? idx.resolve(stopParam) : undefined
     if (stopParam && !stop) return errorResponse('unknown_stop', `unknown stop ${stopParam}`)
 
@@ -53,7 +58,7 @@ export function subwayAlertsHandler({ fetcher, now = () => Date.now(), index = s
         const direction = subwayDirection(s, d)
         return stops.has(parentStop(s)) && !(platform && direction && direction !== platform)
       },
-      route: id => {
+      route: (id) => {
         const r = idx.data.routes[id]
         return r && { id, name: r.shortName, color: r.color, textColor: r.textColor }
       },

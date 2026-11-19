@@ -34,7 +34,7 @@ function arrivals(fetcher = fixtureFetcher(), nowMs = FIXTURE_NOW_MS) {
 
 describe('/health', () => {
   it('needs no token and is never cached', async () => {
-    const res = await healthGET(get('/health'))
+    const res = healthGET(get('/health'))
     expect(res.status).toBe(200)
     expect(res.headers.get('cache-control')).toBe('no-store')
     expect(await res.json()).toMatchObject({ ok: true, staticFeedVersion: SUBWAY_DATA.feedVersion })
@@ -60,22 +60,38 @@ describe.each([
     '?q=hoboken',
     () => pathPreviewHandler({ fetcher: fixtureFetcher(), now: () => PATH_FIXTURE_NOW_MS }),
   ],
-  ['/subway/alerts', '?route=A', () => subwayAlertsHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
+  [
+    '/subway/alerts',
+    '?route=A',
+    () => subwayAlertsHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
+  ],
   [
     '/subway/vehicles',
     '?route=L',
     () => subwayVehiclesHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
   ],
-  ['/lirr/arrivals', '?station=102', () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
+  [
+    '/lirr/arrivals',
+    '?station=102',
+    () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
+  ],
   ['/mnr/stations', '?q=rye', () => agencyHandler()],
-  ['/ferry/vehicles', '', () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
+  [
+    '/ferry/vehicles',
+    '',
+    () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
+  ],
   ['/bus/alerts', '', () => busHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
   [
     '/bus/arrivals',
     `?stop=${BUS_STOP}`,
     () => busHandler({ fetcher: fixtureFetcher(), now: () => BUS_FIXTURE_NOW_MS }),
   ],
-  ['/preview/mnr', '?station=1', () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS })],
+  [
+    '/preview/mnr',
+    '?station=1',
+    () => agencyHandler({ fetcher: fixtureFetcher(), now: () => FIXTURE_NOW_MS }),
+  ],
 ])('%s auth and caching', (path, query, handler) => {
   it('is 401 without a token, uncached and varying on the token header', async () => {
     const res = await handler()(get(path + query))
@@ -105,10 +121,10 @@ describe.each([
     const res = await handler()(get(path + query, auth))
     expect(res.status).toBe(200)
     expect(res.headers.get('content-type')).toMatch(
-      path.startsWith('/preview/') ? /^text\/plain/ : /^application\/json/
+      path.startsWith('/preview/') ? /^text\/plain/ : /^application\/json/,
     )
     expect(res.headers.get('cache-control')).toMatch(
-      /^public, (max-age=\d+, )?s-maxage=\d+, stale-while-revalidate=\d+$/
+      /^public, (max-age=\d+, )?s-maxage=\d+, stale-while-revalidate=\d+$/,
     )
     expect(res.headers.get('vary')).toBe('x-transit-token')
     expect(res.headers.get('set-cookie')).toBeNull()
@@ -118,7 +134,9 @@ describe.each([
 describe('/subway/arrivals', () => {
   it('returns pre-joined arrivals for a station complex with live cache headers', async () => {
     const { GET, fetcher } = arrivals()
-    const res = await GET(get(`/subway/arrivals?stop=${encodeURIComponent(TIMES_SQ)}&limit=2`, auth))
+    const res = await GET(
+      get(`/subway/arrivals?stop=${encodeURIComponent(TIMES_SQ)}&limit=2`, auth),
+    )
     expect(res.headers.get('cache-control')).toBe(LIVE_CACHE)
     expect(res.headers.get('cache-control')).toBe('public, s-maxage=20, stale-while-revalidate=40')
     expect(fetcher.calls.sort()).toEqual(['gtfs', 'gtfs-ace', 'gtfs-nqrw'])
@@ -162,8 +180,8 @@ describe('/subway/arrivals', () => {
     expect(res.headers.get('cache-control')).toBe('public, s-maxage=5')
     const body = ArrivalsResponse.parse(await res.json())
     expect(body.unavailableFeeds).toEqual(['gtfs-ace'])
-    expect(body.groups.some(g => g.route === 'A')).toBe(false)
-    expect(body.groups.some(g => g.route === '1')).toBe(true)
+    expect(body.groups.some((g) => g.route === 'A')).toBe(false)
+    expect(body.groups.some((g) => g.route === '1')).toBe(true)
   })
 
   it('is 502 when every feed fails', async () => {
@@ -187,13 +205,18 @@ describe('/subway/arrivals', () => {
     const res = await arrivals().GET(get(`/subway/arrivals${query}`, auth))
     expect(res.status).toBe(status)
     expect(res.headers.get('cache-control')).toBe('no-store')
-    expect(ErrorBody.parse(await res.json())).toEqual({ error, code: expectedErrorCode(status, error) })
+    expect(ErrorBody.parse(await res.json())).toEqual({
+      error,
+      code: expectedErrorCode(status, error),
+    })
   })
 
   it('caps limit at 10', async () => {
-    const res = await arrivals().GET(get(`/subway/arrivals?stop=${encodeURIComponent(TIMES_SQ)}&limit=99`, auth))
+    const res = await arrivals().GET(
+      get(`/subway/arrivals?stop=${encodeURIComponent(TIMES_SQ)}&limit=99`, auth),
+    )
     const body = ArrivalsResponse.parse(await res.json())
-    expect(Math.max(...body.groups.map(g => g.arrivals.length))).toBe(10)
+    expect(Math.max(...body.groups.map((g) => g.arrivals.length))).toBe(10)
   })
 })
 
@@ -212,8 +235,12 @@ describe('/stops/search', () => {
     expect(res.headers.get('cache-control')).toBe(STATIC_CACHE)
     const hit = body.results.find((r: { name: string }) => r.name === 'Bedford Av')
     expect(hit).toMatchObject({ id: 'L08', stops: [{ id: 'L08', name: 'Bedford Av' }] })
-    expect(hit.routes).toEqual([{ id: 'L', name: 'L', color: SUBWAY_DATA.routes['L']!.color, textColor: '#FFFFFF' }])
-    const arr = await arrivals().GET(get(`/subway/arrivals?stop=${encodeURIComponent(body.results[0].id)}`, auth))
+    expect(hit.routes).toEqual([
+      { id: 'L', name: 'L', color: SUBWAY_DATA.routes['L']!.color, textColor: '#FFFFFF' },
+    ])
+    const arr = await arrivals().GET(
+      get(`/subway/arrivals?stop=${encodeURIComponent(body.results[0].id)}`, auth),
+    )
     expect(arr.status).toBe(200)
   })
 
@@ -260,7 +287,9 @@ describe('/preview/subway', () => {
   })
 
   it('takes a station id like /subway/arrivals', async () => {
-    const res = await preview().GET(get(`/preview/subway?stop=${encodeURIComponent(TIMES_SQ)}`, auth))
+    const res = await preview().GET(
+      get(`/preview/subway?stop=${encodeURIComponent(TIMES_SQ)}`, auth),
+    )
     expect(res.status).toBe(200)
     const body = await res.text()
     expect(body).toMatch(/^Times Sq-42 St · /)
@@ -269,7 +298,7 @@ describe('/preview/subway', () => {
 
   it('uses a short cache when some feeds failed', async () => {
     const res = await preview(fixtureFetcher(['gtfs-ace'])).GET(
-      get(`/preview/subway?stop=${encodeURIComponent(TIMES_SQ)}`, auth)
+      get(`/preview/subway?stop=${encodeURIComponent(TIMES_SQ)}`, auth),
     )
     expect(res.status).toBe(200)
     expect(res.headers.get('cache-control')).toBe('public, max-age=5, s-maxage=5')
@@ -287,7 +316,9 @@ describe('/preview/subway', () => {
   })
 
   it('is 502 when every feed fails', async () => {
-    const res = await preview(fixtureFetcher(['gtfs-l'])).GET(get('/preview/subway?q=bedford%20av', auth))
+    const res = await preview(fixtureFetcher(['gtfs-l'])).GET(
+      get('/preview/subway?q=bedford%20av', auth),
+    )
     expect(res.status).toBe(502)
   })
 })

@@ -14,11 +14,11 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 /** Large modules, and the functions allowed to bundle them (paths relative to the repo root). */
 const ALLOWED: Record<string, (fn: string) => boolean> = {
   // The subway station index: 155 KiB of data.
-  'src/data/subway.generated.ts': fn => /^api\/(subway\/|stops\/|preview\/subway\.ts)/.test(fn),
+  'src/data/subway.generated.ts': (fn) => /^api\/(subway\/|stops\/|preview\/subway\.ts)/.test(fn),
   // Every agency's static data.
-  'src/agency/agencies.ts': fn => fn === 'api/agency.ts',
+  'src/agency/agencies.ts': (fn) => fn === 'api/agency.ts',
   // The protobuf bindings: only functions that decode GTFS-realtime feeds. PATH and Citi Bike read JSON.
-  'gtfs-realtime-bindings': fn => !/^api\/(path|citibike)\.ts$/.test(fn),
+  'gtfs-realtime-bindings': (fn) => !/^api\/(path|citibike)\.ts$/.test(fn),
   // Response schemas: built at import time, and only the docs generator and the tests use them. Routes import their
   // request schemas from `queries.ts` and the response types with `import type`.
   'src/schema.ts': () => false,
@@ -33,8 +33,8 @@ const ALLOWED: Record<string, (fn: string) => boolean> = {
 
 /** Vercel deploys one function per file under api/. */
 const FUNCTIONS = readdirSync(join(ROOT, 'api'), { recursive: true, encoding: 'utf8' })
-  .filter(f => f.endsWith('.ts'))
-  .map(f => `api/${f}`)
+  .filter((f) => f.endsWith('.ts'))
+  .map((f) => `api/${f}`)
   .sort()
 
 /**
@@ -45,10 +45,18 @@ const importsOf = new Map<string, string[]>()
 function imports(file: string): string[] {
   const cached = importsOf.get(file)
   if (cached) return cached
-  const source = ts.createSourceFile(file, readFileSync(join(ROOT, file), 'utf8'), ts.ScriptTarget.Latest)
+  const source = ts.createSourceFile(
+    file,
+    readFileSync(join(ROOT, file), 'utf8'),
+    ts.ScriptTarget.Latest,
+  )
   const specifiers: string[] = []
   const visit = (node: ts.Node) => {
-    if (ts.isImportDeclaration(node) && !node.importClause?.isTypeOnly && ts.isStringLiteral(node.moduleSpecifier)) {
+    if (
+      ts.isImportDeclaration(node) &&
+      !node.importClause?.isTypeOnly &&
+      ts.isStringLiteral(node.moduleSpecifier)
+    ) {
       specifiers.push(node.moduleSpecifier.text)
     } else if (ts.isExportDeclaration(node) && !node.isTypeOnly && node.moduleSpecifier) {
       if (ts.isStringLiteral(node.moduleSpecifier)) specifiers.push(node.moduleSpecifier.text)
@@ -59,8 +67,12 @@ function imports(file: string): string[] {
     ts.forEachChild(node, visit)
   }
   visit(source)
-  const files = specifiers.flatMap(s => {
-    const path = s.startsWith('#src/') ? `src/${s.slice(5)}` : s.startsWith('.') ? join(dirname(file), s) : undefined
+  const files = specifiers.flatMap((s) => {
+    const path = s.startsWith('#src/')
+      ? `src/${s.slice(5)}`
+      : s.startsWith('.')
+        ? join(dirname(file), s)
+        : undefined
     if (path) return [path.replace(/\.js$/, '.ts')]
     // A package, kept by name so ALLOWED can list it; Node built-ins don't count.
     return s.startsWith('node:') ? [] : [s]
@@ -95,9 +107,9 @@ describe('function count', () => {
 })
 
 describe('function bundles', () => {
-  it.each(FUNCTIONS)('%s bundles only the large modules it uses', fn => {
+  it.each(FUNCTIONS)('%s bundles only the large modules it uses', (fn) => {
     const modules = bundle(fn)
-    const large = Object.keys(ALLOWED).filter(m => modules.has(m))
-    expect(large).toEqual(Object.keys(ALLOWED).filter(m => modules.has(m) && ALLOWED[m]!(fn)))
+    const large = Object.keys(ALLOWED).filter((m) => modules.has(m))
+    expect(large).toEqual(Object.keys(ALLOWED).filter((m) => modules.has(m) && ALLOWED[m]!(fn)))
   })
 })

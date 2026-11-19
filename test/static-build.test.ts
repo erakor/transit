@@ -33,7 +33,7 @@ describe('csv', () => {
   })
   it('extracts columns row by row', () => {
     const rows: string[][] = []
-    forEachCsvRow('b,a,c\n1,2,3\n"4,4",5,6\n', ['a', 'b'], v => rows.push(v))
+    forEachCsvRow('b,a,c\n1,2,3\n"4,4",5,6\n', ['a', 'b'], (v) => rows.push(v))
     expect(rows).toEqual([
       ['2', '1'],
       ['5', '4,4'],
@@ -46,7 +46,11 @@ describe('buildSubwayData', () => {
 
   it('keeps parent stations with the routes that serve them', () => {
     expect(Object.keys(data.stops)).toEqual(['101', '127', '902', 'A27'])
-    expect(data.stops['127']).toMatchObject({ name: 'Times Sq-42 St', routes: ['1'], lat: 40.75529 })
+    expect(data.stops['127']).toMatchObject({
+      name: 'Times Sq-42 St',
+      routes: ['1'],
+      lat: 40.75529,
+    })
     expect(data.stops['101']!.routes).toEqual(['1'])
     expect(data.stops['902']!.routes).toEqual(['GS'])
   })
@@ -58,7 +62,7 @@ describe('buildSubwayData', () => {
   })
 
   it('groups stops linked by transfers into one station', () => {
-    const times = data.stations.find(s => s.stops.includes('127'))!
+    const times = data.stations.find((s) => s.stops.includes('127'))!
     expect(times).toMatchObject({
       id: '127+902+A27',
       name: 'Times Sq-42 St',
@@ -66,7 +70,7 @@ describe('buildSubwayData', () => {
       routes: ['1', 'A', 'GS'],
     })
     expect(data.stops['A27']!.station).toBe('127+902+A27')
-    expect(data.stations.find(s => s.id === '101')!.stops).toEqual(['101'])
+    expect(data.stations.find((s) => s.id === '101')!.stops).toEqual(['101'])
   })
 
   it('reads the feed version and is deterministic', () => {
@@ -75,7 +79,9 @@ describe('buildSubwayData', () => {
   })
 
   it('fails on a missing file', () => {
-    expect(() => buildSubwayData({ ...files, 'stops.txt': undefined } as never)).toThrow(/stops.txt/)
+    expect(() => buildSubwayData({ ...files, 'stops.txt': undefined } as never)).toThrow(
+      /stops.txt/,
+    )
   })
 })
 
@@ -83,8 +89,9 @@ describe('committed static data', () => {
   it('looks like the real subway', () => {
     expect(Object.keys(SUBWAY_DATA.stops).length).toBeGreaterThan(400)
     expect(SUBWAY_DATA.routes['L']!.color).toMatch(/^#[0-9A-F]{6}$/)
-    const times = SUBWAY_DATA.stations.find(s => s.stops.includes('127'))!
+    const times = SUBWAY_DATA.stations.find((s) => s.stops.includes('127'))!
     expect(times.stops).toEqual(expect.arrayContaining(['127', '725', '902', 'R16']))
-    for (const s of SUBWAY_DATA.stations) for (const id of s.stops) expect(SUBWAY_DATA.stops[id]!.station).toBe(s.id)
+    for (const s of SUBWAY_DATA.stations)
+      for (const id of s.stops) expect(SUBWAY_DATA.stops[id]!.station).toBe(s.id)
   })
 })

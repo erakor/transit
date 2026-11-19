@@ -4,5 +4,5 @@
 if (!process.env.CI)
   await import('husky').then(
     ({ default: husky }) => console.log(husky()),
-    () => {}
+    () => {},
   )

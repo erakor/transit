@@ -48,20 +48,24 @@ async function recordTransit(): Promise<void> {
   const agencies = Object.values(AGENCIES)
   const feeds = [
     ...Object.keys(FEEDS),
-    ...agencies.flatMap(a => [a.tripsFeed, ...(a.vehiclesFeed ? [a.vehiclesFeed] : [])]),
+    ...agencies.flatMap((a) => [a.tripsFeed, ...(a.vehiclesFeed ? [a.vehiclesFeed] : [])]),
   ]
-  const alertFeeds = new Set([SUBWAY_ALERTS_FEED, BUS_ALERTS_FEED, ...agencies.map(a => a.alertsFeed)])
+  const alertFeeds = new Set([
+    SUBWAY_ALERTS_FEED,
+    BUS_ALERTS_FEED,
+    ...agencies.map((a) => a.alertsFeed),
+  ])
 
   // All at once, so the recordings share one clock.
   const recorded = await Promise.all(
-    [...feeds, ...alertFeeds].map(async feed => {
+    [...feeds, ...alertFeeds].map(async (feed) => {
       const url = feedUrl(feed)
       return {
         feed,
         name: fixtureName(url),
         bytes: new Uint8Array(await (await get(url)).arrayBuffer()) as Uint8Array,
       }
-    })
+    }),
   )
 
   let newest = 0
@@ -71,9 +75,10 @@ async function recordTransit(): Promise<void> {
     if (alertFeeds.has(r.feed)) {
       const all = msg.entity.length
       // An alert without periods is always in effect; one with periods keeps those covering now.
-      msg.entity = msg.entity.filter(e => {
+      msg.entity = msg.entity.filter((e) => {
         const periods = e.alert?.activePeriod ?? []
-        if (e.alert && periods.length) e.alert.activePeriod = periods.filter(p => inEffect(p, stamp))
+        if (e.alert && periods.length)
+          e.alert.activePeriod = periods.filter((p) => inEffect(p, stamp))
         return periods.length === 0 || e.alert!.activePeriod!.length > 0
       })
       r.bytes = FeedMessage.encode(msg).finish()
@@ -82,16 +87,20 @@ async function recordTransit(): Promise<void> {
       newest = Math.max(newest, stamp)
     }
     await writeFile(out(`${r.name}.pb`), r.bytes)
-    console.log(`${r.name}: ${r.bytes.length} bytes, ${msg.entity.length} entities, header ${stamp}`)
+    console.log(
+      `${r.name}: ${r.bytes.length} bytes, ${msg.entity.length} entities, header ${stamp}`,
+    )
   }
-  console.log(`Update FIXTURE_NOW_MS in test/helpers.ts to the newest header timestamp: ${newest}_000.`)
+  console.log(
+    `Update FIXTURE_NOW_MS in test/helpers.ts to the newest header timestamp: ${newest}_000.`,
+  )
 
   const body = await (await get(PATH_FEED_URL)).text()
   const trains = Object.values(parsePathFeed(JSON.parse(body)).stations).flat()
   await writeFile(out('ridepath.json'), body)
   console.log(`ridepath.json: ${body.length} bytes, ${trains.length} trains`)
   console.log(
-    `Update PATH_FIXTURE_NOW_MS in test/helpers.ts to the newest update: ${Math.max(...trains.map(t => t.updatedAt))}_000.`
+    `Update PATH_FIXTURE_NOW_MS in test/helpers.ts to the newest update: ${Math.max(...trains.map((t) => t.updatedAt))}_000.`,
   )
 }
 
@@ -101,20 +110,22 @@ async function recordCitibike(): Promise<void> {
   // The raw bodies, fetched together so the two snapshots are as close in time as possible.
   const [information, status] = await Promise.all(
     (['station_information', 'station_status'] as const).map(
-      async name => (await (await get(gbfsUrl(name))).json()) as Feed
-    )
+      async (name) => (await (await get(gbfsUrl(name))).json()) as Feed,
+    ),
   )
   const feeds = { station_information: information!, station_status: status! }
   const keep = new Set(
     information!.data.stations
-      .filter(s => distanceMeters(TIMES_SQ.lat, TIMES_SQ.lon, s.lat ?? NaN, s.lon ?? NaN) <= RADIUS_M)
-      .map(s => s.station_id)
+      .filter(
+        (s) => distanceMeters(TIMES_SQ.lat, TIMES_SQ.lon, s.lat ?? NaN, s.lon ?? NaN) <= RADIUS_M,
+      )
+      .map((s) => s.station_id),
   )
   for (const [name, feed] of Object.entries(feeds)) {
     const total = feed.data.stations.length
     const kept = {
       ...feed,
-      data: { ...feed.data, stations: feed.data.stations.filter(s => keep.has(s.station_id)) },
+      data: { ...feed.data, stations: feed.data.stations.filter((s) => keep.has(s.station_id)) },
     }
     await writeFile(out(`citibike-${name}.json`), JSON.stringify(kept, null, 1) + '\n')
     console.log(`citibike ${name}: kept ${kept.data.stations.length} of ${total} stations`)
@@ -140,13 +151,20 @@ async function recordBus(): Promise<void> {
   for (const stop of [BUS_STOP, '999999']) {
     const body = await save(stopMonitoringUrl(stop, key), `stop ${stop}`)
     if (stop === BUS_STOP) {
-      const stamp = (JSON.parse(body) as { Siri?: { ServiceDelivery?: { ResponseTimestamp?: string } } }).Siri
-        ?.ServiceDelivery?.ResponseTimestamp
-      console.log(`Update BUS_FIXTURE_NOW_MS in test/helpers.ts to ${Math.floor(Date.parse(stamp ?? '') / 1000)}_000.`)
+      const stamp = (
+        JSON.parse(body) as { Siri?: { ServiceDelivery?: { ResponseTimestamp?: string } } }
+      ).Siri?.ServiceDelivery?.ResponseTimestamp
+      console.log(
+        `Update BUS_FIXTURE_NOW_MS in test/helpers.ts to ${Math.floor(Date.parse(stamp ?? '') / 1000)}_000.`,
+      )
     }
   }
-  for (const route of [BUS_ROUTE, 'ZZZ']) await save(vehicleMonitoringUrl(route, key), `route ${route}`)
-  await save(stopsForLocationUrl(BUS_STOP_POINT.lat, BUS_STOP_POINT.lon, NEARBY_RADIUS_M, key), 'stops')
+  for (const route of [BUS_ROUTE, 'ZZZ'])
+    await save(vehicleMonitoringUrl(route, key), `route ${route}`)
+  await save(
+    stopsForLocationUrl(BUS_STOP_POINT.lat, BUS_STOP_POINT.lon, NEARBY_RADIUS_M, key),
+    'stops',
+  )
 }
 
 const recorders: Record<string, () => Promise<void>> = {
@@ -155,5 +173,6 @@ const recorders: Record<string, () => Promise<void>> = {
   bus: recordBus,
 }
 const only = process.argv[2]
-if (only && !recorders[only]) throw new Error(`unknown provider ${only}: ${Object.keys(recorders).join(', ')}`)
+if (only && !recorders[only])
+  throw new Error(`unknown provider ${only}: ${Object.keys(recorders).join(', ')}`)
 for (const [name, record] of Object.entries(recorders)) if (!only || only === name) await record()

@@ -14,7 +14,7 @@ export interface TripSpec {
 export function makeFeed(timestamp: number, trips: TripSpec[]): FeedMessage {
   return feedFrom(
     timestamp,
-    trips.map(t => ({
+    trips.map((t) => ({
       tripUpdate: {
         trip: { tripId: t.id, routeId: t.route },
         stopTimeUpdate: t.stops.map(([stopId, time]) => ({
@@ -24,7 +24,7 @@ export function makeFeed(timestamp: number, trips: TripSpec[]): FeedMessage {
           scheduleRelationship: t.skipped?.includes(stopId) ? 1 : 0,
         })),
       },
-    }))
+    })),
   )
 }
 
@@ -36,7 +36,10 @@ export function encodeFeed(feed: FeedMessage): Uint8Array {
  * Any GTFS-realtime feed from a plain object (protobufjs `fromObject` shape), round-tripped
  * through protobuf encoding. An entity's `alertType` goes in the MTA's alert extension.
  */
-export function feedFrom(timestamp: number, entity: (Record<string, unknown> & { alertType?: string })[]): FeedMessage {
+export function feedFrom(
+  timestamp: number,
+  entity: (Record<string, unknown> & { alertType?: string })[],
+): FeedMessage {
   const msg = transit_realtime.FeedMessage.fromObject({
     header: { gtfsRealtimeVersion: '2.0', timestamp },
     entity: entity.map(({ alertType: _, ...e }, i) => ({ id: String(i + 1), ...e })),
@@ -59,9 +62,15 @@ export function extensionField(field: number, values: Record<number, string | nu
     for (; n >= 0x80; n = Math.floor(n / 0x80)) out.push((n % 0x80) | 0x80)
     return [...out, n]
   }
-  const len = (f: number, bytes: number[]) => [...varint(f * 8 + 2), ...varint(bytes.length), ...bytes]
+  const len = (f: number, bytes: number[]) => [
+    ...varint(f * 8 + 2),
+    ...varint(bytes.length),
+    ...bytes,
+  ]
   const body = Object.entries(values).flatMap(([f, v]) =>
-    typeof v === 'number' ? [...varint(Number(f) * 8), ...varint(v)] : len(Number(f), [...new TextEncoder().encode(v)])
+    typeof v === 'number'
+      ? [...varint(Number(f) * 8), ...varint(v)]
+      : len(Number(f), [...new TextEncoder().encode(v)]),
   )
   return new Uint8Array(len(field, body))
 }

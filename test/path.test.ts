@@ -5,8 +5,19 @@ import { BOARDING_GRACE_S, computePathArrivals } from '#src/path/arrivals.js'
 import type { PathArrivalsResponse } from '#src/path/schemas.js'
 import { parsePathFeed, PATH_FEED_URL } from '#src/path/feed.js'
 import { pathPreviewLine } from '#src/path/preview.js'
-import { PATH_ROUTES, PATH_STATIONS, pathStation, routeForColors, searchPathStations } from '#src/path/stations.js'
-import { pathArrivalsHandler, pathHandler, pathPreviewHandler, pathStationsHandler } from '#src/routes/path.js'
+import {
+  PATH_ROUTES,
+  PATH_STATIONS,
+  pathStation,
+  routeForColors,
+  searchPathStations,
+} from '#src/path/stations.js'
+import {
+  pathArrivalsHandler,
+  pathHandler,
+  pathPreviewHandler,
+  pathStationsHandler,
+} from '#src/routes/path.js'
 import {
   auth,
   fixture,
@@ -33,7 +44,7 @@ function doc(station: string, destinations: Record<string, Msg[]>) {
         consideredStation: station,
         destinations: Object.entries(destinations).map(([label, messages]) => ({
           label,
-          messages: messages.map(m => ({
+          messages: messages.map((m) => ({
             target: 'X',
             secondsToArrival: String(m.seconds),
             arrivalTimeMessage: '',
@@ -51,8 +62,9 @@ const GRV = pathStation('GRV')!
 describe('PATH stations', () => {
   it('lists 13 stations whose routes all exist', () => {
     expect(PATH_STATIONS).toHaveLength(13)
-    const ids = new Set(PATH_ROUTES.map(r => r.id))
-    for (const s of PATH_STATIONS) for (const r of s.routes) expect(ids.has(r), `${s.id} ${r}`).toBe(true)
+    const ids = new Set(PATH_ROUTES.map((r) => r.id))
+    for (const s of PATH_STATIONS)
+      for (const r of s.routes) expect(ids.has(r), `${s.id} ${r}`).toBe(true)
   })
 
   it('resolves ids case insensitively', () => {
@@ -83,7 +95,7 @@ describe('PATH stations', () => {
 
   it("maps the feed's line colors to routes, including the two-color night line", () => {
     const feed = parsePathFeed(
-      doc('HOB', { ToNY: [{ seconds: 60, headSign: '33rd Street', lineColor: 'ff9900,4D92FB' }] })
+      doc('HOB', { ToNY: [{ seconds: 60, headSign: '33rd Street', lineColor: 'ff9900,4D92FB' }] }),
     )
     expect(routeForColors(feed.stations.HOB![0]!.colors)?.id).toBe('JSQ-33-HOB')
     expect(routeForColors('D93A30')?.id).toBe('NWK-WTC')
@@ -103,13 +115,19 @@ describe('parsePathFeed', () => {
             lastUpdated: '2026-11-10T09:18:17.53649-05:00',
           },
         ],
-      })
+      }),
     )
     expect(feed).toEqual({
       skipped: 0,
       stations: {
         GRV: [
-          { direction: 'NY', headsign: '33rd Street', colors: 'FF9900', time: 1794320297 + 88, updatedAt: 1794320297 },
+          {
+            direction: 'NY',
+            headsign: '33rd Street',
+            colors: 'FF9900',
+            time: 1794320297 + 88,
+            updatedAt: 1794320297,
+          },
         ],
       },
     })
@@ -143,7 +161,7 @@ describe('parsePathFeed', () => {
   it('reads the recorded feed completely', () => {
     const feed = parsePathFeed(JSON.parse(Buffer.from(fixture('ridepath.json')).toString()))
     expect(feed.skipped).toBe(0)
-    expect(Object.keys(feed.stations).sort()).toEqual(PATH_STATIONS.map(s => s.id).sort())
+    expect(Object.keys(feed.stations).sort()).toEqual(PATH_STATIONS.map((s) => s.id).sort())
     const trains = Object.values(feed.stations).flat()
     expect(trains.length).toBeGreaterThan(20)
     for (const t of trains) {
@@ -163,41 +181,56 @@ describe('computePathArrivals', () => {
         { seconds: 100, headSign: 'Newark', lineColor: 'D93A30' },
       ],
       ToNY: [
-        { seconds: 0, headSign: '33rd Street', lineColor: 'FF9900', lastUpdated: '1970-01-12T13:45:40Z' },
+        {
+          seconds: 0,
+          headSign: '33rd Street',
+          lineColor: 'FF9900',
+          lastUpdated: '1970-01-12T13:45:40Z',
+        },
         { seconds: 300, headSign: 'World Trade Center', lineColor: 'D93A30' },
         { seconds: 700, headSign: 'World Trade Center', lineColor: 'D93A30' },
       ],
-    })
+    }),
   )
 
   it("groups by route and direction in PATH's order, toward New York first, soonest first", () => {
     const r = computePathArrivals(GRV, feed, { now: NOW, limit: 3 })
     expect(r.station).toEqual({ id: 'GRV', name: 'Grove Street' })
     expect(r.updatedAt).toBe(NOW - 60)
-    expect(r.groups.map(g => [g.route, g.direction, g.headsign, g.arrivals.map(a => a.time - NOW)])).toEqual([
+    expect(
+      r.groups.map((g) => [g.route, g.direction, g.headsign, g.arrivals.map((a) => a.time - NOW)]),
+    ).toEqual([
       ['NWK-WTC', 'NY', 'World Trade Center', [300, 700]],
       ['NWK-WTC', 'NJ', 'Newark', [100, 400]],
       ['JSQ-33', 'NY', '33rd Street', [-60]],
       ['JSQ-33', 'NJ', 'Journal Square', [50]],
     ])
-    expect(r.groups[0]).toMatchObject({ name: 'Newark - World Trade Center', color: '#D93A30', textColor: '#FFFFFF' })
+    expect(r.groups[0]).toMatchObject({
+      name: 'Newark - World Trade Center',
+      color: '#D93A30',
+      textColor: '#FFFFFF',
+    })
   })
 
   it('keeps limit trains per group', () => {
     const r = computePathArrivals(GRV, feed, { now: NOW, limit: 1 })
-    expect(r.groups.map(g => g.arrivals.length)).toEqual([1, 1, 1, 1])
+    expect(r.groups.map((g) => g.arrivals.length)).toEqual([1, 1, 1, 1])
   })
 
   it('keeps a train at the platform for a while, then drops it', () => {
     const routes = (now: number) =>
-      computePathArrivals(GRV, feed, { now, limit: 3 }).groups.map(g => `${g.route} ${g.direction}`)
+      computePathArrivals(GRV, feed, { now, limit: 3 }).groups.map(
+        (g) => `${g.route} ${g.direction}`,
+      )
     expect(routes(NOW - 60 + BOARDING_GRACE_S)).toContain('JSQ-33 NY')
     expect(routes(NOW - 60 + BOARDING_GRACE_S + 1)).not.toContain('JSQ-33 NY')
     expect(computePathArrivals(GRV, feed, { now: NOW + 3600, limit: 3 }).groups).toEqual([])
   })
 
   it("shows a line color it doesn't know under that color", () => {
-    const odd = parsePathFeed(doc('GRV', { ToNY: [{ seconds: 60, headSign: '33rd Street', lineColor: '123abc' }] }))
+    const odd = parsePathFeed(
+      doc('GRV', { ToNY: [{ seconds: 60, headSign: '33rd Street', lineColor: '123abc' }] }),
+    )
     expect(computePathArrivals(GRV, odd, { now: NOW, limit: 3 }).groups[0]).toMatchObject({
       route: '123ABC',
       name: 'PATH',
@@ -216,7 +249,10 @@ describe('computePathArrivals', () => {
 
 describe('pathPreviewLine', () => {
   const line = (destinations: Record<string, Msg[]>) =>
-    pathPreviewLine(computePathArrivals(GRV, parsePathFeed(doc('GRV', destinations)), { now: NOW, limit: 1 }), NOW)
+    pathPreviewLine(
+      computePathArrivals(GRV, parsePathFeed(doc('GRV', destinations)), { now: NOW, limit: 1 }),
+      NOW,
+    )
 
   it('lists the next train to each destination, soonest first, rounded down', () => {
     expect(
@@ -226,7 +262,7 @@ describe('pathPreviewLine', () => {
           { seconds: 61, headSign: 'Journal Square', lineColor: 'FF9900' },
         ],
         ToNY: [{ seconds: 150, headSign: '33rd Street', lineColor: 'FF9900' }],
-      })
+      }),
     ).toBe('Grove Street · Journal Square 1 · 33rd Street 2 · Newark 4 min')
   })
 
@@ -235,14 +271,23 @@ describe('pathPreviewLine', () => {
       line({
         ToNY: [
           { seconds: 500, headSign: 'World Trade Center', lineColor: 'D93A30' },
-          { seconds: 0, headSign: 'World Trade Center', lineColor: '65C100', lastUpdated: '1970-01-12T13:46:00Z' },
+          {
+            seconds: 0,
+            headSign: 'World Trade Center',
+            lineColor: '65C100',
+            lastUpdated: '1970-01-12T13:46:00Z',
+          },
         ],
-      })
+      }),
     ).toBe('Grove Street · World Trade Center 0 min')
   })
 
   it('says so when no train is coming', () => {
-    const none: PathArrivalsResponse = { station: { id: 'GRV', name: 'Grove Street' }, updatedAt: null, groups: [] }
+    const none: PathArrivalsResponse = {
+      station: { id: 'GRV', name: 'Grove Street' },
+      updatedAt: null,
+      groups: [],
+    }
     expect(pathPreviewLine(none, NOW)).toBe('Grove Street · no trains soon')
   })
 })
@@ -261,9 +306,12 @@ describe('PATH routes', () => {
     const body = await res.json()
     expect(body.station).toEqual({ id: 'JSQ', name: 'Journal Square' })
     expect(body.updatedAt).toBeTypeOf('number')
-    const keys: string[] = body.groups.map((g: { route: string; direction: string }) => `${g.route} ${g.direction}`)
+    const keys: string[] = body.groups.map(
+      (g: { route: string; direction: string }) => `${g.route} ${g.direction}`,
+    )
     expect(keys.length).toBeGreaterThan(1)
-    for (const k of keys) expect(['NWK-WTC NY', 'NWK-WTC NJ', 'JSQ-33 NY', 'JSQ-33-HOB NY']).toContain(k)
+    for (const k of keys)
+      expect(['NWK-WTC NY', 'NWK-WTC NJ', 'JSQ-33 NY', 'JSQ-33-HOB NY']).toContain(k)
     for (const g of body.groups) {
       expect(Object.keys(g).sort()).toEqual([
         'arrivals',
@@ -294,7 +342,9 @@ describe('PATH routes', () => {
       seen.push([url, init])
       return new Response(fixture('ridepath.json'))
     }
-    await pathArrivalsHandler({ fetcher, now: () => PATH_FIXTURE_NOW_MS })(get('/path/arrivals?station=WTC', auth))
+    await pathArrivalsHandler({ fetcher, now: () => PATH_FIXTURE_NOW_MS })(
+      get('/path/arrivals?station=WTC', auth),
+    )
     expect(seen[0]![0]).toBe(PATH_FEED_URL)
     expect(seen[0]![1].headers).toEqual({ accept: 'application/json' })
   })
@@ -325,10 +375,16 @@ describe('PATH routes', () => {
     const res = await GET(get('/path/arrivals?station=WTC', auth))
     expect(res.status).toBe(502)
     expect(res.headers.get('cache-control')).toBe('no-store')
-    expect(await res.json()).toEqual({ error: 'PATH feed unavailable', code: 'upstream_unavailable' })
+    expect(await res.json()).toEqual({
+      error: 'PATH feed unavailable',
+      code: 'upstream_unavailable',
+    })
     expect(
-      (await pathPreviewHandler({ fetcher: bad, now: () => PATH_FIXTURE_NOW_MS })(get('/preview/path?q=wtc', auth)))
-        .status
+      (
+        await pathPreviewHandler({ fetcher: bad, now: () => PATH_FIXTURE_NOW_MS })(
+          get('/preview/path?q=wtc', auth),
+        )
+      ).status,
     ).toBe(502)
     fail = false
     // The failure is remembered for FAIL_MS, then the next request tries again.
@@ -357,7 +413,14 @@ describe('PATH routes', () => {
     expect(body.stations[0]).toEqual({
       id: 'NWK',
       name: 'Newark',
-      routes: [{ id: 'NWK-WTC', name: 'Newark - World Trade Center', color: '#D93A30', textColor: '#FFFFFF' }],
+      routes: [
+        {
+          id: 'NWK-WTC',
+          name: 'Newark - World Trade Center',
+          color: '#D93A30',
+          textColor: '#FFFFFF',
+        },
+      ],
     })
   })
 
@@ -370,7 +433,7 @@ describe('PATH routes', () => {
     // Whatever the recording holds: two to five destinations, soonest first.
     const line = await res.text()
     expect(line).toMatch(/^Grove Street( · [A-Z0-9][A-Za-z0-9 ]+ \d+){2,5} min\n$/)
-    const minutes = [...line.matchAll(/ (\d+)(?= ·| min)/g)].map(m => Number(m[1]))
+    const minutes = [...line.matchAll(/ (\d+)(?= ·| min)/g)].map((m) => Number(m[1]))
     expect(minutes).toEqual([...minutes].sort((a, b) => a - b))
     const byId = await GET(get('/preview/path?station=grv', auth))
     expect(await byId.text()).toMatch(/^Grove Street · /)
