@@ -602,7 +602,7 @@ tells whether the CDN served it (`HIT`, `STALE`) or not (`MISS`).
 pnpm install
 pnpm test             # unit tests (recorded feeds in test/fixtures)
 pnpm check            # every check CI runs: format, lint, types, unused code (knip), tests
-pnpm format           # Prettier; a pre-commit hook also formats and lints staged files
+pnpm format           # oxfmt; a pre-commit hook also formats and lints staged files
 pnpm build:static     # regenerate src/data/*.generated.ts (subway, lirr, mnr, ferry, bus)
 pnpm build:openapi    # regenerate public/openapi.json after changing a route's schemas
 pnpm record-fixtures  # re-record test/fixtures from the live feeds (or just `transit` / `citibike` / `bus`)

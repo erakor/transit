@@ -15,7 +15,10 @@ export interface ResolvedStop {
 export class StationIndex {
   readonly byId = new Map<string, StationInfo>()
 
-  constructor(readonly data: SubwayData) {
+  readonly data: SubwayData
+
+  constructor(data: SubwayData) {
+    this.data = data
     for (const s of data.stations) this.byId.set(s.id, s)
   }
 
@@ -32,7 +35,7 @@ export class StationIndex {
         id: station.id,
         name: station.name,
         stops: station.stops,
-        platforms: station.stops.flatMap(s => [s + 'N', s + 'S']),
+        platforms: station.stops.flatMap((s) => [s + 'N', s + 'S']),
         routes: station.routes,
       }
     }

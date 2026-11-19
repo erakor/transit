@@ -1,7 +1,7 @@
 {
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.codeActionsOnSave": { "source.fixAll.eslint": "explicit" },
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "editor.codeActionsOnSave": { "source.fixAll.oxc": "explicit" },
   // The workspace TypeScript (pinned to 5.9), not the editor's bundled one. Both spellings: the js/ts.* names
   // are VS Code 1.130+, the typescript.* ones what older versions and forks read.
   "js/ts.tsdk.path": "node_modules/typescript/lib",

@@ -2,8 +2,3 @@ allowBuilds:
   esbuild: true
   # macOS-only native watcher; vitest works without it.
   fsevents: false
-
-# GHSA-g3hv-75wg-m249: eslint and its dependencies still range over minimatch versions before 11.0.1.
-# Drop it once `pnpm audit` is clean without it.
-overrides:
-  minimatch: '>=11.0.1'

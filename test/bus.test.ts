@@ -44,7 +44,9 @@ function siri(visits: object[], extra: object = {}) {
     Siri: {
       ServiceDelivery: {
         ResponseTimestamp: '2026-11-10T13:18:56.000-05:00',
-        StopMonitoringDelivery: [{ MonitoredStopVisit: visits.map(j => ({ MonitoredVehicleJourney: j })), ...extra }],
+        StopMonitoringDelivery: [
+          { MonitoredStopVisit: visits.map((j) => ({ MonitoredVehicleJourney: j })), ...extra },
+        ],
       },
     },
   }
@@ -58,12 +60,19 @@ describe('buildBusData', () => {
 
   it('keeps each route once, by id, under its short name, with the feeds’ versions', () => {
     const data = buildBusData([
-      borough('M15+,MTA NYCT,M15-SBS,South Ferry - East Harlem,b933ad,\nB1,MTA NYCT,B1,Bay Ridge,,\n'),
+      borough(
+        'M15+,MTA NYCT,M15-SBS,South Ferry - East Harlem,b933ad,\nB1,MTA NYCT,B1,Bay Ridge,,\n',
+      ),
       borough('M15+,MTA NYCT,changed,,000000,\n'),
       borough('Q06,MTABC,Q6,Jamaica,EE352E,FFFFFF\n', '20261012'),
     ])
     expect(Object.keys(data.routes)).toEqual(['B1', 'M15+', 'Q06'])
-    expect(data.routes['M15+']).toEqual({ id: 'M15+', name: 'M15-SBS', color: '#B933AD', textColor: '#FFFFFF' })
+    expect(data.routes['M15+']).toEqual({
+      id: 'M15+',
+      name: 'M15-SBS',
+      color: '#B933AD',
+      textColor: '#FFFFFF',
+    })
     expect(data.routes.B1).toMatchObject({ color: '#808183' })
     expect(data.routes.Q06!.name).toBe('Q6')
     expect(data.feedVersion).toBe('20261009+20261012')
@@ -76,7 +85,8 @@ describe('buildBusData', () => {
 
   it('generated the routes Bus Time and the alerts use', () => {
     expect(BUS_DATA.routes['M15+']).toMatchObject({ name: 'M15-SBS' })
-    for (const id of ['M15', 'BX12', 'Q06', 'S79+', 'SIM10', 'X27']) expect(BUS_DATA.routes[id], id).toBeDefined()
+    for (const id of ['M15', 'BX12', 'Q06', 'S79+', 'SIM10', 'X27'])
+      expect(BUS_DATA.routes[id], id).toBeDefined()
   })
 })
 
@@ -106,7 +116,7 @@ describe('parseStopMonitoring', () => {
       expect(v.tripId).not.toBe('')
       expect(v.stopName).toBe('1 AV/E 14 ST')
     }
-    expect(visits.filter(v => v.time === undefined)).toHaveLength(2)
+    expect(visits.filter((v) => v.time === undefined)).toHaveLength(2)
   })
 
   it('reads the SIRI 1 distances and plain string names', () => {
@@ -121,11 +131,15 @@ describe('parseStopMonitoring', () => {
             ExpectedDepartureTime: '2026-11-10T13:30:00-05:00',
             StopPointName: 'SUTPHIN BL/ARCHER AV',
             Extensions: {
-              Distances: { PresentableDistance: '1 stop away', DistanceFromCall: 300.6, StopsFromCall: 1 },
+              Distances: {
+                PresentableDistance: '1 stop away',
+                DistanceFromCall: 300.6,
+                StopsFromCall: 1,
+              },
             },
           },
         },
-      ])
+      ]),
     )
     expect(visits).toEqual([
       {
@@ -150,11 +164,19 @@ describe('parseStopMonitoring', () => {
       siri([
         {},
         { PublishedLineName: 'M1' },
-        { LineRef: 'MTA NYCT_M1', MonitoredCall: { ExpectedArrivalTime: 'soon', DistanceFromStop: -1 } },
-      ])
+        {
+          LineRef: 'MTA NYCT_M1',
+          MonitoredCall: { ExpectedArrivalTime: 'soon', DistanceFromStop: -1 },
+        },
+      ]),
     )
     expect(visits).toHaveLength(1)
-    expect(visits[0]).toMatchObject({ routeId: 'M1', time: undefined, meters: undefined, distanceText: '' })
+    expect(visits[0]).toMatchObject({
+      routeId: 'M1',
+      time: undefined,
+      meters: undefined,
+      distanceText: '',
+    })
   })
 
   it('reads cancelled trips, SIRI 2 and SIRI 1, at their scheduled time', () => {
@@ -167,10 +189,13 @@ describe('parseStopMonitoring', () => {
           MonitoredCall: { ...call, ArrivalStatus: 'cancelled', DepartureStatus: 'cancelled' },
         },
         // A bus running late keeps its prediction and is not cancelled.
-        { LineRef: 'MTA NYCT_M15', MonitoredCall: { ...call, ExpectedArrivalTime: '2026-11-10T13:31:00-05:00' } },
-      ])
+        {
+          LineRef: 'MTA NYCT_M15',
+          MonitoredCall: { ...call, ExpectedArrivalTime: '2026-11-10T13:31:00-05:00' },
+        },
+      ]),
     )
-    expect(visits.map(v => [v.cancelled, v.time])).toEqual([
+    expect(visits.map((v) => [v.cancelled, v.time])).toEqual([
       [true, HALF_PAST],
       [true, HALF_PAST],
       [false, HALF_PAST + 60],
@@ -179,7 +204,12 @@ describe('parseStopMonitoring', () => {
 
   it('returns an error condition as the error', () => {
     const answer = parseStopMonitoring(json('bustime-999999.json'))
-    expect(answer).toEqual({ updatedAt: NOW, error: 'No such stop: MTA_999999.', notFound: true, visits: [] })
+    expect(answer).toEqual({
+      updatedAt: NOW,
+      error: 'No such stop: MTA_999999.',
+      notFound: true,
+      visits: [],
+    })
   })
 
   it('throws on a body that is not SIRI', () => {
@@ -196,7 +226,9 @@ describe('parseStopMonitoring', () => {
 
   it('asks for one stop, SIRI 2 with cancelled trips, with the key', () => {
     const url = new URL(stopMonitoringUrl('401687', 'k&y'))
-    expect(url.origin + url.pathname).toBe('https://bustime.mta.info/api/2/siri/stop-monitoring.json')
+    expect(url.origin + url.pathname).toBe(
+      'https://bustime.mta.info/api/2/siri/stop-monitoring.json',
+    )
     expect(Object.fromEntries(url.searchParams)).toMatchObject({
       key: 'k&y',
       version: '2',
@@ -212,7 +244,9 @@ describe('computeBusArrivals', () => {
     const r = computeBusArrivals(BUS_STOP, recorded(), BUS_DATA.routes, { limit: 10 })
     expect(r.stop).toEqual({ id: BUS_STOP, name: '1 AV/E 14 ST' })
     expect(r.updatedAt).toBe(NOW)
-    expect(r.arrivals.map(a => [a.name, a.time === null ? null : a.time - NOW, a.meters])).toEqual([
+    expect(
+      r.arrivals.map((a) => [a.name, a.time === null ? null : a.time - NOW, a.meters]),
+    ).toEqual([
       ['M15', 2252, 8145],
       ['M15', 2565, 7440],
       ['M15', 3165, 10353],
@@ -227,20 +261,24 @@ describe('computeBusArrivals', () => {
       atTerminal: true,
       cancelled: false,
     })
-    expect(computeBusArrivals(BUS_STOP, recorded(), BUS_DATA.routes, { limit: 2 }).arrivals).toHaveLength(2)
+    expect(
+      computeBusArrivals(BUS_STOP, recorded(), BUS_DATA.routes, { limit: 2 }).arrivals,
+    ).toHaveLength(2)
   })
 
   it('orders untimed buses by distance', () => {
     const answer: StopMonitoring = {
       updatedAt: null,
-      visits: [4000, 900].map(meters => ({
+      visits: [4000, 900].map((meters) => ({
         ...recorded().visits[0]!,
         time: undefined,
         meters,
         tripId: String(meters),
       })),
     }
-    expect(computeBusArrivals('1', answer, {}, { limit: 10 }).arrivals.map(a => a.tripId)).toEqual(['900', '4000'])
+    expect(
+      computeBusArrivals('1', answer, {}, { limit: 10 }).arrivals.map((a) => a.tripId),
+    ).toEqual(['900', '4000'])
   })
 
   it('names the stop null when no bus is coming', () => {
@@ -288,11 +326,11 @@ describe('bus vehicles', () => {
 
   it('lists them by headsign, with compass headings and their next stop', () => {
     const vehicles = computeBusVehicles(recordedVehicles())
-    expect(new Set(vehicles.map(v => v.headsign))).toEqual(
-      new Set(['SELECT BUS SERVICE 125 ST via 1 AV', 'SELECT BUS SERVICE SOUTH FERRY via 2 AV'])
+    expect(new Set(vehicles.map((v) => v.headsign))).toEqual(
+      new Set(['SELECT BUS SERVICE 125 ST via 1 AV', 'SELECT BUS SERVICE SOUTH FERRY via 2 AV']),
     )
-    expect(vehicles.map(v => v.headsign)).toEqual([...vehicles.map(v => v.headsign)].sort())
-    expect(vehicles.find(v => v.id === '6218')).toMatchObject({
+    expect(vehicles.map((v) => v.headsign)).toEqual(vehicles.map((v) => v.headsign).sort())
+    expect(vehicles.find((v) => v.id === '6218')).toMatchObject({
       heading: 225,
       stop: { id: '405338', name: 'PEARL ST/BEEKMAN ST' },
       atTerminal: false,
@@ -306,7 +344,9 @@ describe('bus vehicles', () => {
   })
 
   it('turns Bus Time bearings (0 east, counterclockwise) into compass headings', () => {
-    expect([0, 90, 180, 270, 225, 359.6, -10].map(compassHeading)).toEqual([90, 0, 270, 180, 225, 90, 100])
+    expect([0, 90, 180, 270, 225, 359.6, -10].map(compassHeading)).toEqual([
+      90, 0, 270, 180, 225, 90, 100,
+    ])
   })
 
   it('returns an unknown route as the error', () => {
@@ -327,8 +367,14 @@ describe('bus vehicles', () => {
 
   it('asks for one route, SIRI 2, with the key', () => {
     const url = new URL(vehicleMonitoringUrl('M15+', 'k&y'))
-    expect(url.origin + url.pathname).toBe('https://bustime.mta.info/api/siri/vehicle-monitoring.json')
-    expect(Object.fromEntries(url.searchParams)).toMatchObject({ key: 'k&y', version: '2', LineRef: 'M15+' })
+    expect(url.origin + url.pathname).toBe(
+      'https://bustime.mta.info/api/siri/vehicle-monitoring.json',
+    )
+    expect(Object.fromEntries(url.searchParams)).toMatchObject({
+      key: 'k&y',
+      version: '2',
+      LineRef: 'M15+',
+    })
   })
 })
 
@@ -338,7 +384,7 @@ describe('nearby bus stops', () => {
   it('reads the recorded stops with their routes', () => {
     const all = stops()
     expect(all).toHaveLength(37)
-    expect(all.find(s => s.code === BUS_STOP)).toEqual({
+    expect(all.find((s) => s.code === BUS_STOP)).toEqual({
       code: BUS_STOP,
       name: '1 AV/E 14 ST',
       direction: 'NE',
@@ -353,8 +399,14 @@ describe('nearby bus stops', () => {
   })
 
   it('lists the nearest stops first, with route names and colors', () => {
-    const near = nearestBusStops(stops(), BUS_STOP_POINT.lat, BUS_STOP_POINT.lon, BUS_DATA.routes, 4)
-    expect(near.map(s => [s.id, s.direction, s.distance, s.routes.map(r => r.name)])).toEqual([
+    const near = nearestBusStops(
+      stops(),
+      BUS_STOP_POINT.lat,
+      BUS_STOP_POINT.lon,
+      BUS_DATA.routes,
+      4,
+    )
+    expect(near.map((s) => [s.id, s.direction, s.distance, s.routes.map((r) => r.name)])).toEqual([
       [BUS_STOP, 'NE', 0, ['M15']],
       ['405322', 'NE', 2, ['M15-SBS']],
       ['404029', 'NW', 108, ['L92', 'M14A-SBS', 'M14D-SBS']],
@@ -362,12 +414,24 @@ describe('nearby bus stops', () => {
     ])
     expect(near[1]!.routes[0]).toEqual(BUS_DATA.routes['M15+'])
     // Stops past the radius are left out: the answer covers a rounded point.
-    const within = nearestBusStops(stops(), BUS_STOP_POINT.lat, BUS_STOP_POINT.lon, BUS_DATA.routes, 4, 110)
-    expect(within.map(s => s.id)).toEqual([BUS_STOP, '405322', '404029'])
+    const within = nearestBusStops(
+      stops(),
+      BUS_STOP_POINT.lat,
+      BUS_STOP_POINT.lon,
+      BUS_DATA.routes,
+      4,
+      110,
+    )
+    expect(within.map((s) => s.id)).toEqual([BUS_STOP, '405322', '404029'])
   })
 
   it('rejects answers that are not a stop list, as a bad key gets', () => {
-    for (const body of [null, {}, { code: 401, text: 'permission denied' }, { code: 200, data: {} }])
+    for (const body of [
+      null,
+      {},
+      { code: 401, text: 'permission denied' },
+      { code: 200, data: {} },
+    ])
       expect(() => parseStopsForLocation(body)).toThrow('not a stop list')
   })
 
@@ -386,7 +450,12 @@ describe('nearby bus stops', () => {
 })
 
 describe('bus routes', () => {
-  function call(path: string, fail: string[] = [], busKey?: () => string | undefined, nowMs = BUS_FIXTURE_NOW_MS) {
+  function call(
+    path: string,
+    fail: string[] = [],
+    busKey?: () => string | undefined,
+    nowMs = BUS_FIXTURE_NOW_MS,
+  ) {
     const fetcher = fixtureFetcher(fail)
     const handler = busHandler({ fetcher, now: () => nowMs, ...(busKey ? { busKey } : {}) })
     return { fetcher, res: handler(get(path, auth)) }
@@ -451,7 +520,10 @@ describe('bus routes', () => {
     for (const path of [`/bus/arrivals?stop=${BUS_STOP}`, `/preview/bus?stop=${BUS_STOP}`]) {
       const r = await call(path, [`bustime-${BUS_STOP}.json`]).res
       expect(r.status).toBe(502)
-      expect(await r.json()).toEqual({ error: 'Bus Time unavailable', code: 'upstream_unavailable' })
+      expect(await r.json()).toEqual({
+        error: 'Bus Time unavailable',
+        code: 'upstream_unavailable',
+      })
     }
     const logged = vi.mocked(console.error).mock.calls.flat().map(String).join('\n')
     expect(logged).toContain(`bustime stop ${BUS_STOP}`)
@@ -483,15 +555,22 @@ describe('bus routes', () => {
         VehicleStatus: 'cancelled',
         MonitoredCall: { AimedArrivalTime: at(2), StopPointName: 'X' },
       },
-      { LineRef: 'MTA NYCT_M15', MonitoredCall: { ExpectedArrivalTime: at(9), StopPointName: 'X' } },
+      {
+        LineRef: 'MTA NYCT_M15',
+        MonitoredCall: { ExpectedArrivalTime: at(9), StopPointName: 'X' },
+      },
     ])
     const fetcher = async () => Response.json(body)
     const handler = busHandler({ fetcher, now: () => BUS_FIXTURE_NOW_MS })
-    expect(await (await handler(get(`/preview/bus?stop=${BUS_STOP}`, auth))).text()).toBe('X · M15 9 min\n')
-    const arrivals = (await (await handler(get(`/bus/arrivals?stop=${BUS_STOP}`, auth))).json()).arrivals
+    expect(await (await handler(get(`/preview/bus?stop=${BUS_STOP}`, auth))).text()).toBe(
+      'X · M15 9 min\n',
+    )
+    const arrivals = (await (await handler(get(`/bus/arrivals?stop=${BUS_STOP}`, auth))).json())
+      .arrivals
     expect(arrivals.map((a: { cancelled: boolean }) => a.cancelled)).toEqual([true, false])
     // A cancelled trip doesn't take the place of a bus that will come.
-    const one = (await (await handler(get(`/bus/arrivals?stop=${BUS_STOP}&limit=1`, auth))).json()).arrivals
+    const one = (await (await handler(get(`/bus/arrivals?stop=${BUS_STOP}&limit=1`, auth))).json())
+      .arrivals
     expect(one.map((a: { cancelled: boolean }) => a.cancelled)).toEqual([true, false])
   })
 
@@ -520,7 +599,12 @@ describe('bus routes', () => {
     // A route newer than the static data: Bus Time runs it, and it shows under its id, in gray.
     const fresh = await vehicles(`bustime-vehicles-${BUS_ROUTE}.json`, BUS_FIXTURE_NOW_MS + 60_000)
     expect(fresh.status).toBe(200)
-    expect((await fresh.json()).route).toEqual({ id: 'M999', name: 'M999', color: '#808183', textColor: '#FFFFFF' })
+    expect((await fresh.json()).route).toEqual({
+      id: 'M999',
+      name: 'M999',
+      color: '#808183',
+      textColor: '#FFFFFF',
+    })
   })
 
   it('reads an unencoded + as the Select Bus Service route', async () => {
@@ -542,10 +626,12 @@ describe('bus routes', () => {
 
   it('is 502 when the stop lookup fails or answers no list, without logging the key', async () => {
     const { lat, lon } = BUS_STOP_POINT
-    expect((await call(`/bus/nearby?lat=${lat}&lon=${lon}`, ['bustime-stops.json']).res).status).toBe(502)
+    expect(
+      (await call(`/bus/nearby?lat=${lat}&lon=${lon}`, ['bustime-stops.json']).res).status,
+    ).toBe(502)
     const fetcher = async () => Response.json(null)
     const r = await busHandler({ fetcher, now: () => BUS_FIXTURE_NOW_MS + 1 })(
-      get(`/bus/nearby?lat=${lat + 0.01}&lon=${lon}`, auth)
+      get(`/bus/nearby?lat=${lat + 0.01}&lon=${lon}`, auth),
     )
     expect(r.status).toBe(502)
     expect(vi.mocked(console.error).mock.calls.flat().map(String).join('\n')).not.toContain(BUS_KEY)
@@ -587,10 +673,12 @@ describe('bus routes', () => {
     expect(sbs.name).toBe(sbs.id.replace('+', '-SBS').replace(/^BX/, 'Bx'))
     // And can be asked for either way.
     const byName = await (
-      await call(`/bus/alerts?route=${sbs.id.replace('+', '-SBS')}`, [], undefined, FIXTURE_NOW_MS).res
+      await call(`/bus/alerts?route=${sbs.id.replace('+', '-SBS')}`, [], undefined, FIXTURE_NOW_MS)
+        .res
     ).json()
     const byId = await (
-      await call(`/bus/alerts?route=${encodeURIComponent(sbs.id)}`, [], undefined, FIXTURE_NOW_MS).res
+      await call(`/bus/alerts?route=${encodeURIComponent(sbs.id)}`, [], undefined, FIXTURE_NOW_MS)
+        .res
     ).json()
     expect(byName.alerts.length).toBeGreaterThan(0)
     expect(byName).toEqual(byId)
@@ -599,6 +687,9 @@ describe('bus routes', () => {
   it('/bus/alerts is 502 when its feed fails', async () => {
     const r = await call('/bus/alerts', ['bus-alerts'], undefined, FIXTURE_NOW_MS).res
     expect(r.status).toBe(502)
-    expect(await r.json()).toEqual({ error: 'MTA alerts unavailable', code: 'upstream_unavailable' })
+    expect(await r.json()).toEqual({
+      error: 'MTA alerts unavailable',
+      code: 'upstream_unavailable',
+    })
   })
 })

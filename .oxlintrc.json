@@ -1,0 +1,140 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "extends": ["./node_modules/@erakor/toolchain/oxlint/base.json"],
+  "ignorePatterns": ["src/data/*.generated.ts", ".vercel/", "coverage/", "test/fixtures/**"],
+  "rules": {
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error",
+    "typescript/return-await": ["error", "in-try-catch"],
+    "typescript/only-throw-error": "error",
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "regex": "^(\\.\\./)+src/",
+            "message": "Import src/ through the #src/* alias (see AGENTS.md)."
+          }
+        ]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["src/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.\\./",
+                "message": "Use #src/... to reach another folder of src/; ./ is for the same folder."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/subway/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.\\./",
+                "message": "Use #src/... to reach another folder of src/; ./ is for the same folder."
+              },
+              {
+                "regex": "^#src/(agency|bus|path|citibike)/",
+                "message": "Provider folders import from shared modules (#src/gtfsrt.js), not from each other."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/agency/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.\\./",
+                "message": "Use #src/... to reach another folder of src/; ./ is for the same folder."
+              },
+              {
+                "regex": "^#src/(subway|bus|path|citibike)/",
+                "message": "Provider folders import from shared modules (#src/gtfsrt.js), not from each other."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/bus/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.\\./",
+                "message": "Use #src/... to reach another folder of src/; ./ is for the same folder."
+              },
+              {
+                "regex": "^#src/(subway|agency|path|citibike)/",
+                "message": "Provider folders import from shared modules (#src/gtfsrt.js), not from each other."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/path/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.\\./",
+                "message": "Use #src/... to reach another folder of src/; ./ is for the same folder."
+              },
+              {
+                "regex": "^#src/(subway|agency|bus|citibike)/",
+                "message": "Provider folders import from shared modules (#src/gtfsrt.js), not from each other."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/citibike/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "^\\.\\./",
+                "message": "Use #src/... to reach another folder of src/; ./ is for the same folder."
+              },
+              {
+                "regex": "^#src/(subway|agency|bus|path)/",
+                "message": "Provider folders import from shared modules (#src/gtfsrt.js), not from each other."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
